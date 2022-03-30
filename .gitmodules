@@ -1,7 +1,7 @@
 [submodule "3rdparty/Catch2"]
 	path = 3rdparty/Catch2
 	url = https://github.com/catchorg/Catch2.git
-	branch = master
+	branch = v2.x
 [submodule "3rdparty/cxxopts"]
 	path = 3rdparty/cxxopts
 	url = https://github.com/jarro2783/cxxopts.git
