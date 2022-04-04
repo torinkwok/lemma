@@ -5,12 +5,10 @@
 #include <bulldog/game.h>
 
 #include <cstdlib>
-#include <numeric>
 #include <cpprest/http_client.h>
 #include <cpprest/filestream.h>
 #include <bulldog/logger.hpp>
 #include <sys/time.h>
-#include <boost/algorithm/string.hpp>
 
 //cpprest namespaces
 //using namespace utility;                    // Common utilities like string conversions
@@ -19,102 +17,12 @@
 //using namespace web::http::client;          // HTTP client features
 //using namespace concurrency::streams;       // Asynchronous streams
 
-std::string acpcified_actions(std::string slumbot_actions) {
-  std::string acpcified_actions = slumbot_actions;
-  std::replace(acpcified_actions.begin(), acpcified_actions.end(), 'b', 'r');
-  std::replace(acpcified_actions.begin(), acpcified_actions.end(), 'k', 'c');
-  std::vector<std::string> streets; boost::split(streets, acpcified_actions, boost::is_any_of("/"));
-  int max_bet = 0;
-  for (int i = 0; i < streets.size(); i++) {
-    std::string street_actions = streets[i];
-    std::vector<std::string> betstrs; boost::split(betstrs, street_actions, boost::is_any_of("r"));
-    int max_street_bet = max_bet;
-    for (int j = 0; j < betstrs.size(); j++ ) {
-      try {
-        std::string betstr = betstrs[j];
-        bool flag_call = false;
-        bool flag_fold = false;
-        if (betstr.length() > 1 && betstr[betstr.length() - 1] == 'c') {
-          flag_call = true;
-          std::remove(betstr.begin(), betstr.end(), 'c');
-        } else if (betstr.length() > 1 and betstr[betstr.length() - 1] == 'f') {
-          flag_fold = true;
-          std::remove(betstr.begin(), betstr.end(), 'f');
-        }
-        int bet = std::stoi(betstr);
-        bet += max_bet;
-        max_street_bet = std::max(max_street_bet, bet);
-        betstrs[j] = std::to_string(bet);
-        if (flag_call) {
-          betstrs[j] += 'c';
-        } else if (flag_fold) {
-          betstrs[j] += 'f';
-        }
-        betstrs[j] = 'r' + betstrs[j];
-      } catch (std::invalid_argument& err) {
-        continue;
-      }
-    }
-    max_bet = max_street_bet;
-    if (max_bet == 0) {
-      max_bet = 100;
-    }
-    streets[i] = std::accumulate(betstrs.begin(),
-                                  betstrs.end(),
-                                  std::string{});
-  }
-  return boost::algorithm::join(streets, "/");
-}
-
 void from_json(const web::json::value &j, sSlumbotMatchState *s) {
-  // {'old_action': 'b400c/kk/b200b400c/k', 'action': 'b400c/kk/b200b400c/kk',
-  // 'client_pos': 1, 'hole_cards': ['7c', '2s'], 'board': ['Th', '9c', '4s',
-  // '8c', '9d'], 'bot_hole_cards': ['Qc', 'Tc'], 'winnings': -800, 'won_pot':
-  // -1600, 'session_num_hands': 2, 'baseline_winnings': -750, 'session_total':
-  // -1200, 'session_baseline_total': -750}
-
-  // p1_
-  s->p1_ = j.has_field("client_pos") ? (j.at("client_pos").as_integer() ?: 0) : 0;
-
-  // holes_
-  if (j.has_field("hole_cards")) {
-    auto holes = j.at("hold_cards").as_array();
-    for (web::json::value h : holes) {
-      s->holes_ += h.as_string();
-    }
-  } else {
-    s->holes_ = "";
-  }
-
-  // board_
-  if (j.has_field("board")) {
-    auto slumbot_board = j.at("board").as_array();
-    if (slumbot_board.size() == 0) {
-      s->board_ = "";
-    } else if (slumbot_board.size() == 3) {
-      s->board_ = slumbot_board[0].as_string() + slumbot_board[1].as_string() + slumbot_board[2].as_string();
-    } else if (slumbot_board.size() == 4) {
-      s->board_ = slumbot_board[0].as_string() + slumbot_board[1].as_string() + slumbot_board[2].as_string() + "/" + slumbot_board[3].as_string();
-    } else if (slumbot_board.size() == 5) {
-      s->board_ = slumbot_board[0].as_string() + slumbot_board[1].as_string() + slumbot_board[2].as_string() + "/" + slumbot_board[3].as_string() + "/" + slumbot_board[4].as_string();
-    }
-  } else {
-    s->board_ = "";
-  }
-
-  // action_
-  s->action_ = j.has_field("action") ? acpcified_actions(j.at("action").as_string()) : "";
-
-  // ourb_
-
-
-  // oppb_
-
-  // s->p1_ = j.has_field("p1") ? j.at("p1").as_integer() : 0;
-  // s->holes_ = j.has_field("holes") ? j.at("holes").as_string() : "";
-  // s->board_ = j.has_field("board") ? j.at("board").as_string() : "";
-  // s->action_ = j.has_field("action") ? j.at("action").as_string() : "";
-  s->ps_ = j.has_field("ps") ? j.at("ps").as_integer() : 0; // x
+  s->p1_ = j.has_field("p1") ? j.at("p1").as_integer() : 0;
+  s->holes_ = j.has_field("holes") ? j.at("holes").as_string() : "";
+  s->board_ = j.has_field("board") ? j.at("board").as_string() : "";
+  s->action_ = j.has_field("action") ? j.at("action").as_string() : "";
+  s->ps_ = j.has_field("ps") ? j.at("ps").as_integer() : 0;
   s->ourb_ = j.has_field("ourb") ? j.at("ourb").as_integer() : 0;
   s->oppb_ = j.has_field("oppb") ? j.at("oppb").as_integer() : 0;
   s->minb_ = j.has_field("minb") ? j.at("minb").as_integer() : 0;

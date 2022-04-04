@@ -24,6 +24,6 @@
         "high_filter" : 1.0
       }],
     "high_filter" : 1.0,
-    "card_abs": ["null", "null", "null", "colex"]
+    "card_abs": ["colex", "colex", "colex", "colex"]
   }
 }

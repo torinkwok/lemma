@@ -1,6 +1,6 @@
-##Engine Configuration
+## Engine Configuration
 
-###CFR
+### CFR
 name: (train/sgs)\_r(starting round(s))\_cfr_(platform)\_(sb)\_(bb).json
 
 type_StartingRound_platform_game_stack
@@ -8,6 +8,7 @@ type_StartingRound_platform_game_stack
 builder_r0_slumbot_nlh2_100bb.json
 
 example train file:
+
 ```json
 {
   "cfr": {
@@ -40,7 +41,7 @@ example train file:
 }
 ```
 
-###AG Builder
+### AG Builder
 name: (train/sgs)\_r(starting round(s))\_builder_(platform)\_(sb)\_(bb).json
 
 example builder file:

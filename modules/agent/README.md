@@ -1,9 +1,10 @@
-#Webserver
+# Webserver
 with engine ready for waiting
 
 ##REST Endpoints
-####New Engine
+#### New Engine
 with bulldog/config/games/holdem.nolimit.2p.10_20.game
+
 ```bash
 method: POST
 uri: http://192.168.1.90:8080/v1/bulldog/api/new/engine

@@ -2,6 +2,10 @@
   "cfr": {
     "num_threads": 1,
     "algo": "vector_alt",
+    "checkpoint": {
+      "save_final": true,
+      "save_root_prob": true
+    },
     "regret_matching": {
       "floor": 0.0,
       "avg_update_on": 0,

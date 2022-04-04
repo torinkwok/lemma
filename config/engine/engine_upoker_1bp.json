@@ -4,7 +4,8 @@
   "blueprint": {
     "disk" : true,
     "strategy_prefix": [
-      "upoker-p_nlh2_200bb_cfrs_r0_30000000"
+      // "upoker-p_nlh2_200bb_cfrs_r0_30000000"
+      "upoker-p_nlh2_200bb__cfrs_r0_1000"
     ],
     "action_chooser": {
       "purification": false,

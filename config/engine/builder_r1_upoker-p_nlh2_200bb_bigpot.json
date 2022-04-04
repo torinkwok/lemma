@@ -38,6 +38,7 @@
         ],
         "high_filter" : 1.0
       }],
-    "card_abs": ["null", "colex", "hierarchical_60_500_2", "hierarchical_60_500_3"]
+    // "card_abs": ["null", "colex", "hierarchical_60_500_2", "hierarchical_60_500_3"]
+    "card_abs": ["colex", "colex", "colex", "colex"]
   }
 }

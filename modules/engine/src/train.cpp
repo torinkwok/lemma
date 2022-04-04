@@ -55,7 +55,18 @@ void train(const cxxopts::ParseResult &result) {
     //read the sgs file, and extract accordingly
     std::filesystem::path dir(BULLDOG_DIR_CFG_ENG);
     std::filesystem::path filename(result["sgs"].as<std::string>().c_str());
-    std::ifstream sgs_file(dir / filename);
+    // std::ifstream sgs_file(dir / filename, std::ios::in);
+    std::ifstream sgs_file;
+    sgs_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+    try {
+      // sgs_file.open(dir / filename, std::ios::in);
+      // sgs_file.open("/home/kwokt/bulldog/config/engine/sgs_r3_upoker-p_bigpot.json", std::ios::in);
+      sgs_file.open("/home/kwokt/bulldog/config/engine/sgs_r0_upoker-p_bigpot.json", std::ios::in);
+    } catch (std::system_error& err) {
+      std::cerr << err.code() << std::endl;
+      std::cerr << err.code().message() << std::endl;
+      std::cerr << err.what() << std::endl;
+    }
     if (sgs_file.is_open()){
       std::stringstream buffer;
       buffer << sgs_file.rdbuf();
@@ -86,7 +97,8 @@ void train(const cxxopts::ParseResult &result) {
         cfr.cfr_param_.name + "_" + result["exp_tag"].as<std::string>() + "_"
             + std::to_string(cfr.cfr_param_.iteration);
   } else {
-    cfr.profiling_writer_.prefix_ = cfr.cfr_param_.name + "_" + std::to_string(result["max_iter"].as<int>());
+    // cfr.profiling_writer_.prefix_ = cfr.cfr_param_.name + "_" + std::to_string(result["max_iter"].as<int>());
+    cfr.profiling_writer_.prefix_ = cfr.cfr_param_.name + "_" + std::to_string(1024);
   }
 
   //build ag
