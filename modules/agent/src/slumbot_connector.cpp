@@ -277,30 +277,31 @@ int SlumbotConnector::parse(const Game *game, MatchState *state) {
     board_str += slumbot_match_state_->board_;
   }
 
-  std::string acpc_format =
+  std::string ref_acpc_msg =
       "MATCHSTATE:" + std::to_string(state->viewingPlayer) + ":" + std::to_string(state->state.handId) +
           ":" + ":" + slumbot_match_state_->action_ + ":" + holes_str + board_str;
-  logger::debug("slumbot_connector state in acpc_format: " + acpc_format);
+  logger::debug("slumbot_connector state in ref_acpc_msg: " + ref_acpc_msg);
 
-  //use readMatchStatePlus you'd like to supply custom ReadBettingFunction
-  int len = readMatchStatePlus(acpc_format.c_str(), game, state, bsbrReadBetting);
+  // Use readMatchStatePlus you'd like to supply custom ReadBettingFunction.
+  // 
+  // NOTE(kwok): The `ReadBettingFunction` previously passed in is wrongly
+  // `bsbrReadBetting`, which distorted the parsed match state.
+  int c_acpc_msg_len = readMatchStatePlus(ref_acpc_msg.c_str(), game, state, bsbgReadBetting);
+  char c_acpc_msg[MAX_LINE_LEN]; // TODO(kwok): Rename the `MAX_LINE_LEN` constant.
+  printMatchState(game, state, MAX_LINE_LEN, c_acpc_msg);
+  logger::trace("slumbot_connector state parsed: " + std::string(c_acpc_msg));
 
-  char line[MAX_LINE_LEN];
-  printMatchState(game, state, MAX_LINE_LEN, line);
-  std::string line2(line);
-  // TODO(kwok): Test the rounded bet for the random strategy mode.
-  logger::trace("slumbot_connector state parsed (perhaps rounded): " + line2);
-
-  if (len < 0) {
+  if (c_acpc_msg_len < 0) {
     return EXIT_FAILURE;
   }
   return EXIT_SUCCESS;
 }
 
-//build slumbot responses
+// Assemble Slumbot responses.
+//
+// TODO(wolo): Maybe wrap this ACPC standard to Slumbnot standard in a function?
+// But all you need is the action after all.
 int SlumbotConnector::build(const Game *game, Action *action, State *state) {
-  //todo: maybe wrap this acpcstandard to slumbnot standard in a function? but all you need is the action
-
   if (action->type == a_call && state->round > 0 && state->numActions[state->round] == 0) {
     // (kwok) A CALL action leading a non PRE-FLOP betting round is illegal.
     // Replace it with a CHECK. This occurs from time to time with random
@@ -319,24 +320,6 @@ int SlumbotConnector::build(const Game *game, Action *action, State *state) {
   } else {
     action_str_ = actionChars[action->type];
   }
-
-  // if (game->bettingType == noLimitBetting && action->type == a_raise) {
-  //   long int action_size = actionTranslate_bsbg2bsbr(action, state, game);
-
-  //   // if (action_size < (slumbot_match_state_->minb_) || action_size > (slumbot_match_state_->maxb_)) {
-  //   //   logger::critical("engine action size:" + std::to_string(action_size) + ", raise size must be in the range of "
-  //   //                    + std::to_string(slumbot_match_state_->minb_) + " - "
-  //   //                    + std::to_string(slumbot_match_state_->maxb_));
-  //   // }
-
-  //   unsigned short viewingPlayer = slumbot_match_state_->p1_ == 1 ? 0 : 1;
-  //   int32_t lower_bound = state->minNoLimitRaiseTo;
-  //   int32_t upper_bound = state->stackPlayer[viewingPlayer] - state->spent[viewingPlayer];
-  //   if (action_size < lower_bound || action_size > upper_bound) {
-  //     logger::critical("engine action size:" + std::to_string(action_size) + ", raise size must be within the range of "
-  //                      + std::to_string(lower_bound) + " - "
-  //                      + std::to_string(upper_bound));
-  //   }
     
   if (game->bettingType == noLimitBetting && action->type == a_raise) {
     unsigned short viewingPlayer = slumbot_match_state_->p1_ == 1 ? 0 : 1;
