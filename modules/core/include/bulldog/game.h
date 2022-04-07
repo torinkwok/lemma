@@ -192,6 +192,10 @@ typedef struct {
 
 typedef struct {
   State state;
+  /// In ACPC, the `position` field tells the clients their position relative to
+  /// the dealer button. A value of `0` indicates that for the current hand, the
+  /// client is the first player after the button (the *small* blind in ring
+  /// games, or the *big* blind in reverse-blind heads-up games.)
   uint8_t viewingPlayer;
 } MatchState;
 

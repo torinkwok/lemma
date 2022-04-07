@@ -108,7 +108,8 @@
 				"--engine_params=engine_upoker_1bp.json",
 				"--game=nlh2_200bb.game",
 				"--connector=1",
-				"--connector_params=lemma,ckp3t4kkbccHZFmosBZVsGibxz6MnaQ4Heof3uu3nkXtLwn7GVoMDhNrj6qe8ZCU,1000"
+				"--connector_params=lemma,ckp3t4kkbccHZFmosBZVsGibxz6MnaQ4Heof3uu3nkXtLwn7GVoMDhNrj6qe8ZCU,1000",
+				"--log_level=trace",
 			],
 			"stopAtEntry": false,
 			"cwd": "${workspaceFolder}",
@@ -137,7 +138,8 @@
 				"--engine_params=engine_upoker_1bp.json",
 				"--game=nlh2_200bb.game",
 				"--connector=0",
-				"--connector_params=localhost,52001"
+				"--connector_params=localhost,52001",
+				"--log_level=trace",
 			],
 			"stopAtEntry": false,
 			"cwd": "${workspaceFolder}",

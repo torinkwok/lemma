@@ -25,11 +25,11 @@ std::string acpcified_actions(std::string slumbot_actions) {
   std::replace(acpcified_actions.begin(), acpcified_actions.end(), 'k', 'c');
   std::vector<std::string> streets; boost::split(streets, acpcified_actions, boost::is_any_of("/"));
   int max_bet = 0;
-  for (int i = 0; i < streets.size(); i++) {
+  for (size_t i = 0; i < streets.size(); i++) {
     std::string street_actions = streets[i];
     std::vector<std::string> betstrs; boost::split(betstrs, street_actions, boost::is_any_of("r"));
     int max_street_bet = max_bet;
-    for (int j = 0; j < betstrs.size(); j++ ) {
+    for (size_t j = 0; j < betstrs.size(); j++ ) {
       try {
         std::string betstr = betstrs[j];
         bool flag_call = false;
@@ -77,16 +77,16 @@ void from_json(const web::json::value &j, sSlumbotMatchState *s) {
   s->p1_ = j.has_field("client_pos") ? (j.at("client_pos").as_integer() ?: 0) : 0;
 
   // holes_
+  s->holes_ = "";
   if (j.has_field("hole_cards")) {
-    auto holes = j.at("hold_cards").as_array();
+    auto holes = j.at("hole_cards").as_array();
     for (web::json::value h : holes) {
       s->holes_ += h.as_string();
     }
-  } else {
-    s->holes_ = "";
   }
 
   // board_
+  s->board_ = "";
   if (j.has_field("board")) {
     auto slumbot_board = j.at("board").as_array();
     if (slumbot_board.size() == 0) {
@@ -97,31 +97,34 @@ void from_json(const web::json::value &j, sSlumbotMatchState *s) {
       s->board_ = slumbot_board[0].as_string() + slumbot_board[1].as_string() + slumbot_board[2].as_string() + "/" + slumbot_board[3].as_string();
     } else if (slumbot_board.size() == 5) {
       s->board_ = slumbot_board[0].as_string() + slumbot_board[1].as_string() + slumbot_board[2].as_string() + "/" + slumbot_board[3].as_string() + "/" + slumbot_board[4].as_string();
+    } else {
+      logger::error("undefined board size");
     }
-  } else {
-    s->board_ = "";
   }
 
   // action_
   s->action_ = j.has_field("action") ? acpcified_actions(j.at("action").as_string()) : "";
 
-  // ourb_
+  // ourb_ & oppb_
+  s->ourb_ = s->oppb_ = 0xbe5;
+  if (s->action_[s->action_.length() - 1] != 'c') {
+    s->ourb_ *= -1; // so that ourb_ != oppb_
+  }
 
-
-  // oppb_
-
-  // s->p1_ = j.has_field("p1") ? j.at("p1").as_integer() : 0;
-  // s->holes_ = j.has_field("holes") ? j.at("holes").as_string() : "";
-  // s->board_ = j.has_field("board") ? j.at("board").as_string() : "";
-  // s->action_ = j.has_field("action") ? j.at("action").as_string() : "";
   s->ps_ = j.has_field("ps") ? j.at("ps").as_integer() : 0; // x
-  s->ourb_ = j.has_field("ourb") ? j.at("ourb").as_integer() : 0;
-  s->oppb_ = j.has_field("oppb") ? j.at("oppb").as_integer() : 0;
   s->minb_ = j.has_field("minb") ? j.at("minb").as_integer() : 0;
   s->maxb_ = j.has_field("maxb") ? j.at("maxb").as_integer() : 0;
 
   //game ends state
-  s->oppholes_ = j.has_field("oppholes") ? j.at("oppholes").as_string() : "";
+
+  s->oppholes_ = "";
+  if (j.has_field("bot_hole_cards")) {
+    auto oppholes = j.at("bot_hole_cards").as_array();
+    for (web::json::value h : oppholes) {
+      s->oppholes_ += h.as_string();
+    }
+  }
+
   s->sd_ = j.has_field("sd") ? j.at("sd").as_integer() : 0; // x
   s->outcome_ = j.has_field("outcome") ? j.at("outcome").as_integer() : -1; // x
   s->stotal_ = j.has_field("stotal") ? j.at("stotal").as_integer() : 0;
@@ -159,146 +162,89 @@ SlumbotConnector::~SlumbotConnector() {
 }
 
 int SlumbotConnector::connect() {
-  //Initialize sessionId
-  struct timeval tp{};
-  gettimeofday(&tp, nullptr);
-  long int ms = tp.tv_sec * 1000 + tp.tv_usec / 1000;
-  std::srand(time(nullptr));
-  int r = std::rand() % 1000000;
-  long int sessionid = (ms * 1000000 + r);
-  sid_ = sessionid;
-  logger::trace("session id: " + std::to_string(sessionid));
-
-  //Login
-  auto requestJson = web::http::client::http_client(U(base_url_))
-      .request(web::http::methods::GET,
-               web::http::uri_builder(U(cgi_uri_))
-                   .append_query(U("type"), U("login"))
-                   .append_query(U("username"), U(username_))
-                   .append_query(U("pw"), U(password_))
-                   .to_string())
-
-          // GetAvg the response.
-      .then([=](const web::http::http_response& response) {
-        if (response.status_code() != 200) {
-          logger::error("login returned " + std::to_string(response.status_code()));
-        }
-        return response.extract_json(true);
-      })
-      .then([=](const web::json::value &jsonObject) {
-        logger::debug("login returned:" + jsonObject.serialize());
-        outcome_flag_ = jsonObject.has_field("outcome");
-        from_json(jsonObject, slumbot_match_state_);
-      });
-
-  // Wait for the concurrent tasks to finish.
-  try {
-    requestJson.wait();
-  } catch (const std::exception &e) {
-    logger::error(e.what());
-    return EXIT_FAILURE;
-  }
+  web::http::http_request loginRequest(web::http::methods::POST);
+  loginRequest.headers().add(U("Content-Type"), U("application/json"));
+  web::json::value loginRequestJsonBody;
+  loginRequestJsonBody[U("username")] = web::json::value::string(U("lemma"));
+  loginRequestJsonBody[U("password")] = web::json::value::string(U("ckp3t4kkbccHZFmosBZVsGibxz6MnaQ4Heof3uu3nkXtLwn7GVoMDhNrj6qe8ZCU"));
+  loginRequest.set_body(loginRequestJsonBody);
+  // FIXME(kwok): Encapsulate REST talks better.
+  auto loginRequestJson = web::http::client::http_client(U("https://slumbot.com/api/login"))
+    .request(loginRequest)
+    .then([](const web::http::http_response& response) {
+      if (response.status_code() != 200) {
+        logger::error("(kwok) login returned " + std::to_string(response.status_code()));
+      }
+      return response.extract_json(true);
+    })
+    .then([this](const web::json::value& jsonObject) {
+      logger::debug("(kwok) login returned:" + jsonObject.serialize());
+      this->token_ = jsonObject.at(U("token")).as_string();
+    });
+  try {loginRequestJson.wait();}
+  catch (const std::exception &e) {logger::error(e.what()); return EXIT_FAILURE;}
   return EXIT_FAILURE;
 }
 
 int SlumbotConnector::send() {
-  struct timeval tp{};
-  gettimeofday(&tp, nullptr);
-  long int ms = tp.tv_sec * 1000 + tp.tv_usec / 1000;
-  ++slumbot_match_state_->ai_; //increment action count
-  logger::trace(
-      "action=" + action_str_ +
-          "&sid=" + std::to_string(sid_) +
-          "&un=" + username_ +
-          "&ai=" + std::to_string(slumbot_match_state_->ai_) +
-          "&_=" + std::to_string(ms));
-  auto requestJson = web::http::client::http_client(U(base_url_))
-      .request(web::http::methods::GET,
-               web::http::uri_builder(U(cgi_uri_))
-                   .append_query(U("type"), U("play"))
-                   .append_query(U("action"), U(action_str_))
-                   .append_query(U("sid"), U(sid_))
-                   .append_query(U("un"), U(username_))
-                   .append_query(U("ai"), U(slumbot_match_state_->ai_))
-                   .append_query(U("_"), U(ms))
-                   .to_string())
-      .then([](const web::http::http_response &response) {
-        if (response.to_string().find("Error") != std::string::npos) {
-          throw std::runtime_error("slumbot_connector::send action returned Error");
-        }
-        return response.extract_json(true);
-      }).then([&](const web::json::value &jsonObject) {
-        logger::trace("slumbot_connector::send action returned:" + jsonObject.serialize());
-        action_str_ = "";
-        outcome_flag_ = jsonObject.has_field("outcome");
-        from_json(jsonObject, slumbot_match_state_);
-      });
-  try {
-    requestJson.wait();
-    return EXIT_SUCCESS;
-  } catch (const std::exception &e) {
-    logger::error(e.what());
-    return EXIT_FAILURE;
-  }
+  web::http::http_request actRequest(web::http::methods::POST);
+  actRequest.headers().add(U("Content-Type"), U("application/json"));
+  web::json::value actRequestJsonBody;
+  actRequestJsonBody[U("token")] = web::json::value::string(this->token_);
+  actRequestJsonBody[U("incr")] = web::json::value::string(this->action_str_);
+  actRequest.set_body(actRequestJsonBody);
+  auto actRequestFuture = web::http::client::http_client(U("https://slumbot.com/api/act"))
+    .request(actRequest)
+    .then([](const web::http::http_response& response) {
+      if (response.status_code() != 200) {
+        logger::error("(kwok) slumbot_connector::send action returned Error" + std::to_string(response.status_code()));
+      }
+      return response.extract_json(true);
+    })
+    .then([this](const web::json::value& jsonObject) {
+      logger::debug("(kwok) slumbot_connector::send action returned:" + jsonObject.serialize());
+      this->previous_act_result_json_ = jsonObject;
+      from_json(this->previous_act_result_json_, this->slumbot_match_state_);
+    });
+  try {actRequestFuture.wait();}
+  catch (const std::exception &e) {logger::error(e.what()); return EXIT_FAILURE;}
+  return EXIT_SUCCESS;
 }
 
 bool SlumbotConnector::get() {
-  //Determine it its time for next hand
-  if (slumbot_match_state_->hip_ == 0 && outcome_flag_) {
-    //outcome updated by send, continue
-    outcome_flag_ = false;
+  // A hand has completed.
+  if (this->has_showed_down()) {
+    this->reset_hand();
+    web::http::http_request newHandRequest(web::http::methods::POST);
+    newHandRequest.headers().add(U("Content-Type"), U("application/json"));
+    web::json::value newHandRequestJsonBody;
+    newHandRequestJsonBody[U("token")] = web::json::value::string(this->token_);
+    newHandRequest.set_body(newHandRequestJsonBody);
+    // FIXME(kwok): Encapsulate REST talks better.
+    auto newHandRequestFuture = web::http::client::http_client(U("https://slumbot.com/api/new_hand"))
+      .request(newHandRequest)
+      .then([](const web::http::http_response& response) {
+        if (response.status_code() != 200) {
+          // FIXME(kwok): Check the type of error reported here.
+          throw std::runtime_error("(kwok) slumbot_connector::get next_hand returned Error");
+        }
+        return response.extract_json(true);
+      })
+      .then([this](const web::json::value& jsonObject) {
+        logger::trace("(kwok) slumbot_connector::get next_hand returned:" + jsonObject.serialize());
+        if (jsonObject.has_field(U("token"))) {
+          this->token_ = jsonObject.at(U("token")).as_string();
+        }
+        this->previous_act_result_json_ = jsonObject;
+        from_json(this->previous_act_result_json_, this->slumbot_match_state_);
+      });
+    try {newHandRequestFuture.wait();}
+    catch (const std::exception &e) {logger::error(e.what()); return false;}
     return true;
-  } else if (slumbot_match_state_->hip_ == 0 && iter_ > 0) {
-    logger::info("******ITERATION: " + std::to_string(iter_) + "******");
-    logger::trace("requesting for next hand from slumbot");
-    struct timeval tp{};
-    gettimeofday(&tp, nullptr);
-    long int ms = tp.tv_sec * 1000 + tp.tv_usec / 1000;
-    slumbot_match_state_->ai_ = 0;
-    auto requestJson = web::http::client::http_client(U(base_url_))
-        .request(web::http::methods::GET,
-                 web::http::uri_builder(U(cgi_uri_))
-                     .append_query(U("type"), U("play"))
-                     .append_query(U("action"), U("nh"))
-                     .append_query(U("sid"), U(sid_))
-                     .append_query(U("un"), U(username_))
-                     .append_query(U("ai"), U(slumbot_match_state_->ai_))
-                     .append_query(U("_"), U(ms))
-                     .to_string())
-
-            // GetAvg the response.
-        .then([](const web::http::http_response &response) {
-          if (response.to_string().find("Error") != std::string::npos) {
-            throw std::runtime_error("slumbot_connector::get next_hand returned Error");
-          }
-          return response.extract_json(true);
-        })
-        .then([=](const web::json::value &jsonObject) {
-          logger::trace("slumbot_connector::get next_hand returned:" + jsonObject.serialize());
-          from_json(jsonObject, slumbot_match_state_);
-        });
-    // Wait for the concurrent tasks to finish.
-    try {
-      requestJson.wait();
-    } catch (const std::exception &e) {
-      logger::error(e.what());
-      return false;
-    }
-    --iter_;
-    return true;
-  } else if (slumbot_match_state_->hip_ == 1) {
-    //all other cases, previous communication with slumbot has updated state
-    logger::trace("matchstate should have been updated by previous send, skip directly to parse");
+  // In the mist of a hand.
+  } else {
     return true;
   }
-
-  if (iter_ == 0) {
-    logger::trace("finished all iterations");
-    return false;
-  }
-
-  logger::error("case not handled yet");
-  return false;
 }
 
 int SlumbotConnector::parse(const Game *game, MatchState *state) {
@@ -307,8 +253,11 @@ int SlumbotConnector::parse(const Game *game, MatchState *state) {
   }
   initState(game, iter_rec_-iter_, &state->state);
 
-  //In slumbot, p1_=1 is the small blind
-  //todo: should we move customizations such as below to a connector file?
+  // In Slumbot, `p1_ = 1` is the small blind. In ACPC, `p1_ = 0` is the small
+  // blind.
+  //
+  // TODO(wolo): Should we move customizations such as below to a
+  // connector file?
   state->viewingPlayer = slumbot_match_state_->p1_ == 1 ? 0 : 1;
   std::string holes_str;
   if (state->viewingPlayer == 0) {
@@ -331,7 +280,7 @@ int SlumbotConnector::parse(const Game *game, MatchState *state) {
   std::string acpc_format =
       "MATCHSTATE:" + std::to_string(state->viewingPlayer) + ":" + std::to_string(state->state.handId) +
           ":" + ":" + slumbot_match_state_->action_ + ":" + holes_str + board_str;
-  logger::trace("slumbot_connector state in acpc_format: " + acpc_format);
+  logger::debug("slumbot_connector state in acpc_format: " + acpc_format);
 
   //use readMatchStatePlus you'd like to supply custom ReadBettingFunction
   int len = readMatchStatePlus(acpc_format.c_str(), game, state, bsbrReadBetting);
@@ -339,7 +288,8 @@ int SlumbotConnector::parse(const Game *game, MatchState *state) {
   char line[MAX_LINE_LEN];
   printMatchState(game, state, MAX_LINE_LEN, line);
   std::string line2(line);
-  logger::trace("slumbot_connector state parsed: " + line2);
+  // TODO(kwok): Test the rounded bet for the random strategy mode.
+  logger::trace("slumbot_connector state parsed (perhaps rounded): " + line2);
 
   if (len < 0) {
     return EXIT_FAILURE;
@@ -350,28 +300,60 @@ int SlumbotConnector::parse(const Game *game, MatchState *state) {
 //build slumbot responses
 int SlumbotConnector::build(const Game *game, Action *action, State *state) {
   //todo: maybe wrap this acpcstandard to slumbnot standard in a function? but all you need is the action
-  action_str_ = "";
-  if (action->type == a_call && slumbot_match_state_->oppb_ == slumbot_match_state_->ourb_) {
-    action_str_ += 'k';
-  } else if (action->type == a_raise) {
-    action_str_ += 'b';
-  } else {
-    action_str_ += actionChars[action->type];
+
+  if (action->type == a_call && state->round > 0 && state->numActions[state->round] == 0) {
+    // (kwok) A CALL action leading a non PRE-FLOP betting round is illegal.
+    // Replace it with a CHECK. This occurs from time to time with random
+    // strategy mode.
+    action_str_ = "k";
+    // FIXME(kwok): logger::error it when we're not in the random strategy mode.
+    logger::warn("slumbot_connector built action string " + action_str_ +
+                 " (in place of [c" + std::to_string(action->size) + "])");
+    return EXIT_SUCCESS;
   }
 
+  if (action->type == a_call && slumbot_match_state_->oppb_ == slumbot_match_state_->ourb_) {
+    action_str_ = "k";
+  } else if (action->type == a_raise) {
+    action_str_ = "b";
+  } else {
+    action_str_ = actionChars[action->type];
+  }
+
+  // if (game->bettingType == noLimitBetting && action->type == a_raise) {
+  //   long int action_size = actionTranslate_bsbg2bsbr(action, state, game);
+
+  //   // if (action_size < (slumbot_match_state_->minb_) || action_size > (slumbot_match_state_->maxb_)) {
+  //   //   logger::critical("engine action size:" + std::to_string(action_size) + ", raise size must be in the range of "
+  //   //                    + std::to_string(slumbot_match_state_->minb_) + " - "
+  //   //                    + std::to_string(slumbot_match_state_->maxb_));
+  //   // }
+
+  //   unsigned short viewingPlayer = slumbot_match_state_->p1_ == 1 ? 0 : 1;
+  //   int32_t lower_bound = state->minNoLimitRaiseTo;
+  //   int32_t upper_bound = state->stackPlayer[viewingPlayer] - state->spent[viewingPlayer];
+  //   if (action_size < lower_bound || action_size > upper_bound) {
+  //     logger::critical("engine action size:" + std::to_string(action_size) + ", raise size must be within the range of "
+  //                      + std::to_string(lower_bound) + " - "
+  //                      + std::to_string(upper_bound));
+  //   }
+    
   if (game->bettingType == noLimitBetting && action->type == a_raise) {
-    long int action_size = actionTranslate_bsbg2bsbr(action, state, game);
-
-    if (action_size < (slumbot_match_state_->minb_) || action_size > (slumbot_match_state_->maxb_)) {
-      logger::critical("engine action size:" + std::to_string(action_size) + ", raise size must be in the range of "
-                       + std::to_string(slumbot_match_state_->minb_) + " - "
-                       + std::to_string(slumbot_match_state_->maxb_));
+    unsigned short viewingPlayer = slumbot_match_state_->p1_ == 1 ? 0 : 1;
+    int32_t lower_bound = state->spent[1 - viewingPlayer]; // FIXME(kwok): A hack only suitable for heads-up.
+    int32_t upper_bound = state->stackPlayer[viewingPlayer];
+    int32_t action_size_by_game = action->size;
+    int32_t action_size_by_round = actionTranslate_bsbg2bsbr(action, state, game);
+    if (action_size_by_game <= lower_bound || action_size_by_game > upper_bound) {
+      logger::critical("engine action size (by game): " + std::to_string(action_size_by_game) +
+                       ", raise size (by game) must be within the range of (" +
+                       std::to_string(lower_bound) + " - " +
+                       std::to_string(upper_bound) + "]");
     }
-
-    if (action_size < 0) {
-      logger::critical("raise cannot be less than 0, " + std::to_string(action_size) + "recieved");
+    if (action_size_by_round < 0) {
+      logger::critical("raise cannot be less than 0, " + std::to_string(action_size_by_round) + "recieved");
     }
-    action_str_ += std::to_string(action_size);
+    action_str_ += std::to_string(action_size_by_round);
   }
 
   logger::trace("slumbot_connector built action string " + action_str_);

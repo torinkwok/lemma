@@ -357,7 +357,7 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
    * GET ACTION from the last playbook
    */
   auto pb_depth = playbook_stack_.size();
-  for (auto pb_it = pb_depth - 1; pb_it >= 0; pb_it--) {
+  for (int pb_it = pb_depth - 1; pb_it >= 0; pb_it--) {
     //try to find from this playbook
     auto pb = playbook_stack_.at(pb_it);
     logger::debug("    [ENGINE %s] : get action from %d/%d playbooks (%s)",

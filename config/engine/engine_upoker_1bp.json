@@ -15,5 +15,6 @@
     }
   },
   "subgame_solvers": [
-  ]
+  ],
+  "random_action": true
 }
