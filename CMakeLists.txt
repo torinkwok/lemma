@@ -18,7 +18,7 @@ endif ()
 message("CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
 
 #set c++ flags
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O0")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -O0")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin/Build")
 
 #set executable installation directory, default /usr/local/bin
@@ -62,6 +62,11 @@ include_directories(3rdparty/spdlog/include)
 include_directories(3rdparty/cereal/include)
 option(THREAD_SAFE ON)
 
+find_package(OpenSSL REQUIRED)
+message(STATUS "OpenSSL Libraries Found: ${OPENSSL_FOUND}")
+message(STATUS "OpenSSL Include:         ${OPENSSL_INCLUDE_DIR}")
+message(STATUS "OpenSSL Libraries:       ${OPENSSL_LIBRARIES}")
+
 #These packages need to be installed locally, i.e. with brew / apt-get etc
 if (UNIX AND NOT APPLE)
     set(cpprestsdk_DIR /usr/lib/${CMAKE_LIBRARY_ARCHITECTURE}/cmake/)
@@ -69,11 +74,10 @@ if (UNIX AND NOT APPLE)
 elseif (APPLE)
     #this is not safe, should add a FindTBB.cmake to automatially find and include the right directories
     #do something like this https://github.com/justusc/FindTBB
-    include_directories(/usr/local/Cellar/parallelstl/20200330/stdlib)
-    include_directories(/usr/local/Cellar/parallelstl/20200330/include)
-#    include_directories(/usr/local/Cellar/tbb/2020_U2/include)
-#    link_directories(/usr/local/Cellar/tbb/2020_U2/lib)
-    set(OPENSSL_ROOT_DIR "/usr/local/opt/openssl")
+    # include_directories(/usr/local/Cellar/parallelstl/20200330/stdlib)
+    # include_directories(/usr/local/Cellar/parallelstl/20200330/include)
+    include_directories(${OPENSSL_INCLUDE_DIR})
+    link_libraries(${OPENSSL_LIBRARIES})
 endif ()
 find_package(cpprestsdk REQUIRED)
 find_package(Threads REQUIRED)
@@ -82,12 +86,12 @@ find_package(Threads REQUIRED)
 #
 set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_USE_MULTITHREADED ON)
-find_package(Boost REQUIRED system)
+find_package(Boost REQUIRED system thread date_time regex serialization)
 include_directories(${Boost_INCLUDE_DIR})
 link_directories(${Boost_LIBRARY_DIRS})
-message(STATUS "Boost Include: ${Boost_INCLUDE_DIR}")
-message(STATUS "Boost Library Dir: ${Boost_LIBRARY_DIRS}")
-message(STATUS "Boost Libraries: ${Boost_LIBRARIES}")
+message(STATUS "Boost Include:      ${Boost_INCLUDE_DIR}")
+message(STATUS "Boost Library Dirs: ${Boost_LIBRARY_DIRS}")
+message(STATUS "Boost Libraries:    ${Boost_LIBRARIES}")
 
 message(STATUS "C++ Flags:${CMAKE_CXX_FLAGS}")
 
