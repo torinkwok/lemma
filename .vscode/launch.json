@@ -27,7 +27,7 @@
 				"--public_cards=5",
 				"--clusters=169",
 				"--threads=1",
-				"--loglevel=info",
+				"--log_level=info",
 			],
 			"stopAtEntry": false,
 			"cwd": "${workspaceFolder}",

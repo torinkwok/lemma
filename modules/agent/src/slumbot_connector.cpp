@@ -289,7 +289,7 @@ int SlumbotConnector::parse(const Game *game, MatchState *state) {
   int c_acpc_msg_len = readMatchStatePlus(ref_acpc_msg.c_str(), game, state, bsbgReadBetting);
   char c_acpc_msg[MAX_LINE_LEN]; // TODO(kwok): Rename the `MAX_LINE_LEN` constant.
   printMatchState(game, state, MAX_LINE_LEN, c_acpc_msg);
-  logger::trace("slumbot_connector state parsed: " + std::string(c_acpc_msg));
+  logger::debug("slumbot_connector state parsed: " + std::string(c_acpc_msg));
 
   if (c_acpc_msg_len < 0) {
     return EXIT_FAILURE;

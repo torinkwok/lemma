@@ -102,6 +102,7 @@ class AbstractGame {
 
   //assume to be a fair estimate of the reach_prob of the root_node.
   sHandBelief *root_hand_belief_ = nullptr;
+  // FIXME(kwok): A fixed number of players.
   int player_num_ = 2;
 
   web::json::value raw_;

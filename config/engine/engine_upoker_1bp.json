@@ -14,7 +14,7 @@
       "prune_threshold": 0.08
     }
   },
+  // "random_action": true,
   "subgame_solvers": [
-  ],
-  "random_action": true
+  ]
 }

@@ -410,6 +410,7 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
       }
     }
   }
+  // busy_flag_ = false;
   logger::error("not a single action any history playbook valid. wrong wrong");
   AsynStartDaemonSolving(selected_sgs, cfr_return_code);
   return GET_ACTION_FAILURE;
