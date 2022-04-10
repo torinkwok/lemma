@@ -126,6 +126,7 @@ class ColexBuilder : public BaseBuilder {
                                            "2d3d4d5d6d7d8d9dTdJdQdKdAd"
                                            "2h3h4h5h6h7h8h9hThJhQhKhAh"
                                            "2s3s4s5s6s7s8s9sTsJsQsKsAs";
+    // (n-1)*(n)/2 times, where n=HOLDEM_MAX_CARDS.
     for (uint8_t i = 0; i < HOLDEM_MAX_CARDS - 1; i++) {
       for (uint8_t j = i + 1; j < HOLDEM_MAX_CARDS; j++) {
         std::string cards;

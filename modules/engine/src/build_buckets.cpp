@@ -101,7 +101,10 @@ int main(int argc, char *argv[]) {
                                             end_error,
                                             KMeans::InitRandom);
       break;
-    case BaseBuilder::BuildColex:abs_builder = new ColexBuilder(priv_cards_num, pub_cards_num, cluster_num);
+    case BaseBuilder::BuildColex:
+      abs_builder = new ColexBuilder(priv_cards_num,
+                                     pub_cards_num,
+                                     cluster_num);
       break;
     default:
       logger::critical("Builder Not Implemented");

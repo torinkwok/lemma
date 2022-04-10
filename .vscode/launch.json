@@ -27,22 +27,22 @@
 				"--public_cards=5",
 				"--clusters=169",
 				"--threads=1",
-				"--log_level=info",
+				"--loglevel=trace",
 			],
 			"stopAtEntry": false,
 			"cwd": "${workspaceFolder}",
 			"environment": [],
 			"externalConsole": false,
-			"MIMode": "gdb",
+			"MIMode": "lldb",
 			"setupCommands": [
 				{
-					"description": "Enable pretty-printing for gdb",
+					"description": "Enable pretty-printing for lldb",
 					"text": "-enable-pretty-printing",
 					"ignoreFailures": true
 				},
 				{
 					"description": "Set Disassembly Flavor to Intel",
-					"text": "-gdb-set disassembly-flavor intel",
+					"text": "-lldb-set disassembly-flavor intel",
 					"ignoreFailures": true
 				}
 			]
@@ -53,22 +53,22 @@
 			"request": "launch",
 			"program": "${command:cmake.launchTargetPath}",
 			"args": [
-				"--sgs=config/engine/sgs_r3_upoker-p_bigpot.json",
+				"--sgs=sgs_r3_upoker-p_bigpot.json",
 			],
 			"stopAtEntry": false,
 			"cwd": "${workspaceFolder}",
 			"environment": [],
 			"externalConsole": false,
-			"MIMode": "gdb",
+			"MIMode": "lldb",
 			"setupCommands": [
 				{
-					"description": "Enable pretty-printing for gdb",
+					"description": "Enable pretty-printing for lldb",
 					"text": "-enable-pretty-printing",
 					"ignoreFailures": true
 				},
 				{
 					"description": "Set Disassembly Flavor to Intel",
-					"text": "-gdb-set disassembly-flavor intel",
+					"text": "-lldb-set disassembly-flavor intel",
 					"ignoreFailures": true
 				}
 			]
@@ -79,22 +79,22 @@
 			"request": "launch",
 			"program": "${command:cmake.launchTargetPath}",
 			"args": [
-				"--sgs=config/engine/sgs_r0_upoker-p_bigpot.json",
+				"--sgs=sgs_r0_upoker-p_bigpot.json",
 			],
 			"stopAtEntry": false,
 			"cwd": "${workspaceFolder}",
 			"environment": [],
 			"externalConsole": false,
-			"MIMode": "gdb",
+			"MIMode": "lldb",
 			"setupCommands": [
 				{
-					"description": "Enable pretty-printing for gdb",
+					"description": "Enable pretty-printing for lldb",
 					"text": "-enable-pretty-printing",
 					"ignoreFailures": true
 				},
 				{
 					"description": "Set Disassembly Flavor to Intel",
-					"text": "-gdb-set disassembly-flavor intel",
+					"text": "-lldb-set disassembly-flavor intel",
 					"ignoreFailures": true
 				}
 			]
@@ -115,16 +115,16 @@
 			"cwd": "${workspaceFolder}",
 			"environment": [],
 			"externalConsole": false,
-			"MIMode": "gdb",
+			"MIMode": "lldb",
 			"setupCommands": [
 				{
-					"description": "Enable pretty-printing for gdb",
+					"description": "Enable pretty-printing for lldb",
 					"text": "-enable-pretty-printing",
 					"ignoreFailures": true
 				},
 				{
 					"description": "Set Disassembly Flavor to Intel",
-					"text": "-gdb-set disassembly-flavor intel",
+					"text": "-lldb-set disassembly-flavor intel",
 					"ignoreFailures": true
 				}
 			]
@@ -145,16 +145,16 @@
 			"cwd": "${workspaceFolder}",
 			"environment": [],
 			"externalConsole": false,
-			"MIMode": "gdb",
+			"MIMode": "lldb",
 			"setupCommands": [
 				{
-					"description": "Enable pretty-printing for gdb",
+					"description": "Enable pretty-printing for lldb",
 					"text": "-enable-pretty-printing",
 					"ignoreFailures": true
 				},
 				{
 					"description": "Set Disassembly Flavor to Intel",
-					"text": "-gdb-set disassembly-flavor intel",
+					"text": "-lldb-set disassembly-flavor intel",
 					"ignoreFailures": true
 				}
 			]

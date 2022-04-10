@@ -1,5 +1,6 @@
 {
 	"files.associations": {
+		"*.json": "jsonc",
 		"*.ipp": "cpp",
 		"*.tcc": "cpp",
 		"future": "cpp",
@@ -71,7 +72,9 @@
 		"typeindex": "cpp",
 		"valarray": "cpp",
 		"variant": "cpp",
-		"*.dat": "cpp"
+		"*.dat": "cpp",
+		"filesystem": "cpp",
+		"locale": "cpp"
 	},
 	"python.linting.mypyEnabled": true,
 	"python.linting.enabled": false

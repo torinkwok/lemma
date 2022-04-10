@@ -59,9 +59,7 @@ void train(const cxxopts::ParseResult &result) {
     std::ifstream sgs_file;
     sgs_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
     try {
-      // sgs_file.open(dir / filename, std::ios::in);
-      // sgs_file.open("/home/kwokt/bulldog/config/engine/sgs_r3_upoker-p_bigpot.json", std::ios::in);
-      sgs_file.open("/home/kwokt/bulldog/config/engine/sgs_r0_upoker-p_bigpot.json", std::ios::in);
+      sgs_file.open(dir / filename, std::ios::in);
     } catch (std::system_error& err) {
       std::cerr << err.code() << std::endl;
       std::cerr << err.code().message() << std::endl;
