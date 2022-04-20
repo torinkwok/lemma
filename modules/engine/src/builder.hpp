@@ -102,7 +102,7 @@ class BaseBuilder {
   virtual ~BaseBuilder() = default;;
   virtual void run() = 0;
  protected:
-  std::map<unsigned int, unsigned short> bucket_map_;
+  std::map<unsigned int /* bucket */, unsigned short /* index */> bucket_map_;
   std::string ofilemeta_;
   std::string ifilemeta_;
   std::string ifile_;
@@ -130,6 +130,7 @@ class ColexBuilder : public BaseBuilder {
     for (uint8_t i = 0; i < HOLDEM_MAX_CARDS - 1; i++) {
       for (uint8_t j = i + 1; j < HOLDEM_MAX_CARDS; j++) {
         std::string cards;
+        // Here we're only considering pairs of cards.
         cards += cardstrings.substr(i * 2, 2);
         cards += cardstrings.substr(j * 2, 2);
         ret.insert(ComputeColex(Canonize(CardsetFromString(cards).cards)));
@@ -673,7 +674,7 @@ class HierarchicalBuilder : public BaseBuilder {
   }
   void build_transition_table() {
     Bucket base_abs;
-    base_abs.LoadFromFile(ifile_);
+    base_abs.LoadClassicFromFile(ifile_);
 
     auto hands = pokerstove::createCardSet(num_priv_);
 

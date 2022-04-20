@@ -29,14 +29,15 @@ class Bucket {
  public:
   BUCKET_TYPE type_;
   static void Save(std::map<unsigned int, unsigned short> &entries, const std::string &ofile);
-  void LoadFromFile(const std::string &ofile);
+  void LoadClassicFromFile(const std::string &ofile);
+
   /*
    * bucket type
    */
   void LoadRangeColex(Board_t *board, int round);
   void LoadHierarchical(std::string name);
   void LoadHierarchicalPublic();
-  void LoadHierColex(Board_t *board, uint8_t r);
+  void LoadHierarchicalColex(Board_t *board, uint8_t r);
   void LoadSubgameColex(Board_t *board, int r);
 
   uint32_t Get(unsigned long all_colex, unsigned long board_colex);

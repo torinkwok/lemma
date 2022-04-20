@@ -18,6 +18,8 @@ class AGBuilder {
     delete card_abs_;
     free(game_);
   }
+
+  /// Prepare for the build of an abstract game.
   AGBuilder(const std::string &config_filepath, BucketPool *pool) {
     std::ifstream file(config_filepath);
     web::json::value config;
@@ -55,12 +57,13 @@ class AGBuilder {
    */
   void Build(AbstractGame *ag, State *root_state = nullptr, State *forced_state = nullptr, bool depth_limited = false) {
     if (root_state == nullptr) {
-      //build empty game.
+      // Building an empty game.
       State state;
       initState(game_, 0, &state);
       ag->root_state_ = state;
     } else {
-      ag->root_state_ = *root_state; //please set the root reach prob outside.
+      // Please set the root reach prob outside.
+      ag->root_state_ = *root_state;
     }
     char line[1024];
     printState(game_, &ag->root_state_, 1024, line);
@@ -81,6 +84,7 @@ class AGBuilder {
     ag->Print();
 #endif
   }
+  
  private:
   web::json::value raw_;
   CompositeActionAbs *action_abs_;

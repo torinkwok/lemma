@@ -80,6 +80,7 @@ double ScalarCfrWorker::EvalChoiceNode(int trainee_pos, Node *this_node, HandInf
         }
       }
       child_cfu[a] = WalkTree(trainee_pos, next_node, hand_info);
+      logger::warn(std::to_string(child_cfu[a]));
     }
 
     //only supported weighted response. check outside

@@ -23,12 +23,14 @@ class CardAbs {
       auto name = reader_names[r].as_string();
       if (name == "null") {
         logger::error("bucket abstraction is null for round %d, should not be querying it", r);
+
       } else if (name == "colex") {
         Board_t board{};
         BoardFromState(game, state, &board);
         reader->buckets_[r] = new Bucket();
         reader->buckets_[r]->LoadRangeColex(&board, state->round);
         reader->bucket_count_[r] = reader->buckets_[r]->Size();
+
       } else if (name == "hier_colex") {
         std::string final_name = name + "_" + std::to_string(r);
         if (!bucket_pool_->Has(final_name, r)) {
@@ -37,13 +39,13 @@ class CardAbs {
           Board_t board{};
           BoardFromState(game, state, &board);
           BucketMeta *meta = new BucketMeta;
-          meta->bucket_.LoadHierColex(&board, r);
+          meta->bucket_.LoadHierarchicalColex(&board, r);
           meta->bucket_count_ = meta->bucket_.Size();
           bucket_pool_->InsertBucket(meta, final_name, r);
         }
         auto meta = bucket_pool_->Get(final_name, r);
-        reader->buckets_[r] = new Bucket();
-        reader->buckets_[r] = &meta->bucket_;
+        reader->buckets_[r] = new Bucket(); // FIXME(kwok): Redundancy?
+        reader->buckets_[r] = &meta->bucket_; // FIXME(kwok): Overriding the effect above. Accidentally or consciously?
         reader->bucket_count_[r] = meta->bucket_count_;
 
       } else if (name == "subgame_colex") {
@@ -52,6 +54,7 @@ class CardAbs {
         reader->buckets_[r] = new Bucket();
         reader->buckets_[r]->LoadSubgameColex(&board, r);
         reader->bucket_count_[r] = reader->buckets_[r]->Size();
+
       } else {
         //hierarchical bucket.
         // todo: also preload the colex and hier_colex on flop to file. but it is too small. in file form helps backward compatibility

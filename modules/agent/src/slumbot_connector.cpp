@@ -256,8 +256,7 @@ int SlumbotConnector::parse(const Game *game, MatchState *state) {
   // In Slumbot, `p1_ = 1` is the small blind. In ACPC, `p1_ = 0` is the small
   // blind.
   //
-  // TODO(wolo): Should we move customizations such as below to a
-  // connector file?
+  // TODO(wolo): Should we move customizations such as below to a connector file?
   state->viewingPlayer = slumbot_match_state_->p1_ == 1 ? 0 : 1;
   std::string holes_str;
   if (state->viewingPlayer == 0) {

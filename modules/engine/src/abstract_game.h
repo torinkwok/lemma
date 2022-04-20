@@ -94,24 +94,32 @@ class AbstractGame {
   }
 
   std::string name_ = "default_ag";
+
+  // -----------------------------------------------------------------
+  // NOTE(kwok): Instance variables constructed within or set up by
+  // `AGBuilder::Build`.
   Game game_{};
   BucketReader bucket_reader_;
   State root_state_{};
-  sRNBAKernel *kernel_ = nullptr;
   Node *root_node_ = nullptr;
-
-  //assume to be a fair estimate of the reach_prob of the root_node.
-  sHandBelief *root_hand_belief_ = nullptr;
-  // FIXME(kwok): A fixed number of players.
-  int player_num_ = 2;
-
   web::json::value raw_;
   bool depth_limited_ = false;
+
+  // -----------------------------------------------------------------
+  // NOTE(kwok): Constructed within or set up by `AbstractGame` itself.
+  sRNBAKernel *kernel_ = nullptr;
+  // Assume to be a fair estimate of the reach_prob of the root_node.
+  sHandBelief *root_hand_belief_ = nullptr;
+  std::map<uint8_t, std::multimap<uint8_t, Node *>> node_map_;
+
+  // FIXME(kwok): The number of players is not supposed to be fixed to 2.
+  int player_num_ = 2;
 
   /*
    * query game state methods
    */
   static int GetActivePlayerNum() {
+    // FIXME(kwok): The number of active players is not supposed to be hard-coded.
     return 2;
   };
 
@@ -137,8 +145,6 @@ class AbstractGame {
   void PurifyLowProbRange() const;
 
   [[nodiscard]] int GetMaxRound() const;
-
-  std::map<uint8_t, std::multimap<uint8_t, Node *>> node_map_;
 };
 
 #endif //BULLDOG_MODULES_ENGINE_SRC_ABSTRACT_GAME_H_

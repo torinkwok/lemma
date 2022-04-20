@@ -50,7 +50,7 @@ class BucketPool {
       meta->post_flop_bucket_count_ = std::atoi(parsed_str[2].c_str());
     } else {
       std::filesystem::path bucket_file(name + ".bin");
-      meta->bucket_.LoadFromFile(dir / bucket_file);
+      meta->bucket_.LoadClassicFromFile(dir / bucket_file);
       logger::debug("loaded bucket from file %s", dir / bucket_file);
       //get the bucket number // may need to extract this.
       std::vector<std::string> parsed_str;

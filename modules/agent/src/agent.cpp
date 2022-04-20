@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
     logger::init_logger(log_level);
   }
 
-  //Initiate Game
+  // ACPC-flavor game initialization.
   Game *game = nullptr;
   std::filesystem::path dir(BULLDOG_DIR_CFG_GAME);
   std::filesystem::path filename(result["game"].as<std::string>());
@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
     logger::critical(" [AGENT] : Failed to read content of game file %s", (dir / filename));
   }
 
-  //Initiate Engine
+  // Engine initialization.
   auto &e_params = result["engine_params"].as<std::vector<std::string>>();
   const char *solver_filename = e_params[0].c_str();
   auto *engine = new Engine(solver_filename, game);
@@ -78,17 +78,20 @@ int main(int argc, char *argv[]) {
   table_context.session_game = *game;
   table_context.table_name_ = "slumbot_table";
   engine->SetTableContext(table_context);
+
   int sum_session_total = 0;
   int total_hands_played = 0;
 
-  //make stack aware. need to do it after the engine is inited. or it will throw blueprint game not compatible error.
+  // Make stack aware. Need to do it after the engine is inited.
+  // Or it will throw blueprint game not compatible error.
+  // FIXME(kwok): What the hell is this?
 //  game->use_state_stack = 1;
 
-  //Run Sessions
+  // Run Sessions.
   for (int i = 1; i <= result["sessions"].as<int>(); i++) {
     logger::info(" [AGENT] : RUNNING SESSION %d", i);
 
-    //Initiate Connector
+    // Connector initialization.
     BaseConnector *connector = nullptr;
     switch (result["connector"].as<int>()) {
       case acpc:connector = new AcpcConnector(result["connector_params"].as<std::vector<std::string>>());
@@ -115,17 +118,16 @@ int main(int argc, char *argv[]) {
      * */
     while (connector->get()) {
       /* Read the incoming match state */
-
       MatchState match_state;
-      //todo. handle -1
+      // TODO: Handle `-1` properly.
       if (connector->parse(game, &match_state) == EXIT_FAILURE) {
         logger::error(" [AGENT] : failed to parse into game state");
         break;
       };
 
-      /* Ignore game over message */
+      /* Ignore game-over message */
       if (stateFinished(&match_state.state)) {
-        //todo: 2p hack
+        // TODO: 2p hack.
         std::string players[2];
         players[match_state.viewingPlayer] = "Bulldog";
         players[match_state.viewingPlayer ? 0 : 1] = "Slumbot";
@@ -170,7 +172,7 @@ int main(int argc, char *argv[]) {
       Action action;
       //slumbot use normalized session.
       engine->GetActionBySession(match_state, action, 12000);
-      logger::debug(" [AGENT] : action returned from engine: %c%d", actionChars[action.type], action.size);
+//      logger::debug(" [AGENT] : action returned from engine: %c%d", actionChars[action.type], action.size);
 
 #if 0
       //detect if the action should be fixed

@@ -17,7 +17,7 @@ extern "C" {
 #include <bulldog/game.h>
 }
 
-void Bucket::LoadFromFile(const std::string &ofile) {
+void Bucket::LoadClassicFromFile(const std::string &ofile) {
   type_ = CLASSIC_BUCKET;
 
   std::filesystem::path full_path(ofile);
@@ -63,6 +63,175 @@ void Bucket::LoadRangeColex(Board_t *board, int round) {
   }
   logger::trace("colex bucket at round = %d || unique colex = %d || bucket count = %d",
                 round, colex_set.size(), bucket_index);
+}
+
+void Bucket::LoadHierarchicalPublic() {
+  //find public bucket for flop
+  std::filesystem::path dir(BULLDOG_DIR_DATA_ABS);
+  std::filesystem::path pub_file("hierarchical_pubcolex_60_2_3.txt");
+  std::ifstream pub_is(dir / pub_file, std::ios::binary);
+  if (pub_is.is_open()) {
+    std::string line;
+    std::getline(pub_is, line);
+    while (std::getline(pub_is, line)) {
+      int board_idx, bucket;
+      std::sscanf(line.c_str(), "%d,%d", &board_idx, &bucket);
+      pub_colex_bucket_[board_idx] = bucket;
+      assert(bucket < 60);
+    }
+  } else {
+    logger::critical("unable to open %s", dir / pub_file);
+  };
+  pub_is.close();
+}
+
+void Bucket::LoadHierarchical(std::string name) {
+  //name: hierarchical_60_500_1
+  std::vector<std::string> parsed_str;
+  split_string(std::move(name), "_", parsed_str);
+  unsigned int round = std::atoi(parsed_str[3].c_str());
+  unsigned int pub_bucket_count = std::atoi(parsed_str[1].c_str());
+  unsigned int priv_bucket_count = std::atoi(parsed_str[2].c_str());
+
+  type_ = HIERARCHICAL_BUCKET;
+  //load hierarchical only works after flop
+  assert(round > 0);
+  std::filesystem::path dir(BULLDOG_DIR_DATA_ABS);
+
+  LoadHierarchicalPublic();
+
+#if DEV > 1
+  Bucket_t total_bucket_count = priv_bucket_count * pub_bucket_count;
+  std::vector<bool> bucket_tally;
+  bucket_tally.reserve(total_bucket_count);
+  for (Bucket_t i = 0; i < total_bucket_count; i++)
+    bucket_tally.emplace_back(false);
+#endif
+
+  for (unsigned int pub_bucket = 0; pub_bucket < pub_bucket_count; pub_bucket++) {
+    //regular pub_bucket load
+    // FIXME(kwok): Does the hard-coded number 2 denote the number of players?
+    std::filesystem::path
+        priv_file("buckets_" + parsed_str[1] + "_" + parsed_str[2] + "_2_" + std::to_string(round + 2) + "_" +
+                  std::to_string(pub_bucket) + ".bin");
+    std::ifstream priv_is(dir / priv_file, std::ios::binary);
+    if (priv_is.is_open()) {
+      cereal::BinaryInputArchive load(priv_is);
+      load(cluster_map_);
+      logger::debug("loaded pub_bucket file %s of size %d", priv_file, cluster_map_.size());
+    } else {
+      logger::critical("unable to open %s", dir / priv_file);
+    }
+    priv_is.close();
+    // post process to assign pub_bucket into range of 0-29999
+    for (auto const&[key, val] : cluster_map_) {
+      assert(val < priv_bucket_count);
+      // NOTE(kwok): Kind of like indexing a tensor.
+      master_map_[pub_bucket][key] = (pub_bucket * priv_bucket_count) + val; //it > 2^16
+#if DEV > 1
+      bucket_tally[master_map_[pub_bucket][key]] = true;
+#endif
+    }
+    cluster_map_.clear();
+  }
+#if DEV > 1
+  unsigned int empty_bucket_count = 0;
+  for (unsigned int i = 0; i < total_bucket_count; i++) {
+    if (!bucket_tally[i]) {
+      empty_bucket_count++;
+    }
+  }
+  logger::debug("%d/%d hierarchical buckets in round %d are empty!", empty_bucket_count, total_bucket_count, round);
+#endif
+}
+
+unsigned int Bucket::GetPublicBucket(unsigned int pub_colex) {
+  return pub_colex_bucket_[pub_colex];
+}
+
+/*
+ * it should be board + 2, e.g. 3+2 for flop
+ */
+void Bucket::LoadHierarchicalColex(Board_t *board, uint8_t r) {
+  if (r > HOLDEM_ROUND_RIVER)
+    logger::critical("round %d does not exist in holdem", r);
+  if (r == HOLDEM_ROUND_PREFLOP)
+    logger::critical("does not support board hand colex for preflop", r);
+  type_ = HIERARCHICAL_COLEX;
+  int board_count = r == 1 ? 3 :
+                    r == 2 ? 4 : 5;
+  auto iso_board_combo = pokerstove::createCardSet(board_count, pokerstove::Card::SUIT_CANONICAL);
+  auto raw_board_combo = pokerstove::createCardSet(board_count);
+  auto raw_hand_combo = pokerstove::createCardSet(2);
+
+  int iso_board_cursor = 0;
+  int bucket_idx_cursor = 0;
+
+  for (const auto &iso_board : iso_board_combo) {
+    auto iso_board_colex = iso_board.colex();
+    for (const auto &raw_board : raw_board_combo) {
+      if (raw_board.canonize().colex() != iso_board_colex) {
+        continue;
+      }
+      //the raw board belongs to the colex board
+      for (const auto &raw_hand : raw_hand_combo) {
+        // NOTE(kwok): A hand that is not possible given the board.
+        if (raw_hand.intersects(raw_board)) {
+          continue;
+        }
+        // now the hands are valid.
+        auto hand_board = pokerstove::CardSet(raw_hand.str() + raw_board.str());
+        Colex all_colex = hand_board.canonize().colex();
+        // skip duplicated entires
+        if (master_map_[iso_board_colex].find(all_colex) == master_map_[iso_board_colex].end()) {
+          master_map_[iso_board_colex][all_colex] = bucket_idx_cursor;
+          bucket_idx_cursor++;
+        }
+      }
+    }
+    iso_board_cursor++;
+  }
+//  logger::debug("total [%d board colex] [%d hier colex] buckets", iso_board_cursor, bucket_idx_cursor);
+}
+
+void Bucket::LoadSubgameColex(Board_t *board, int round) {
+  if (round != HOLDEM_ROUND_RIVER) {
+    logger::critical("subgame colex only support river. "
+                     "other rounds would be too big. "
+                     "use other abstraction algorithms instead.");
+  }
+  type_ = HIERARCHICAL_COLEX;
+//  auto cmd_begin = std::chrono::steady_clock::now();
+  int bucket_idx_cursor = 0;
+  for (Card_t c = 0; c < HOLDEM_MAX_CARDS; c++) {
+    if (board->CardCrash(c)) continue;
+    //use a local board
+    Board_t local_board = *board;
+    local_board.cards[4] = c;
+
+    auto board_set = emptyCardset();
+    for (unsigned char card : local_board.cards) {
+      AddCardTToCardset(&board_set, card);
+    }
+    auto board_colex = ComputeColex(Canonize(board_set.cards));
+    //for each hand, compute the colex value.
+    for (Card_t low = 0; low < HOLDEM_MAX_CARDS - 1; low++) {
+      for (Card_t high = low + 1; high < HOLDEM_MAX_CARDS; high++) {
+        auto hand = Hand_t{high, low};
+        if (local_board.HandCrash(hand)) continue;
+        auto full_colex = ComputeColexFromAllCards(high, low, local_board, round);
+        if (master_map_[board_colex].find(full_colex) == master_map_[board_colex].end()) {
+          //insert, and increment the value.
+          master_map_[board_colex][full_colex] = bucket_idx_cursor;
+          bucket_idx_cursor++;
+        }
+      }
+    }
+  }
+//  auto cmd_time =
+//      std::chrono::duration_cast<std::chrono::milliseconds>(
+//          std::chrono::steady_clock::now() - cmd_begin).count();
+//  logger::debug("generate subgame colex takes %d ms", cmd_time);
 }
 
 void Bucket::Save(std::map<unsigned int, unsigned short> &entries, const std::string &ofile) {
@@ -126,7 +295,8 @@ uint32_t Bucket::Get(unsigned long all_colex, unsigned long board_colex) {
 
 
 uint32_t Bucket::Get(Cardset *all_cards, Cardset *board_cards) {
-  return Get(ComputeColex(Canonize(all_cards->cards)), ComputeColex(Canonize(board_cards->cards)));
+  return Get(ComputeColex(Canonize(all_cards->cards)),
+             ComputeColex(Canonize(board_cards->cards)));
 }
 
 uint32_t Bucket::Size() {
@@ -145,165 +315,4 @@ uint32_t Bucket::Size() {
 
 std::unordered_map<unsigned int, uint32_t> Bucket::ExtractMap() {
   return master_map_[0];
-}
-
-void Bucket::LoadHierarchicalPublic() {
-  //find public bucket for flop
-  std::filesystem::path dir(BULLDOG_DIR_DATA_ABS);
-  std::filesystem::path pub_file("hierarchical_pubcolex_60_2_3.txt");
-  std::ifstream pub_is(dir / pub_file, std::ios::binary);
-  if (pub_is.is_open()) {
-    std::string line;
-    std::getline(pub_is, line);
-    while (std::getline(pub_is, line)) {
-      int board_idx, bucket;
-      std::sscanf(line.c_str(), "%d,%d", &board_idx, &bucket);
-      pub_colex_bucket_[board_idx] = bucket;
-      assert(bucket < 60);
-    }
-  } else {
-    logger::critical("unable to open %s", dir / pub_file);
-  };
-  pub_is.close();
-}
-
-void Bucket::LoadHierarchical(std::string name) {
-  //name: hierarchical_60_500_1
-  std::vector<std::string> parsed_str;
-  split_string(std::move(name), "_", parsed_str);
-  unsigned int round = std::atoi(parsed_str[3].c_str());
-  unsigned int pub_bucket_count = std::atoi(parsed_str[1].c_str());
-  unsigned int priv_bucket_count = std::atoi(parsed_str[2].c_str());
-
-  type_ = HIERARCHICAL_BUCKET;
-  //load hierarchical only works after flop
-  assert(round > 0);
-  std::filesystem::path dir(BULLDOG_DIR_DATA_ABS);
-
-  LoadHierarchicalPublic();
-
-#if DEV > 1
-  Bucket_t total_bucket_count = priv_bucket_count * pub_bucket_count;
-  std::vector<bool> bucket_tally;
-  bucket_tally.reserve(total_bucket_count);
-  for (Bucket_t i = 0; i < total_bucket_count; i++)
-    bucket_tally.emplace_back(false);
-#endif
-
-  for (unsigned int bucket = 0; bucket < pub_bucket_count; bucket++) {
-    //regular bucket load
-    std::filesystem::path
-        priv_file("buckets_" + parsed_str[1] + "_" + parsed_str[2] + "_2_" + std::to_string(round + 2) + "_" +
-        std::to_string(bucket) + ".bin");
-    std::ifstream priv_is(dir / priv_file, std::ios::binary);
-    if (priv_is.is_open()) {
-      cereal::BinaryInputArchive load(priv_is);
-      load(cluster_map_);
-      logger::debug("loaded bucket file %s of size %d", priv_file, cluster_map_.size());
-    } else {
-      logger::critical("unable to open %s", dir / priv_file);
-    }
-    priv_is.close();
-    //post process to assign bucket into range of 0-29999
-    for (auto const&[key, val] : cluster_map_) {
-      assert(val < priv_bucket_count);
-      master_map_[bucket][key] = (bucket * priv_bucket_count) + val; //it > 2^16
-#if DEV > 1
-      bucket_tally[master_map_[bucket][key]] = true;
-#endif
-    }
-    cluster_map_.clear();
-  }
-#if DEV > 1
-  unsigned int empty_bucket_count = 0;
-  for (unsigned int i = 0; i < total_bucket_count; i++) {
-    if (!bucket_tally[i]) {
-      empty_bucket_count++;
-    }
-  }
-  logger::debug("%d/%d hierarchical buckets in round %d are empty!", empty_bucket_count, total_bucket_count, round);
-#endif
-}
-
-unsigned int Bucket::GetPublicBucket(unsigned int pub_colex) {
-  return pub_colex_bucket_[pub_colex];
-}
-
-/*
- * it should be board + 2, e.g. 3+2 for flop
- */
-void Bucket::LoadHierColex(Board_t *board, uint8_t r) {
-  if (r > HOLDEM_ROUND_RIVER)
-    logger::critical("round %d does not exist in holdem", r);
-  if (r == HOLDEM_ROUND_PREFLOP)
-    logger::critical("does not support board hand colex for preflop", r);
-  type_ = HIERARCHICAL_COLEX;
-  int board_count = r == 1 ? 3 :
-                    r == 2 ? 4 : 5;
-  auto iso_board_combo = pokerstove::createCardSet(board_count, pokerstove::Card::SUIT_CANONICAL);
-  auto raw_hand_combo = pokerstove::createCardSet(2);
-  auto raw_board_combo = pokerstove::createCardSet(board_count);
-  int iso_board_cursor = 0;
-  int bucket_idx_cursor = 0;
-  for (const auto &iso_board : iso_board_combo) {
-    auto eval_board_colex = iso_board.colex();
-    for (const auto &raw_board : raw_board_combo) {
-      if (raw_board.canonize().colex() != eval_board_colex)
-        continue;
-      //the raw board belongs to the colex board
-      for (const auto &raw_hand : raw_hand_combo) {
-        if (raw_hand.intersects(raw_board))
-          continue;
-        //now the hands are valid.
-        auto hand_board = pokerstove::CardSet(raw_hand.str() + raw_board.str());
-        Colex all_colex = hand_board.canonize().colex();
-        //skip duplicated entires
-        if (master_map_[eval_board_colex].find(all_colex) == master_map_[eval_board_colex].end()) {
-          master_map_[eval_board_colex][all_colex] = bucket_idx_cursor;
-          bucket_idx_cursor++;
-        }
-      }
-    }
-    iso_board_cursor++;
-  }
-//  logger::debug("total [%d board colex] [%d hier colex] buckets", iso_board_cursor, bucket_idx_cursor);
-}
-
-void Bucket::LoadSubgameColex(Board_t *board, int round) {
-  if (round != HOLDEM_ROUND_RIVER)
-    logger::critical("subgame colex only support river. other rounds would be too big");
-
-  type_ = HIERARCHICAL_COLEX;
-
-//  auto cmd_begin = std::chrono::steady_clock::now();
-  int bucket_idx_cursor = 0;
-  for (Card_t c = 0; c < HOLDEM_MAX_CARDS; c++) {
-    if (board->CardCrash(c)) continue;
-    //use a local board
-    Board_t local_board = *board;
-    local_board.cards[4] = c;
-
-    auto board_set = emptyCardset();
-    for (unsigned char card : local_board.cards) {
-      AddCardTToCardset(&board_set, card);
-    }
-    auto board_colex = ComputeColex(Canonize(board_set.cards));
-    //for each hand, compute the colex value.
-    for (Card_t low = 0; low < HOLDEM_MAX_CARDS - 1; low++) {
-      for (Card_t high = low + 1; high < HOLDEM_MAX_CARDS; high++) {
-        auto hand = Hand_t{high, low};
-        if (local_board.HandCrash(hand)) continue;
-        auto full_colex = ComputeColexFromAllCards(high, low, local_board, round);
-        if (master_map_[board_colex].find(full_colex) == master_map_[board_colex].end()) {
-          //insert, and increment the value.
-          master_map_[board_colex][full_colex] = bucket_idx_cursor;
-          bucket_idx_cursor++;
-        }
-      }
-    }
-  }
-//  auto cmd_time =
-//      std::chrono::duration_cast<std::chrono::milliseconds>(
-//          std::chrono::steady_clock::now() - cmd_begin).count();
-//  logger::debug("generate subgame colex takes %d ms", cmd_time);
 }

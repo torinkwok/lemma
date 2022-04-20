@@ -19,10 +19,10 @@ extern "C" {
 TEST_CASE("hier colex on flop determinisitc", "[abstraction]") {
   Board_t board{};
   Bucket bucket;
-  bucket.LoadHierColex(&board, 1);
+  bucket.LoadHierarchicalColex(&board, 1);
   REQUIRE(bucket.Size() == 1258712);
   Bucket bucket2;
-  bucket2.LoadHierColex(&board, 1);
+  bucket2.LoadHierarchicalColex(&board, 1);
   REQUIRE(bucket.Size() == 1258712);
 
   for (auto [k, v] : bucket.master_map_){
@@ -119,7 +119,7 @@ TEST_CASE("validate bucket files", "[abstraction]") {
 
       //this if for only classic kmeans buckets, not hierarchical
       if (parsed_str.size() == 4) {
-        bucket.LoadFromFile(dir / file);
+        bucket.LoadClassicFromFile(dir / file);
 
         SECTION("bucket keys") {
           int card_count = std::stoi(parsed_str[2]) + std::stoi(parsed_str[3]);

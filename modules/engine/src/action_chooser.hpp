@@ -14,9 +14,8 @@ extern "C" {
 
 struct ACParam {
   double prune_threshold_ = 0.0; //
-  double pot_allin_threshold_ =
-      0.4; //min allin requirement for all, r4000c/r20000.  it is == 2 pot raise, acceptable
-  double fold_threshold_ = 1.0; //max fold requirement to fold
+  double pot_allin_threshold_ = 0.4; // min allin requirement for all, r4000c/r20000.  it is == 2 pot raise, acceptable
+  double fold_threshold_ = 1.0; // max fold requirement to fold
   bool purification_ = false;
 };
 

@@ -118,7 +118,8 @@ bool Strategy::EstimateNewAgReach(AbstractGame *new_ag, MatchState *new_match_st
     }
     //start
     match.Print("try matched node in new ag reach estimate: ");
-    std::array<sHandBelief, 2> local_base_reach;
+    // FIXME(kwok): The number of players is not supposed to be fixed to 2.
+    std::array<sHandBelief, 2 /* player no. */> local_base_reach;
     local_base_reach[0].CopyValue(&new_base_reach[0]);
     local_base_reach[1].CopyValue(&new_base_reach[1]);
     auto estimate_return_code = EstimateReachProbAtNode(new_match_state,
@@ -550,6 +551,7 @@ int Strategy::ComputeStrategy(Round_t r,
         return GetPolicy<ZIPAVG>(rnb_avg, a_max, zipavg_ + rnb0);
       } else {
         char v[a_max];
+        // rnb0: 435
         file_ptr->seekg(rnb0);
         file_ptr->read(v, a_max);
         ZIPAVG zip_v[a_max];
@@ -873,8 +875,9 @@ bool Strategy::IsStrategyInitializedForMyHand(Node *matched_node,
 }
 
 std::vector<NodeMatchCondition> Strategy::FindSortedMatchedNodes(State &state) const {
-  if (ag_->node_map_.empty()) ag_->IndexBettingTree();
-
+  if (ag_->node_map_.empty()) {
+    ag_->IndexBettingTree();
+  }
   auto current_player = currentPlayer(&ag_->game_, &state);
   auto real_betting = GetBettingStr(&ag_->game_, state);
   auto all_nodes = ag_->node_map_[state.round].equal_range(current_player);

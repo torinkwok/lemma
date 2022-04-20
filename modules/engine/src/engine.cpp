@@ -6,7 +6,7 @@
 #include <cpprest/json.h>
 
 int Engine::SetTableContext(const TableContext &table_context) {
-  //check game type.
+  // Check game compatibility.
   auto compatible_flag = CompatibleGame(&table_context.session_game, normalized_game_);
   if (compatible_flag == 0) {
     logger::error("engine game not compatible with session");
@@ -19,6 +19,7 @@ int Engine::SetTableContext(const TableContext &table_context) {
 Engine::Engine(const char *engine_conf_file, Game *game) {
   normalized_game_ = game;
   owning_pool_ = true;
+
   std::filesystem::path dir(BULLDOG_DIR_CFG_ENG);
   std::filesystem::path filename(engine_conf_file);
   std::ifstream file(dir / filename);
@@ -32,7 +33,7 @@ Engine::Engine(const char *engine_conf_file, Game *game) {
   } else {
     logger::error("    [ENGINE %s] : unable to open file %s", engine_name_, dir / filename);
   }
-  //solver meta
+  // Solver meta
   auto engine_conf_str = std::string(engine_conf_file);
   engine_name_ = engine_conf_str.substr(0, engine_conf_str.length() - 5); //remove the .json
   bucket_pool_ = new BucketPool();
@@ -122,7 +123,7 @@ Engine::Engine(const char *engine_conf_file, Game *game) {
 }
 
 Engine::Engine(const char *engine_conf_file, Game *game, BucketPool *bucket_pool, StrategyPool *blueprint_pool) {
-  //fixed blueprint pool
+  // Fixed blueprint pool
   normalized_game_ = game;
   bucket_pool_ = bucket_pool;
   blueprint_pool_ = blueprint_pool;
@@ -696,7 +697,8 @@ void Engine::AsynStopCFRSolving() {
 }
 
 bool Engine::EngineStateStaleCheck(MatchState *new_match_state) {
-  //check game state continuity.
+  // check game state continuity.
+  // FIXME(kwok): Is the logic here proper?
   if (!playbook_stack_.empty() && InSameMatch(normalized_game_, &last_matchstate_, new_match_state) > 0) {
     logger::warn("    [ENGINE %s] : match state not continuted. force set new hand", engine_name_);
     return false;

@@ -86,7 +86,7 @@ bool IsStateCardsValid(Game *game, State *state) {
       }
   }
   
-  //then check all the board + hands cards, if they has the same one
+  //then check all the board + hands cards, if they have the same one
   auto sum_bc = sumBoardCards(game, state->round);
   for (auto i = 0; i < sum_bc; i++) {
       if (state->boardCards[i] != UNDEFINED_CARD) {

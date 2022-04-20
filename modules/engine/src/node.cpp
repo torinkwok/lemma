@@ -97,6 +97,7 @@ int Node::GetActingPlayer() {
   if (IsTerminal())
     logger::critical("terminal node has no acting player.");
   auto player = currentPlayer(game_, &state_);
+  // FIXME(kwok): The number of players is not supposed to be fixed to 2.
   if (!(player == 0 || player == 1))
     logger::critical("get player error %d", player);
   return currentPlayer(game_, &state_);
