@@ -481,7 +481,9 @@ void Strategy::AllocateMemory(STRATEGY_TYPE type, CFR_MODE cfr_mode) {
       logger::critical("unsupported strategy type %s", StrategyToNameMap[type]);
   }
   double mem_size = (double) size * bytesize / (1024.0 * 1024.0);
-  logger::debug("allocated heap memory for %s || length = %d || size = %f (mb)", StrategyToNameMap[type], size,
+  logger::debug("allocated heap memory for %s || length = %d || size = %f (mb)",
+                StrategyToNameMap[type],
+                size,
                 mem_size);
 }
 

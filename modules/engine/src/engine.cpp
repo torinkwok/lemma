@@ -23,8 +23,8 @@ Engine::Engine(const char *engine_conf_file, Game *game) {
   std::filesystem::path dir(BULLDOG_DIR_CFG_ENG);
   std::filesystem::path filename(engine_conf_file);
   std::ifstream file(dir / filename);
-
   web::json::value data;
+
   if (file.good()) {
     std::stringstream buffer;
     buffer << file.rdbuf();
@@ -33,20 +33,21 @@ Engine::Engine(const char *engine_conf_file, Game *game) {
   } else {
     logger::error("    [ENGINE %s] : unable to open file %s", engine_name_, dir / filename);
   }
+
   // Solver meta.
   auto engine_conf_str = std::string(engine_conf_file);
   engine_name_ = engine_conf_str.substr(0, engine_conf_str.length() - 5); //remove the .json
   bucket_pool_ = new BucketPool();
+
   if (data.has_field("random_action")) {
     random_action_ = true;
     return;
   }
-  /*
-   * Configure offline blueprint.
-   */
+
+  // Offline blueprints installation.
   if (data.has_field("blueprint")) {
     blueprint_pool_ = new StrategyPool();
-    auto blueprint_conf = data.at("blueprint");
+    web::json::value blueprint_conf = data.at("blueprint");
     if (!blueprint_conf.has_field("strategy_prefix")) {
       logger::critical("    [ENGINE %s] : please fill in the must-have options for configuration || blueprint prefix",
                        engine_name_);
@@ -55,22 +56,25 @@ Engine::Engine(const char *engine_conf_file, Game *game) {
     if (blueprint_conf.has_field("disk")) {
       disk_look_up = blueprint_conf.at("disk").as_bool();
     }
-    //iteratively load all the blueprint
-    auto pool = blueprint_conf.at("strategy_prefix").as_array();
-    for (auto &i : pool) {
-      const std::string &name = i.as_string();
-      auto *blueprint_i = new Strategy();
-      logger::debug("    [ENGINE %s] : loading blueprint %s [disk %d]", engine_name_, name, disk_look_up);
-      LoadAG(blueprint_i, name, bucket_pool_, nullptr);
-      LoadStrategy(blueprint_i, STRATEGY_ZIPAVG, name, disk_look_up);
-      //the blueprint is never stack aware. dont use compatible
-      if (!Equal(normalized_game_, &blueprint_i->ag_->game_))
-        logger::critical("    [ENGINE %s] : engine game != blueprint game", engine_name_);
-      blueprint_pool_->AddStrategy(blueprint_i);
-    }
-    /*
-    * configure action
-    */
+    // Loading all the blueprints iteratively.
+    web::json::array pool = blueprint_conf.at("strategy_prefix").as_array();
+    for (web::json::value &obj : pool) {
+      const std::string &name = obj.as_string();
+      auto *blueprint = new Strategy();
+      logger::debug("    [ENGINE %s] : loading blueprint %s [disk %d]",
+                    engine_name_,
+                    name,
+                    disk_look_up);
+      LoadAG(blueprint, name, bucket_pool_, nullptr);
+      LoadStrategy(blueprint, STRATEGY_ZIPAVG, name, disk_look_up);
+      // The blueprint is never stack aware. Don't use compatible.
+      if (!Equal(normalized_game_, &blueprint->ag_->game_)) {
+          logger::critical("    [ENGINE %s] : engine game != blueprint game", engine_name_);
+      }
+      blueprint_pool_->AddStrategy(blueprint);
+    } // Offline blueprints installation.
+
+    // Action choosers configuration.
     if (blueprint_conf.has_field("action_chooser")) {
       auto action_conf = blueprint_conf.at("action_chooser");
       default_action_chooser_ = new ActionChooser();
@@ -78,9 +82,7 @@ Engine::Engine(const char *engine_conf_file, Game *game) {
     }
   }
 
-  /*
-   * configure online playing.
-   */
+  // Online playing configuration.
   if (data.has_field("subgame_solvers")) {
     auto solvers = data.at("subgame_solvers").as_array();
     sgs_size_ = solvers.size();
@@ -95,10 +97,8 @@ Engine::Engine(const char *engine_conf_file, Game *game) {
     }
   }
 
-  /*
-   * all games must turn on to use the state stack, for engine.
-   * and they should be exactly the same game. in fact
-   */
+  // All games must turn on to use the state stack, for engine.
+  // and they should be exactly the same game. in fact
   for (int i = 0; i < sgs_size_; i++) {
       if (normalized_game_->use_state_stack == 1) {
           //for slumbot/acpc, the game_.use_state_stack == 0;
@@ -108,17 +108,20 @@ Engine::Engine(const char *engine_conf_file, Game *game) {
 
   for (int i = 0; i < sgs_size_; i++) {
     if (normalized_game_->use_state_stack == 1) {
-      if (CompatibleGame(normalized_game_, subgame_solvers_[i].ag_builder_->game_) == 0)
-        logger::critical("    [ENGINE %s] : engine game def != sgs game betting type, in game type", engine_name_);
+      if (CompatibleGame(normalized_game_, subgame_solvers_[i].ag_builder_->game_) == 0) {
+          logger::critical("    [ENGINE %s] : engine game def != sgs game betting type, in game type", engine_name_);
+      }
     } else {
-      if (!Equal(normalized_game_, subgame_solvers_[i].ag_builder_->game_))
-        logger::critical("    [ENGINE %s]  : engine game def != sgs game def.", engine_name_);
+      if (!Equal(normalized_game_, subgame_solvers_[i].ag_builder_->game_)) {
+          logger::critical("    [ENGINE %s]  : engine game def != sgs game def.", engine_name_);
+      }
     }
   }
 
-  //daemon depends on subgame solving
-  if (data.has_field("daemon") && sgs_size_ > 0)
-    is_daemon_engine = data.at("daemon").as_bool();
+  // Daemon depends on subgame solving
+  if (data.has_field("daemon") && sgs_size_ > 0) {
+      is_daemon_engine = data.at("daemon").as_bool();
+  }
 
   logger::debug("    [ENGINE %s] : solving engine properly configured. ready to go.", engine_name_);
   RefreshEngineState();

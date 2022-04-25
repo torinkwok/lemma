@@ -282,7 +282,7 @@ int SlumbotConnector::parse(const Game *game, MatchState *state) {
   logger::debug("slumbot_connector state in ref_acpc_msg: " + ref_acpc_msg);
 
   // Use readMatchStatePlus you'd like to supply custom ReadBettingFunction.
-  // 
+  //
   // NOTE(kwok): The `ReadBettingFunction` previously passed in is wrongly
   // `bsbrReadBetting`, which distorted the parsed match state.
   int c_acpc_msg_len = readMatchStatePlus(ref_acpc_msg.c_str(), game, state, bsbgReadBetting);
