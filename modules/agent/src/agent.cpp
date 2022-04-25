@@ -17,18 +17,18 @@ int main(int argc, char *argv[]) {
   // ./agent engine=acpc params=localhost,51000
   cxxopts::Options options("Game Agent", "Manages connection with Poker Sites and executes Engine actions");
   options.add_options()
-      ("g,game", "game file", cxxopts::value<std::string>(), "xxx.game")
-      ("q,engine_params",
-       "order specifc comma seperated list of parameters for engine",
-       cxxopts::value<std::vector<std::string>>())
-      ("c,connector", "connector for the platform we're connecting to", cxxopts::value<int>(), "0:acpc 1:slumbot")
-      ("s,sessions", "number of outer sessions to run", cxxopts::value<int>()->default_value("1"))
-      ("p,connector_params",
-       " order specific comma seperated list of parameters for connector",
-       cxxopts::value<std::vector<std::string>>())
-      ("l,log_level", "log level", cxxopts::value<std::string>()->default_value("info"), "[debug, info, warn, err]")
-      ("o,log_output", "console/file?", cxxopts::value<std::string>(), "default logs output to console")
-      ("h,help", "print usage information");
+          ("g,game", "game file", cxxopts::value<std::string>(), "xxx.game")
+          ("q,engine_params",
+           "order specifc comma seperated list of parameters for engine",
+           cxxopts::value<std::vector<std::string>>())
+          ("c,connector", "connector for the platform we're connecting to", cxxopts::value<int>(), "0:acpc 1:slumbot")
+          ("s,sessions", "number of outer sessions to run", cxxopts::value<int>()->default_value("1"))
+          ("p,connector_params",
+           " order specific comma seperated list of parameters for connector",
+           cxxopts::value<std::vector<std::string>>())
+          ("l,log_level", "log level", cxxopts::value<std::string>()->default_value("info"), "[debug, info, warn, err]")
+          ("o,log_output", "console/file?", cxxopts::value<std::string>(), "default logs output to console")
+          ("h,help", "print usage information");
 
   auto result = options.parse(argc, argv);
 
@@ -38,10 +38,10 @@ int main(int argc, char *argv[]) {
   }
 
   bool check_must_opts = result.count("engine")
-      || result.count("engine_params")
-      || result.count("connector")
-      || result.count("connector_params")
-      || result.count("game");
+                         || result.count("engine_params")
+                         || result.count("connector")
+                         || result.count("connector_params")
+                         || result.count("game");
   if (!check_must_opts) {
     std::cout << "fill the must-have options" << std::endl;
     std::cout << options.help() << std::endl;
@@ -94,21 +94,24 @@ int main(int argc, char *argv[]) {
     // Connector initialization.
     BaseConnector *connector = nullptr;
     switch (result["connector"].as<int>()) {
-      case acpc:connector = new AcpcConnector(result["connector_params"].as<std::vector<std::string>>());
+      case acpc:
+        connector = new AcpcConnector(result["connector_params"].as<std::vector<std::string>>());
 
         /* Connect to the dealer */
         if (connector->connect() != EXIT_SUCCESS) {
           logger::critical(" [AGENT] : Failed to connect to ACPC dealer");
         }
         break;
-      case slumbot:connector = new SlumbotConnector(result["connector_params"].as<std::vector<std::string>>());
+      case slumbot:
+        connector = new SlumbotConnector(result["connector_params"].as<std::vector<std::string>>());
 
         /* Connect to the dealer */
         if (!connector->connect()) {
           logger::critical(" [AGENT] : failed to login on Slumbot");
         }
         break;
-      default:logger::critical(" [AGENT] : Connector Not Implemented");
+      default:
+        logger::critical(" [AGENT] : Connector Not Implemented");
     }
 
     int session_total = 0;
