@@ -253,37 +253,44 @@ struct SubgameSolver
         ag_builder_ = new AGBuilder((dir / file), bucket_pool);
 
         web::json::value sgs_trigger = sgs_conf.at("trigger");
-        // Requirements
-        logger::require_warn(sgs_trigger.has_field("active_round"), "must specify round for sgs", nullptr);
-        active_round = sgs_trigger.at("active_round").as_integer();
 
-        // Non-requirements
-        // Outer trigger
-        if (sgs_trigger.has_field("active_offtree_min")) {
-            active_offtree_min = sgs_trigger.at("active_offtree_min").as_double();
-        }
-        if (sgs_trigger.has_field("active_bet_seq_min")) {
-            active_bet_seq_min = sgs_trigger.at("active_bet_seq_min").as_integer();
-        }
-        if (sgs_trigger.has_field("active_sumpot_min")) {
-            active_sumpot_min = sgs_trigger.at("active_sumpot_min").as_integer();
+        /* Required options: */ {
+            logger::require_warn(sgs_trigger.has_field("active_round"),
+                                 "must specify round for sgs",
+                                 nullptr);
+            active_round = sgs_trigger.at("active_round").as_integer();
         }
 
-        // Inner trigger
-        if (sgs_trigger.has_field("resolve_offtree_min")) {
-            resolve_offtree_min = sgs_trigger.at("resolve_offtree_min").as_double();
-        }
-        if (sgs_trigger.has_field("resolve_sumpot_min")) {
-            resolve_sumpot_min = sgs_trigger.at("resolve_sumpot_min").as_integer();
-        }
-        if (sgs_trigger.has_field("resolve_last_root_sumpot_min")) {
-            resolve_last_root_sumpot_min = sgs_trigger.at("resolve_last_root_sumpot_min").as_integer();
-            // if (resolve_last_root_sumpot_min > active_sumpot_min) {
-            //     logger::error_and_exit(
-            //             "resolve_last_root_sumpot_min %d must <= active_sumpot_min %d. "
-            //             "you may solve in middle and then try to resolve it from root again",
-            //             resolve_last_root_sumpot_min, active_sumpot_min);
-            // }
+        /* Optional options: */ {
+            /* Outer triggers: */ {
+                if (sgs_trigger.has_field("active_offtree_min")) {
+                    active_offtree_min = sgs_trigger.at("active_offtree_min").as_double();
+                }
+                if (sgs_trigger.has_field("active_bet_seq_min")) {
+                    active_bet_seq_min = sgs_trigger.at("active_bet_seq_min").as_integer();
+                }
+                if (sgs_trigger.has_field("active_sumpot_min")) {
+                    active_sumpot_min = sgs_trigger.at("active_sumpot_min").as_integer();
+                }
+            }
+
+            /* Inner triggers: */ {
+                if (sgs_trigger.has_field("resolve_offtree_min")) {
+                    resolve_offtree_min = sgs_trigger.at("resolve_offtree_min").as_double();
+                }
+                if (sgs_trigger.has_field("resolve_sumpot_min")) {
+                    resolve_sumpot_min = sgs_trigger.at("resolve_sumpot_min").as_integer();
+                }
+                if (sgs_trigger.has_field("resolve_last_root_sumpot_min")) {
+                    resolve_last_root_sumpot_min = sgs_trigger.at("resolve_last_root_sumpot_min").as_integer();
+                    // if (resolve_last_root_sumpot_min > active_sumpot_min) {
+                    //     logger::error_and_exit(
+                    //             "resolve_last_root_sumpot_min %d must <= active_sumpot_min %d. "
+                    //             "you may solve in middle and then try to resolve it from root again",
+                    //             resolve_last_root_sumpot_min, active_sumpot_min);
+                    // }
+                }
+            }
         }
     }
 };
