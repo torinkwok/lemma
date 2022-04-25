@@ -102,8 +102,10 @@ private:
      * META, by configuration
      */
     Game *normalized_game_;
+
     BucketPool *bucket_pool_ = nullptr;
     StrategyPool *blueprint_pool_ = nullptr;
+
     ActionChooser *default_action_chooser_ = nullptr;
     //todo: why not use std::vector?
     SubgameSolver *subgame_solvers_ = nullptr;

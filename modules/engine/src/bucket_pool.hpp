@@ -32,8 +32,10 @@ public:
 
     BucketMeta *Get(const std::string &name, int round)
     {
-        if (!Has(name, round))
+        if (!Has(name, round)) {
+            // Loading bucket lazily.
             bucket_pool_[round][name] = LoadBucket(name);
+        }
         return bucket_pool_[round][name];
     }
 
@@ -72,7 +74,10 @@ public:
     }
 
 private:
-    std::array<std::map<std::string, BucketMeta *>, 4> bucket_pool_;
+    std::array<
+            std::map<std::string /* name */, BucketMeta *>,
+            4 /* round */
+    > bucket_pool_;
 };
 
 #endif //BULLDOG_MODULES_ENGINE_SRC_BUCKET_POOL_HPP_

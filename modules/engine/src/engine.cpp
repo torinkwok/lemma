@@ -33,7 +33,7 @@ Engine::Engine(const char *engine_conf_file, Game *game) {
   } else {
     logger::error("    [ENGINE %s] : unable to open file %s", engine_name_, dir / filename);
   }
-  // Solver meta
+  // Solver meta.
   auto engine_conf_str = std::string(engine_conf_file);
   engine_name_ = engine_conf_str.substr(0, engine_conf_str.length() - 5); //remove the .json
   bucket_pool_ = new BucketPool();
@@ -42,7 +42,7 @@ Engine::Engine(const char *engine_conf_file, Game *game) {
     return;
   }
   /*
-   * configure offline blueprint
+   * Configure offline blueprint.
    */
   if (data.has_field("blueprint")) {
     blueprint_pool_ = new StrategyPool();
@@ -99,10 +99,12 @@ Engine::Engine(const char *engine_conf_file, Game *game) {
    * all games must turn on to use the state stack, for engine.
    * and they should be exactly the same game. in fact
    */
-  for (int i = 0; i < sgs_size_; i++)
-    if (normalized_game_->use_state_stack == 1)
-      //for slumbot/acpc, the game_.use_state_stack == 0;
-      subgame_solvers_[i].ag_builder_->game_->use_state_stack = 1;
+  for (int i = 0; i < sgs_size_; i++) {
+      if (normalized_game_->use_state_stack == 1) {
+          //for slumbot/acpc, the game_.use_state_stack == 0;
+          subgame_solvers_[i].ag_builder_->game_->use_state_stack = 1;
+      }
+  }
 
   for (int i = 0; i < sgs_size_; i++) {
     if (normalized_game_->use_state_stack == 1) {
