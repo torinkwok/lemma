@@ -1,7 +1,3 @@
-//
-// Created by Isaac Zhang on 4/6/20.
-//
-
 #ifndef BULLDOG_MODULES_CORE_INCLUDE_BULLDOG_MATRIX_H_
 #define BULLDOG_MODULES_CORE_INCLUDE_BULLDOG_MATRIX_H_
 

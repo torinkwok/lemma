@@ -1,7 +1,3 @@
-//
-// Created by Isaac Zhang on 8/18/20.
-//
-
 #include "../../core/include/bulldog/table_util.h"
 #include <algorithm>
 

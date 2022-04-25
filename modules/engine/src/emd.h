@@ -1,7 +1,3 @@
-//
-// Created by Carmen C on 25/3/2020.
-//
-
 #ifndef BULLDOG_MODULES_ENGINE_SRC_EMD_H_
 #define BULLDOG_MODULES_ENGINE_SRC_EMD_H_
 

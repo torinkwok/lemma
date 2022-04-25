@@ -1,7 +1,3 @@
-//
-// Created by Carmen C on 18/3/2020.
-//
-
 #include "kmeans.h"
 #include "builder.hpp"
 #include <bulldog/logger.hpp>

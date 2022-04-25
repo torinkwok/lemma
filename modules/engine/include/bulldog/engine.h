@@ -1,7 +1,3 @@
-//
-// Created by Isaac Zhang on 2/25/20.
-//
-
 /**
  * overall design of the engine
  * - blind-invariant, stack-aware

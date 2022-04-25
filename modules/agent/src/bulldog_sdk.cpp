@@ -1,7 +1,3 @@
-//
-// Created by Isaac Zhang on 7/31/20.
-//
-
 #include "bulldog_sdk.h"
 
 bool BulldogSDK::Ping(lLogger f) const {

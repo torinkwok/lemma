@@ -1,6 +1,3 @@
-//
-// Created by Isaac Zhang on 2/25/20.
-//
 #include <bulldog/game_util.h>
 #include "strategy.h"
 

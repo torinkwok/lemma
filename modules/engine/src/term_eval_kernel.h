@@ -1,7 +1,3 @@
-//
-// Created by Isaac Zhang on 5/21/20.
-//
-
 #ifndef BULLDOG_MODULES_ENGINE_SRC_TERM_EVAL_KERNEL_H_
 #define BULLDOG_MODULES_ENGINE_SRC_TERM_EVAL_KERNEL_H_
 

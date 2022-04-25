@@ -1,7 +1,3 @@
-//
-// Created by Carmen C on 16/6/2020.
-//
-
 #include "cfr_worker.h"
 
 double ScalarCfrWorker::Solve(Board_t board) {

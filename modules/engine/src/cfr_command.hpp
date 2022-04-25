@@ -1,7 +1,3 @@
-//
-// Created by Isaac Zhang on 6/5/20.
-//
-
 #ifndef BULLDOG_MODULES_ENGINE_SRC_CFR_COMMAND_HPP_
 #define BULLDOG_MODULES_ENGINE_SRC_CFR_COMMAND_HPP_
 

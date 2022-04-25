@@ -1,7 +1,3 @@
-//
-// Created by Isaac Zhang on 7/30/20.
-//
-
 #ifndef BULLDOG_MODULES_AGENT_SRC_SERVER_CONSTANTS_H_
 #define BULLDOG_MODULES_AGENT_SRC_SERVER_CONSTANTS_H_
 #include <string>

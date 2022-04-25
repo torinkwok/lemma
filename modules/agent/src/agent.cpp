@@ -1,7 +1,3 @@
-//
-// Created by Isaac Zhang on 2/19/20.
-//
-
 /* C / C++ includes */
 #include <bulldog/engine.h>
 #include "acpc_connector.hpp"

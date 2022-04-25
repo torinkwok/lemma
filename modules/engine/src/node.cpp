@@ -1,7 +1,3 @@
-//
-// Created by Isaac Zhang on 3/5/20.
-//
-
 #include <stack>
 #include <bulldog/card_util.h>
 #include "node.h"

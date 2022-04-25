@@ -1,7 +1,4 @@
-//
-// Created by Carmen C on 23/3/2020.
 // Modified from https://github.com/luxiaoxun/KMeans-GMM-HMM
-//
 
 #include "kmeans.h"
 #include "bucket.h"

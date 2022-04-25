@@ -1,6 +1,3 @@
-//
-// Created by Isaac Zhang on 4/4/20.
-//
 #include <bulldog/card_util.h>
 #include <pokerstove/peval/CardSetGenerators.h>
 

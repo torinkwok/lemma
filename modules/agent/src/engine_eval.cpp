@@ -1,7 +1,4 @@
-//
-// Created by Isaac Zhang on 4/11/20.
-// for head-2-head eval
-//
+// For head-2-head eval
 
 #include <bulldog/engine.h>
 #include <bulldog/logger.hpp>

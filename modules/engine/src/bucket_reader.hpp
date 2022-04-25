@@ -1,7 +1,3 @@
-//
-// Created by Isaac Zhang on 3/10/20.
-//
-
 #ifndef BULLDOG_MODULES_ENGINE_SRC_BUCKET_READER_HPP_
 #define BULLDOG_MODULES_ENGINE_SRC_BUCKET_READER_HPP_
 

@@ -1,6 +1,3 @@
-//
-// Created by Carmen C on 21/2/2020.
-//
 #include "slumbot_connector.hpp"
 #include <bulldog/game.h>
 

@@ -1,7 +1,3 @@
-//
-// Created by Isaac Zhang on 8/8/20.
-//
-
 #include <bulldog/logger.hpp>
 #include "engine_util.h"
 

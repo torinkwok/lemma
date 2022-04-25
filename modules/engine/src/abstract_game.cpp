@@ -1,7 +1,3 @@
-//
-// Created by Isaac Zhang on 8/7/20.
-//
-
 #include "abstract_game.h"
 
 void AbstractGame::IndexBettingTree(Node *this_node) {

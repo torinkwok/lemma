@@ -1,7 +1,3 @@
-//
-// Created by Isaac Zhang on 4/6/20.
-//
-
 #ifndef BULLDOG_MODULES_ENGINE_SRC_HAND_KERNEL_HPP_
 #define BULLDOG_MODULES_ENGINE_SRC_HAND_KERNEL_HPP_
 

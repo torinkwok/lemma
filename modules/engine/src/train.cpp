@@ -1,7 +1,3 @@
-//
-// Created by Isaac Zhang on 2/25/20.
-//
-
 #include "cfr.h"
 #include "ag_builder.hpp"
 #include "strategy_io.h"

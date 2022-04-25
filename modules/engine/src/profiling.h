@@ -1,7 +1,3 @@
-//
-// Created by Isaac Zhang on 3/25/20.
-//
-
 #ifndef BULLDOG_MODULES_ENGINE_SRC_PROFILING_H_
 #define BULLDOG_MODULES_ENGINE_SRC_PROFILING_H_
 

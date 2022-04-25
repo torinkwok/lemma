@@ -1,7 +1,3 @@
-//
-// Created by Isaac Zhang on 3/10/20.
-//
-
 #include <spdlog/spdlog.h>
 #include <bulldog/logger.hpp>
 #include <bulldog/game_util.h>

@@ -1,7 +1,3 @@
-//
-// Created by Isaac Zhang on 8/7/20.
-//
-
 #define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
 #include "../src/engine_util.h"

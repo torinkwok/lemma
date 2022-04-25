@@ -1,6 +1,3 @@
-//
-// Created by Isaac Zhang on 2/26/20.
-//
 #include "cfr.h"
 #include "strategy_io.h"
 #include <filesystem>

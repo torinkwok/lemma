@@ -1,7 +1,3 @@
-//
-// Created by Carmen C on 11/7/2020.
-//
-
 #include "strategy_io.h"
 #include "ag_builder.hpp"
 

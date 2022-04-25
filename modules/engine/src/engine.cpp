@@ -1,7 +1,3 @@
-//
-// Created by Isaac Zhang on 7/21/20.
-//
-
 #include <bulldog/engine.h>
 #include <cpprest/json.h>
 

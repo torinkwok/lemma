@@ -1,7 +1,3 @@
-//
-// Created by Carmen C on 11/6/2020.
-//
-
 #include <cxxopts.hpp>
 #include "strategy_io.h"
 #include "action_abs.h"

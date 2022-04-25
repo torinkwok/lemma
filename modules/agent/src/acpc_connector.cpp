@@ -1,7 +1,3 @@
-//
-// Created by Carmen C on 21/2/2020.
-//
-
 #include <iostream>
 #include <vector>
 #include <bulldog/logger.hpp>

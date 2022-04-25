@@ -1,7 +1,3 @@
-//
-// Created by Isaac Zhang on 5/9/20.
-//
-
 #ifndef BULLDOG_MODULES_ENGINE_SRC_CFR_STATE_H_
 #define BULLDOG_MODULES_ENGINE_SRC_CFR_STATE_H_
 

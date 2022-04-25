@@ -1,7 +1,3 @@
-//
-// Created by Isaac Zhang on 5/21/20.
-//
-
 #include "term_eval_kernel.h"
 void TermEvalKernel::Prepare(Board_t *board) {
   board_ = *board;

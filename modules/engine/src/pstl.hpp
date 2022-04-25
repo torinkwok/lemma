@@ -1,7 +1,4 @@
-//
-// Created by Carmen C on 14/5/2020.
 // Referencing https://github.com/ParRes/Kernels/blob/master/Cxx11/prk_pstl.h
-//
 
 #ifndef BULLDOG_MODULES_ENGINE_SRC_PSTL_HPP_
 #define BULLDOG_MODULES_ENGINE_SRC_PSTL_HPP_

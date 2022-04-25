@@ -1,7 +1,3 @@
-//
-// Created by Isaac Zhang on 3/20/20.
-//
-
 #include "cfr_worker.h"
 #include "node.h"
 

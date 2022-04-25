@@ -1,7 +1,3 @@
-//
-// Created by Isaac Zhang on 2/25/20.
-//
-
 #ifndef BULLDOG_MODULES_ENGINE_SRC_STRATEGY_H_
 #define BULLDOG_MODULES_ENGINE_SRC_STRATEGY_H_
 

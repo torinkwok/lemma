@@ -1,7 +1,3 @@
-//
-// Created by Isaac Zhang on 4/7/20.
-//
-
 #ifndef BULLDOG_MODULES_ENGINE_SRC_HAND_BELIEF_H_
 #define BULLDOG_MODULES_ENGINE_SRC_HAND_BELIEF_H_
 

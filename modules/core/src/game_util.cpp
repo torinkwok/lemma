@@ -1,6 +1,3 @@
-//
-// Created by Isaac Zhang on 8/13/20.
-//
 #include "../../core/include/bulldog/game_util.h"
 #include <cmath>
 #include <set>

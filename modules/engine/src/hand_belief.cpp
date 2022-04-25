@@ -1,7 +1,3 @@
-//
-// Created by Isaac Zhang on 7/12/20.
-//
-
 #include "hand_belief.h"
 bool sHandBelief::TopoAligned(sHandBelief *that) {
   for (auto i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {

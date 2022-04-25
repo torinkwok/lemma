@@ -1,7 +1,3 @@
-//
-// Created by Carmen C on 24/3/2020.
-//
-
 #ifndef BULLDOG_MODULES_CORE_SRC_LOGGER_HPP_
 #define BULLDOG_MODULES_CORE_SRC_LOGGER_HPP_
 

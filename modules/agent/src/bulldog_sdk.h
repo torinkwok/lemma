@@ -1,7 +1,3 @@
-//
-// Created by Isaac Zhang on 7/30/20.
-//
-
 #ifndef BULLDOG_MODULES_AGENT_SRC_BULLDOG_SDK_H_
 #define BULLDOG_MODULES_AGENT_SRC_BULLDOG_SDK_H_
 

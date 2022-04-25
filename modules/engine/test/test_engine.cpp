@@ -1,7 +1,3 @@
-//
-// Created by Carmen C on 15/5/2020.
-//
-
 #define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
 #include <bulldog/engine.h>

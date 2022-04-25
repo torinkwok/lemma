@@ -1,7 +1,3 @@
-//
-// Created by Carmen C on 24/3/2020.
-//
-
 #include "bucket.h"
 #include "node.h"
 #include <bulldog/logger.hpp>

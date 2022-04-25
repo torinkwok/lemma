@@ -1,6 +1,3 @@
-//
-// Created by Isaac Zhang on 4/9/20.
-//
 #define CATCH_CONFIG_MAIN
 
 #include <catch2/catch.hpp>
