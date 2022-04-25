@@ -208,6 +208,7 @@ struct SubgameSolver
         std::filesystem::path filename(config_file);
         std::ifstream sgs_file(dir / filename);
         web::json::value sgs_conf;
+
         if (sgs_file.good()) {
             std::stringstream buffer;
             buffer << sgs_file.rdbuf();
@@ -217,8 +218,10 @@ struct SubgameSolver
         logger::require_critical(sgs_conf.has_field("builder_file"), "please fill in build_file || sgs conf");
         logger::require_critical(sgs_conf.has_field("cfr_file"), "please fill in cfr_file || sgs conf");
         logger::require_critical(sgs_conf.has_field("trigger"), "please fill in trigger || sgs conf");
+
         auto sgs_conf_str = std::string(config_file);
-        name_ = sgs_conf_str.substr(0, sgs_conf_str.length() - 5);//get ride of
+        name_ = sgs_conf_str.substr(0, sgs_conf_str.length() - 5);
+
         if (sgs_conf.has_field("action_chooser")) {
             auto action_conf = sgs_conf.at("action_chooser");
             action_chooser_->ConfFromJson(action_conf);
@@ -240,39 +243,47 @@ struct SubgameSolver
         cfr_->BuildCMDPipeline();
         cfr_->profiling_writer_.prefix_ = cfr_->cfr_param_.name + "_" + std::to_string(convergence_state_->iteration);
 
-        //set playing strategy
-        if (sgs_conf.has_field("playing_strategy"))
+        // Setting playing strategy.
+        if (sgs_conf.has_field("playing_strategy")) {
             playing_strategy_ = StrategyMap[sgs_conf.at("playing_strategy").as_string()];
+        }
 
         std::filesystem::path file(sgs_conf.at("builder_file").as_string());
+        // `AGBuilder::Build` gets invoked within `Build*Subgame` methods.
         ag_builder_ = new AGBuilder((dir / file), bucket_pool);
 
-        auto sgs_trigger = sgs_conf.at("trigger");
-        //must have
+        web::json::value sgs_trigger = sgs_conf.at("trigger");
+        // Requirements
         logger::require_warn(sgs_trigger.has_field("active_round"), "must specify round for sgs", nullptr);
         active_round = sgs_trigger.at("active_round").as_integer();
 
-        //optional
-        //outer
-        if (sgs_trigger.has_field("active_offtree_min"))
+        // Non-requirements
+        // Outer trigger
+        if (sgs_trigger.has_field("active_offtree_min")) {
             active_offtree_min = sgs_trigger.at("active_offtree_min").as_double();
-        if (sgs_trigger.has_field("active_bet_seq_min"))
+        }
+        if (sgs_trigger.has_field("active_bet_seq_min")) {
             active_bet_seq_min = sgs_trigger.at("active_bet_seq_min").as_integer();
-        if (sgs_trigger.has_field("active_sumpot_min"))
+        }
+        if (sgs_trigger.has_field("active_sumpot_min")) {
             active_sumpot_min = sgs_trigger.at("active_sumpot_min").as_integer();
+        }
 
-        //inner trigger
-        if (sgs_trigger.has_field("resolve_offtree_min"))
+        // Inner trigger
+        if (sgs_trigger.has_field("resolve_offtree_min")) {
             resolve_offtree_min = sgs_trigger.at("resolve_offtree_min").as_double();
-        if (sgs_trigger.has_field("resolve_sumpot_min"))
+        }
+        if (sgs_trigger.has_field("resolve_sumpot_min")) {
             resolve_sumpot_min = sgs_trigger.at("resolve_sumpot_min").as_integer();
+        }
         if (sgs_trigger.has_field("resolve_last_root_sumpot_min")) {
             resolve_last_root_sumpot_min = sgs_trigger.at("resolve_last_root_sumpot_min").as_integer();
-//      if (resolve_last_root_sumpot_min > active_sumpot_min) {
-//        logger::error_and_exit(
-//            "resolve_last_root_sumpot_min %d must <= active_sumpot_min %d. "
-//            "you may solve in middle and then try to resolve it from root again", resolve_last_root_sumpot_min, active_sumpot_min);
-//      }
+            // if (resolve_last_root_sumpot_min > active_sumpot_min) {
+            //     logger::error_and_exit(
+            //             "resolve_last_root_sumpot_min %d must <= active_sumpot_min %d. "
+            //             "you may solve in middle and then try to resolve it from root again",
+            //             resolve_last_root_sumpot_min, active_sumpot_min);
+            // }
         }
     }
 };

@@ -78,9 +78,9 @@ Engine::Engine(const char *engine_conf_file, Game *game) {
     }
   }
 
-  // Online playing configuration.
+  // Online subgame solvers configuration.
   if (data.has_field("subgame_solvers")) {
-    auto solvers = data.at("subgame_solvers").as_array();
+    web::json::array solvers = data.at("subgame_solvers").as_array();
     sgs_size_ = solvers.size();
     subgame_solvers_ = new SubgameSolver[sgs_size_];
     for (int i = 0; i < sgs_size_; i++) {
@@ -104,6 +104,7 @@ Engine::Engine(const char *engine_conf_file, Game *game) {
 
   for (int i = 0; i < sgs_size_; i++) {
     if (normalized_game_->use_state_stack == 1) {
+        // Normalized game, a.k.a. global game, must be compatible with those sub-games.
       if (CompatibleGame(normalized_game_, subgame_solvers_[i].ag_builder_->game_) == 0) {
           logger::critical("    [ENGINE %s] : engine game def != sgs game betting type, in game type", engine_name_);
       }
@@ -114,7 +115,7 @@ Engine::Engine(const char *engine_conf_file, Game *game) {
     }
   }
 
-  // Daemon depends on subgame solving
+  // The `daemon` flag only makes sense for a sub-game size greater than zero.
   if (data.has_field("daemon") && sgs_size_ > 0) {
       is_daemon_engine = data.at("daemon").as_bool();
   }
@@ -428,8 +429,9 @@ int Engine::RefreshEngineState() {
   AsynStopCFRSolving();
   busy_flag_ = false;
   playbook_stack_.clear();
-  for (auto s : sgs_strategy_stack_)
-    delete s;
+  for (auto s : sgs_strategy_stack_) {
+      delete s;
+  }
   sgs_strategy_stack_.clear();
   return NEW_HAND_SUCCESS;
 }
