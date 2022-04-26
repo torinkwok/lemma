@@ -206,24 +206,29 @@ Engine::Engine(const char *engine_conf_file, Game *game, BucketPool *bucket_pool
    * all games must turn on to use the state stack, for engine.
    * and they should be exactly the same game. in fact
    */
-  for (int i = 0; i < sgs_size_; i++)
-    if (normalized_game_->use_state_stack == 1)
-      //for slumbot/acpc, the game_.use_state_stack == 0;
-      subgame_solvers_[i].ag_builder_->game_->use_state_stack = 1;
+  for (int i = 0; i < sgs_size_; i++) {
+      if (normalized_game_->use_state_stack == 1) {
+          // For Slumbot/ACPC, `game_.use_state_stack == 0`;
+          subgame_solvers_[i].ag_builder_->game_->use_state_stack = 1;
+      }
+  }
 
   for (int i = 0; i < sgs_size_; i++) {
     if (normalized_game_->use_state_stack == 1) {
-      if (CompatibleGame(normalized_game_, subgame_solvers_[i].ag_builder_->game_) == 0)
-        logger::critical("    [ENGINE %s] : engine game def != sgs game betting type, in game type", engine_name_);
+      if (CompatibleGame(normalized_game_, subgame_solvers_[i].ag_builder_->game_) == 0) {
+          logger::critical("    [ENGINE %s] : engine game def != sgs game betting type, in game type", engine_name_);
+      }
     } else {
-      if (!Equal(normalized_game_, subgame_solvers_[i].ag_builder_->game_))
-        logger::critical("    [ENGINE %s]  : engine game def != sgs game def.", engine_name_);
+      if (!Equal(normalized_game_, subgame_solvers_[i].ag_builder_->game_)) {
+          logger::critical("    [ENGINE %s]  : engine game def != sgs game def.", engine_name_);
+      }
     }
   }
 
-  //daemon depends on subgame solving
-  if (data.has_field("daemon") && sgs_size_ > 0)
-    is_daemon_engine = data.at("daemon").as_bool();
+  // The `daemon` option only makes sense for non-empty sub-games.
+  if (data.has_field("daemon") && sgs_size_ > 0) {
+      is_daemon_engine = data.at("daemon").as_bool();
+  }
 
   logger::debug("    [ENGINE %s] : solving engine properly configured. ready to go.", engine_name_);
   RefreshEngineState();
