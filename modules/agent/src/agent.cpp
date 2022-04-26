@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
         // Connector initialization.
         BaseConnector *connector = nullptr;
         switch (result["connector"].as<int>()) {
-            case acpc:
+            case acpc: {
                 connector = new AcpcConnector(result["connector_params"].as<std::vector<std::string>>());
 
                 /* Connect to the dealer */
@@ -100,7 +100,8 @@ int main(int argc, char *argv[])
                     logger::critical(" [AGENT] : Failed to connect to ACPC dealer");
                 }
                 break;
-            case slumbot:
+            }
+            case slumbot: {
                 connector = new SlumbotConnector(result["connector_params"].as<std::vector<std::string>>());
 
                 /* Connect to the dealer */
@@ -108,8 +109,10 @@ int main(int argc, char *argv[])
                     logger::critical(" [AGENT] : failed to login on Slumbot");
                 }
                 break;
-            default:
+            }
+            default: {
                 logger::critical(" [AGENT] : Connector Not Implemented");
+            }
         }
 
         int session_total = 0;
@@ -126,10 +129,11 @@ int main(int argc, char *argv[])
                 break;
             };
 
-            /* Ignore game-over message */
+            /* Ignoring game-over message */
             if (stateFinished(&match_state.state)) {
                 // TODO: 2p hack.
                 std::string players[2];
+                // FIXME(kwok): The number of players is not supposed to be fixed to 2.
                 players[match_state.viewingPlayer] = "Bulldog";
                 players[match_state.viewingPlayer ? 0 : 1] = "Slumbot";
 
@@ -137,6 +141,7 @@ int main(int argc, char *argv[])
                 printState(game, &match_state.state, MAX_LINE_LEN, line);
                 std::string outcome = "";
                 std::string player_names = "";
+
                 for (int p = 0; p < game->numPlayers; p++) {
                     outcome += std::to_string((int) valueOfState(game, &match_state.state, p));
                     player_names += players[p];
@@ -145,6 +150,7 @@ int main(int argc, char *argv[])
                         player_names += "|";
                     }
                 }
+
                 auto full_match_str = std::string(line) + ":" + outcome + ":" + player_names;
                 logger::info(" [AGENT] : %s", full_match_str);
 
@@ -163,11 +169,11 @@ int main(int argc, char *argv[])
             // FIXME(kwok): Is this guardian code necessary?
             //      if (currentPlayer(game, &match_state.state)
             //          != match_state.viewingPlayer) {
-            //        logger::debug(" [AGENT] : ignore state, not acting player");
-            //        continue;
+            //          logger::debug(" [AGENT] : ignore state, not acting player");
+            //          continue;
             //      }
 
-            /* GetAvg an action to play */
+            /* Pick an action to play. */
             char line[MAX_LINE_LEN];
             printMatchState(game, &match_state, MAX_LINE_LEN, line);
             logger::debug(" [AGENT] : %s", line);
@@ -175,7 +181,6 @@ int main(int argc, char *argv[])
             //slumbot use normalized session.
             engine->GetActionBySession(match_state, action, 12000);
             //      logger::debug(" [AGENT] : action returned from engine: %c%d", actionChars[action.type], action.size);
-
 #if 0
             //detect if the action should be fixed
             //no longger needed, done within the engine interface
@@ -190,12 +195,13 @@ int main(int argc, char *argv[])
       //        logger::debug(" [AGENT] : invalid action has been fixed to: %c%d", actionChars[action.type], action.size);
       //      }
 #endif
-
+            /* Craft a request. */
             if (connector->build(game, &action, &match_state.state) == EXIT_FAILURE) {
                 logger::error(" [AGENT] : failed to build action");
                 break;
             };
 
+            /* Send it! */
             if (connector->send() == EXIT_FAILURE) {
                 logger::error(" [AGENT] : failed to send action");
                 break;
@@ -211,4 +217,3 @@ int main(int argc, char *argv[])
     delete engine;
     free(game);
 }
-

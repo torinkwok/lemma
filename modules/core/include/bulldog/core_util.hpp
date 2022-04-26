@@ -36,14 +36,14 @@ struct SimpleTimer
                 std::chrono::steady_clock::now() - ckp_.at(0)).count();
     }
 
-//  void PrintAllCheckpoint() {
-//    for (unsigned int i = 1; i < ckp_.size(), i++;) {
-//      logger::debug("TIME SPENT [%s takes %d ms]",
-//                    names_.at(i),
-//                    std::chrono::duration_cast<std::chrono::milliseconds>(
-//                        ckp_.at(i) - ckp_.at(0)).count());
-//    }
-//  }
+    //  void PrintAllCheckpoint() {
+    //    for (unsigned int i = 1; i < ckp_.size(), i++;) {
+    //      logger::debug("TIME SPENT [%s takes %d ms]",
+    //                    names_.at(i),
+    //                    std::chrono::duration_cast<std::chrono::milliseconds>(
+    //                        ckp_.at(i) - ckp_.at(0)).count());
+    //    }
+    //  }
 };
 
 static inline int split_string(std::string s, const std::string delim, std::vector<std::string> &out)
