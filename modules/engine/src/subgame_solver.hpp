@@ -88,18 +88,18 @@ struct SubgameSolver
         return false;
     }
 
-/*
- * how to build the subgame defines the subgame solver
- * we follow the design of pluribus impl (unsafe, but always solve from the street root)
- *  - to force the previous unseen action into the abstraction
- *  - to force the strategy of already happened actions of mine frozen
- * specifically,
- * - CheckNewRound()
- * - resolving if needed
- *  - kth_action = 1, do step back, it is equivalent to the street root
- *  - > 1, step back to the root.
- *
- */
+    /*
+     * how to build the subgame defines the subgame solver
+     * we follow the design of pluribus impl (unsafe, but always solve from the street root)
+     *  - to force the previous unseen action into the abstraction
+     *  - to force the strategy of already happened actions of mine frozen
+     * specifically,
+     * - CheckNewRound()
+     * - resolving if needed
+     *  - kth_action = 1, do step back, it is equivalent to the street root
+     *  - > 1, step back to the root.
+     *
+     */
     int BuildSubgame(AbstractGame *ag,
                      Strategy *last_strategy,
                      NodeMatchCondition &condition,
@@ -172,7 +172,7 @@ struct SubgameSolver
             uint8_t step_to_last_root = kth_action - last_strategy->ag_->root_state_.numActions[this_round];
             steps_to_reverse = step_to_last_root;
         }
-//    logger::debug("    [SGS %s] : resolving takes [step back %d]", name_, steps_to_reverse);
+        // logger::debug("    [SGS %s] : resolving takes [step back %d]", name_, steps_to_reverse);
         if (!BuildResolvingSubgame(ag, real_match_state, steps_to_reverse)) {
             return SKIP_RESOLVING_SUBGAME;
         }

@@ -55,6 +55,7 @@ bool Strategy::EstimateNewAgReach(AbstractGame *new_ag, MatchState *new_match_st
     return true;
   }
   auto new_round = new_match_state->state.round;
+
 #if DEV > 1
   /*
    * safe guarding | the root belief of THIS_AG is correct.

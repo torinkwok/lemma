@@ -27,42 +27,44 @@ struct StrategyPool
             return pool_.at(0);
         }
 
-        //find by the ratio. choose the ceiling one
-        //sort if needed, sort by stack depth, ascending
+        // Find by stack depth. Choose the ceiling one
+
+        // Lazily sort the strategies by ascending stack depth if needed.
         if (!sorted) {
             std::sort(pool_.begin(), pool_.end(),
                       [](const Strategy *lhs, const Strategy *rhs)
                       {
-                          auto depth_lhs = GameDefaultStackDepth(&lhs->ag_->game_);
-                          auto depth_rhs = GameDefaultStackDepth(&rhs->ag_->game_);
-                          if (depth_lhs == depth_rhs) {
+                          auto lhs_depth = GameDefaultStackDepth(&lhs->ag_->game_);
+                          auto rhs_depth = GameDefaultStackDepth(&rhs->ag_->game_);
+                          if (lhs_depth == rhs_depth) {
                               logger::critical("we have blueprints of the same stack depth. not supported");
                           }
-                          return depth_lhs < depth_rhs;
+                          return lhs_depth < rhs_depth;
                       });
             sorted = true;
         }
 
-        int match_state_depth = StateStackDepth(&match_state->state, game);
+        int match_state_stack_depth = StateStackDepth(&match_state->state, game);
 
         /*
          * find the blueprint with >= stack. the reason is,
          * the higher than real stack raise can be captured and translated into all in
          */
         auto it = std::find_if(pool_.begin(), pool_.end(),
-                               [match_state_depth](const Strategy *strategy)
+                               [match_state_stack_depth](const Strategy *strategy)
                                {
                                    int depth = GameDefaultStackDepth(&strategy->ag_->game_);
-                                   return depth >= match_state_depth;
+                                   return depth >= match_state_stack_depth;
                                });
         Strategy *rtn_strategy;
         if (it == pool_.end()) {
-            //none match, return the highest one
-            logger::debug("none blueprint with >= stackdepth found. use the highest one");
+            // None matched, return the hightest one.
+            logger::debug("no blueprint with >= stackdepth found. use the highest one");
             rtn_strategy = pool_.back();
         } else {
             rtn_strategy = (*it);
         }
+
         logger::debug("picked blueprint with depth %d", GameDefaultStackDepth(&rtn_strategy->ag_->game_));
         return rtn_strategy;
     }

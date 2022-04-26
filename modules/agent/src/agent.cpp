@@ -94,8 +94,6 @@ int main(int argc, char *argv[])
         switch (result["connector"].as<int>()) {
             case acpc: {
                 connector = new AcpcConnector(result["connector_params"].as<std::vector<std::string>>());
-
-                /* Connect to the dealer */
                 if (connector->connect() != EXIT_SUCCESS) {
                     logger::critical(" [AGENT] : Failed to connect to ACPC dealer");
                 }
@@ -103,8 +101,6 @@ int main(int argc, char *argv[])
             }
             case slumbot: {
                 connector = new SlumbotConnector(result["connector_params"].as<std::vector<std::string>>());
-
-                /* Connect to the dealer */
                 if (!connector->connect()) {
                     logger::critical(" [AGENT] : failed to login on Slumbot");
                 }
@@ -181,6 +177,7 @@ int main(int argc, char *argv[])
             //slumbot use normalized session.
             engine->GetActionBySession(match_state, action, 12000);
             //      logger::debug(" [AGENT] : action returned from engine: %c%d", actionChars[action.type], action.size);
+
 #if 0
             //detect if the action should be fixed
             //no longger needed, done within the engine interface
@@ -195,6 +192,7 @@ int main(int argc, char *argv[])
       //        logger::debug(" [AGENT] : invalid action has been fixed to: %c%d", actionChars[action.type], action.size);
       //      }
 #endif
+
             /* Craft a request. */
             if (connector->build(game, &action, &match_state.state) == EXIT_FAILURE) {
                 logger::error(" [AGENT] : failed to build action");
