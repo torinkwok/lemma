@@ -155,14 +155,15 @@ static inline int DecayingBettingDistance(State &ref_state, State &target_state)
         for (auto a = 0; a < ref_state.numActions[r]; a++) {
             auto ref_type = ref_state.action[r][a].type;
             auto target_type = target_state.action[r][a].type;
-            if (ref_type == a_call && target_type == a_call)
+            if (ref_type == a_call && target_type == a_call) {
                 continue;
+            }
             if (ref_type == a_raise && target_type == a_raise) {
                 int diff_raise_size = abs(ref_state.action[r][a].size - target_state.action[r][a].size);
                 sum += diff_raise_size * s0[r];
                 continue;
             }
-            //for 2p we dont have fold action yet.
+            //for 2p we don't have fold action yet.
             // one call one raise. the diff is the one with the raise action .
             if (ref_type == a_raise) {
                 sum += ref_state.action[r][a].size * s0[r];

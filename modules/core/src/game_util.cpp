@@ -10,10 +10,13 @@
 bool IsPriorStateSameRound(State *old_state, State *new_state)
 {
     uint8_t canon_round = old_state->round;
-    if (canon_round != new_state->round) return false;
+    if (canon_round != new_state->round) {
+        return false;
+    }
     uint8_t a_max = old_state->numActions[canon_round];
-    if (a_max >= new_state->numActions[canon_round])
-        return false; //cant have the same number of actions
+    if (a_max >= new_state->numActions[canon_round]) {
+        return false; // Can't have the same number of actions.
+    }
     //else, for each action in the old state, it should be found in the new state
     //if none action of the old_state, it returns true
     for (auto a = 0; a < a_max; a++) {
@@ -32,13 +35,10 @@ bool StateBettingEqual(State *a, State *b)
     }
 
     for (auto r = 0; r <= a->round; ++r) {
-
         if (a->numActions[r] != b->numActions[r]) {
             return false;
         }
-
         for (auto i = 0; i < a->numActions[r]; ++i) {
-
             if (a->action[r][i].type != b->action[r][i].type) {
                 return false;
             }
@@ -47,6 +47,7 @@ bool StateBettingEqual(State *a, State *b)
             }
         }
     }
+
     return true;
 }
 
@@ -60,10 +61,13 @@ bool WithEarlyRaiseAction(State *state)
     }
 
     //for > preflop, if someone else raise before,
-    if (state->numActions[r] > 0)
-        for (int a = 0; a < state->numActions[r]; a++)
-            if (state->action[r][a].type == a_raise)
+    if (state->numActions[r] > 0) {
+        for (int a = 0; a < state->numActions[r]; a++) {
+            if (state->action[r][a].type == a_raise) {
                 return true;
+            }
+        }
+    }
 
     return false;
 }
@@ -98,8 +102,10 @@ bool IsStateCardsValid(Game *game, State *state)
         }
     }
 
-    if (cards_s.size() != cards_v.size())  //should be the same
+    if (cards_s.size() != cards_v.size()) { //should be the same
         return false;
+    }
+
     return true;
 }
 

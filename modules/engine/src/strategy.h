@@ -132,7 +132,7 @@ public:
     bool IsStrategyInitializedForMyHand(Node *matched_node, STRATEGY_TYPE strategy_type, MatchState *match_state) const;
 
     std::vector<NodeMatchCondition>
-    FindSortedMatchedNodes(State &state) const;
+    FindSortedMatchedNodes(State &ref_state) const;
 };
 
 struct sThreadInputZipavgConvert

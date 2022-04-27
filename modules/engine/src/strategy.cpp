@@ -874,20 +874,20 @@ bool Strategy::IsStrategyInitializedForMyHand(Node *matched_node,
   return !uniform;
 }
 
-std::vector<NodeMatchCondition> Strategy::FindSortedMatchedNodes(State &state) const {
+std::vector<NodeMatchCondition> Strategy::FindSortedMatchedNodes(State &ref_state) const {
   if (ag_->node_map_.empty()) {
     ag_->IndexBettingTree();
   }
 
-  auto current_player = currentPlayer(&ag_->game_, &state);
-  auto real_betting = GetBettingStr(&ag_->game_, state);
-  auto all_nodes = ag_->node_map_[state.round].equal_range(current_player);
+  auto current_player = currentPlayer(&ag_->game_, &ref_state);
+  auto real_betting = GetBettingStr(&ag_->game_, ref_state);
+  auto all_player_nodes_range = ag_->node_map_[ref_state.round].equal_range(current_player);
 
   SimpleTimer timer;
   std::vector<NodeMatchCondition> candidate_conditions;
-  for (auto it = all_nodes.first; it != all_nodes.second; it++) {
+  for (auto it = all_player_nodes_range.first; it != all_player_nodes_range.second; it++) {
     auto node = (*it).second;
-    NodeMatchCondition new_condition(state, node);
+    NodeMatchCondition new_condition(ref_state, node);
     if (new_condition.bet_sim_dist_ > 2) {
         continue;
     }
@@ -895,9 +895,9 @@ std::vector<NodeMatchCondition> Strategy::FindSortedMatchedNodes(State &state) c
   }
 
   std::sort(candidate_conditions.begin(), candidate_conditions.end());
-//  timer.Checkpoint("selecting match node candidates");
-  //for extreme case where you have none matched nodes
-  logger::require_critical(!candidate_conditions.empty(), "none node matched. terrible tree");
+  timer.Checkpoint("selecting match node candidates");
 
+  // For extreme case where we got no matched nodes.
+  logger::require_critical(!candidate_conditions.empty(), "none node matched. terrible tree");
   return candidate_conditions;
 }
