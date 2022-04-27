@@ -172,10 +172,12 @@ struct SubgameSolver
             uint8_t step_to_last_root = kth_action - last_strategy->ag_->root_state_.numActions[this_round];
             steps_to_reverse = step_to_last_root;
         }
+
         // logger::debug("    [SGS %s] : resolving takes [step back %d]", name_, steps_to_reverse);
         if (!BuildResolvingSubgame(ag, real_match_state, steps_to_reverse)) {
             return SKIP_RESOLVING_SUBGAME;
         }
+
         ag->root_node_->PrintState("    new subgame root : ");
         return (steps_to_reverse > 1) ? RESOLVING_WITH_PRIOR_ACTION : RESOLVING_NONE_PRIOR_ACTION;
     }

@@ -242,7 +242,7 @@ double ScalarCfrWorker::LeafRootRollout(int trainee_pos, Node *this_node, HandIn
   //map this_node to the node of blueprint
   NodeMatchResult condition;
   //todo: change the strategy match node
-  blueprint_->ag_->MapToNode(this_node->state_, condition);
+    blueprint_->ag_->MapStateToNode(this_node->state_, condition);
   auto matched_node = condition.matched_node_;
 
   //do multiple rollout starting from the matched node till u hit terminal

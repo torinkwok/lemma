@@ -21,7 +21,7 @@ void AbstractGame::IndexBettingTree(Node *this_node)
  * @param strategy
  * @return
  */
-void AbstractGame::MapToNode(State &real_state, NodeMatchResult &condition)
+void AbstractGame::MapStateToNode(State &real_state, NodeMatchResult &match_result)
 {
     if (node_map_.empty()) {
         IndexBettingTree();
@@ -31,8 +31,8 @@ void AbstractGame::MapToNode(State &real_state, NodeMatchResult &condition)
     auto real_betting = GetBettingStr(&game_, real_state);
     auto range = node_map_[real_state.round].equal_range(current_player);
 
-    NodeMatchResult min_condition;
-    min_condition.bet_sim_dist_ = 100; // A hack to make sure it has composite less than.
+    NodeMatchResult min_match_result;
+    min_match_result.bet_sim_dist_ = 100; // A hack to make sure it has composite less than.
 
     for (auto it = range.first; it != range.second; it++) {
         auto node = (*it).second;
@@ -47,24 +47,24 @@ void AbstractGame::MapToNode(State &real_state, NodeMatchResult &condition)
         if (betting_similarity == 0) {
             sum_bet_size_abs_diff = DecayingBettingDistance(real_state, node->state_);
         }
-        auto new_condition = NodeMatchResult{node,
-                                             L2_dist,
-                                             betting_similarity,
-                                             sum_bet_size_abs_diff};
-        if (new_condition < min_condition) {
+        auto new_match_result = NodeMatchResult{node,
+                                                L2_dist,
+                                                betting_similarity,
+                                                sum_bet_size_abs_diff};
+        if (new_match_result < min_match_result) {
             // And also the strategy is not uninitialized.
-            min_condition.CopyValue(new_condition);
+            min_match_result.CopyValue(new_match_result);
         }
     }
 
     // For extreme case where we got nothing matched.
-    if (min_condition.bet_sim_dist_ == 100) {
+    if (min_match_result.bet_sim_dist_ == 100) {
         logger::warn("none node matched. terrible tree");
-        min_condition.matched_node_ = range.first->second;
+        min_match_result.matched_node_ = range.first->second;
     }
 
     //set return
-    condition.CopyValue(min_condition);
+    match_result.CopyValue(min_match_result);
 }
 
 void AbstractGame::NormalizeRootReachProb()

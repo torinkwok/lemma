@@ -291,7 +291,7 @@ void Strategy::PrintNodeStrategy(Node *node, Bucket_t b, STRATEGY_TYPE calc_mode
 void Strategy::InspectStrategyByMatchState(MatchState *match_state, STRATEGY_TYPE calc_mode) {
   //perform action mapping
   NodeMatchResult condition;
-  ag_->MapToNode(match_state->state, condition);
+    ag_->MapStateToNode(match_state->state, condition);
   auto matched_node = condition.matched_node_;
 
   //compute r n b
@@ -731,10 +731,10 @@ bool Strategy::FreezePriorAction(Strategy *old_strategy, MatchState *real_match_
     };
     //match to both tree
     NodeMatchResult old_match_condition;
-    old_strategy->ag_->MapToNode(step_back_state, old_match_condition);
+      old_strategy->ag_->MapStateToNode(step_back_state, old_match_condition);
     auto old_match_node = old_match_condition.matched_node_;
     NodeMatchResult new_match_condition;
-    ag_->MapToNode(step_back_state, new_match_condition);
+      ag_->MapStateToNode(step_back_state, new_match_condition);
     auto new_match_node = new_match_condition.matched_node_;
     if (old_match_node->GetAmax() != new_match_node->GetAmax()) {
       logger::error("tough to map strategy over with diff actions size");
@@ -812,10 +812,10 @@ void Strategy::CheckFrozenStrategyConsistency(Strategy *old_strategy, MatchState
         "stepping too many steps. u may have an empty state or invalid state. return false");
     //match to both tree
     NodeMatchResult old_match_condition;
-    old_strategy->ag_->MapToNode(step_back_state, old_match_condition);
+      old_strategy->ag_->MapStateToNode(step_back_state, old_match_condition);
     auto old_match_node = old_match_condition.matched_node_;
     NodeMatchResult new_match_condition;
-    ag_->MapToNode(step_back_state, new_match_condition);
+      ag_->MapStateToNode(step_back_state, new_match_condition);
     auto new_match_node = new_match_condition.matched_node_;
     logger::require_critical(old_match_node->GetAmax() != new_match_node->GetAmax(),
                              "tough to map strategy over with diff actions size");

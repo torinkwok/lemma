@@ -146,7 +146,7 @@ public:
 
     void IndexBettingTree(Node *this_node = nullptr);
 
-    void MapToNode(State &real_state, NodeMatchResult &condition);
+    void MapStateToNode(State &real_state, NodeMatchResult &match_result);
 
     void NormalizeRootReachProb();
 
