@@ -48,9 +48,11 @@ struct sHandBelief
 
     void CleanCrashHands(VectorIndex v)
     {
-        for (int i = 0; i < FULL_HAND_BELIEF_SIZE; i++)
-            if (VectorIdxClash(v, i))
+        for (int i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {
+            if (VectorIdxClash(v, i)) {
                 Zero(i);
+            }
+        }
     }
 
     void Zero(int idx)
@@ -85,18 +87,22 @@ struct sHandBelief
     //-1 also consdier 0 in this case. normally used in ranges propogations
     bool AllZero()
     {
-        for (double &i: belief_)
-            if (i > 0.0)
+        for (double &i: belief_) {
+            if (i > 0.0) {
                 return false;
+            }
+        }
         return true;
     }
 
     //normally used in range propogation. assuming all > 0 except -1
     bool AllPruned()
     {
-        for (double &i: belief_)
-            if (i > BELIEF_MASK_VALUE)
+        for (double &i: belief_) {
+            if (i > BELIEF_MASK_VALUE) {
                 return false;
+            }
+        }
         return true;
     }
 
@@ -107,14 +113,18 @@ struct sHandBelief
         double sum = BeliefSum();
         if (sum == 0) {
             logger::warn("hand belief sum is zero, hack to 1.0/1326");
-            for (auto i = 0; i < FULL_HAND_BELIEF_SIZE; i++)
-                if (!IsPruned(i))
+            for (auto i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {
+                if (!IsPruned(i)) {
                     belief_[i] = 1.0 / FULL_HAND_BELIEF_SIZE;
+                }
+            }
         } else {
             double scaler = 1.0 / sum;
-            for (auto i = 0; i < FULL_HAND_BELIEF_SIZE; i++)
-                if (!IsPruned(i))
+            for (auto i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {
+                if (!IsPruned(i)) {
                     belief_[i] *= scaler;
+                }
+            }
         }
     }
 
@@ -141,9 +151,11 @@ struct sHandBelief
     double BeliefSum()
     {
         double sum = 0;
-        for (int i = 0; i < FULL_HAND_BELIEF_SIZE; i++)
-            if (!IsPruned(i)) //skip masked value -1 only
+        for (int i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {
+            if (!IsPruned(i)) { //skip masked value -1 only
                 sum += belief_[i];
+            }
+        }
         return sum;
     }
 
@@ -168,39 +180,47 @@ struct sHandBelief
     //set all hands , overriding -1
     void SetAll(double nv)
     {
-        for (double &i: belief_)
+        for (double &i: belief_) {
             i = nv;
+        }
     };
 
     void DotMultiply(sHandBelief *that)
     {
         //they must be topo same
-        for (auto i = 0; i < FULL_HAND_BELIEF_SIZE; i++)
-            if (!IsPruned(i) && !that->IsPruned(i))
+        for (auto i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {
+            if (!IsPruned(i) && !that->IsPruned(i)) {
                 belief_[i] *= that->belief_[i];
+            }
+        }
     };
 
     int CountPrunedEntries()
     {
         int count = 0;
-        for (auto i = 0; i < FULL_HAND_BELIEF_SIZE; i++)
-            if (IsPruned(i))
+        for (auto i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {
+            if (IsPruned(i)) {
                 count++;
+            }
+        }
         return count;
     }
 
     //copy everthing including the mask value.
     void CopyValue(sHandBelief *that)
     {
-        for (auto i = 0; i < FULL_HAND_BELIEF_SIZE; i++)
+        for (auto i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {
             belief_[i] = that->belief_[i];
+        }
     };
 
     void Scale(double factor)
     {
-        for (auto i = 0; i < FULL_HAND_BELIEF_SIZE; i++)
-            if (!IsPruned(i)) //skip 0 and -1
+        for (auto i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {
+            if (!IsPruned(i)) { //skip 0 and -1
                 belief_[i] *= factor;
+            }
+        }
     }
 
     //delete all entries < 10^-6. an average range is about 1 / 1326 ~= 8 * 10^-4
@@ -238,8 +258,9 @@ struct Ranges
             num_player_ = that->num_player_;
             beliefs_ = new sHandBelief[num_player_];
             Copy(that);
-            for (int p = 0; p < num_player_; p++)
+            for (int p = 0; p < num_player_; p++) {
                 beliefs_[p].SetAllUnmaskedHands(0.0);
+            }
         } else {
             logger::critical("unsupported range constructr mode %s", directive);
         }
@@ -247,8 +268,9 @@ struct Ranges
 
     void Copy(Ranges *that_range) const
     {
-        for (int p = 0; p < num_player_; p++)
+        for (int p = 0; p < num_player_; p++) {
             beliefs_[p].CopyValue(&that_range->beliefs_[p]);
+        }
     }
 
     virtual ~Ranges()
@@ -259,8 +281,9 @@ struct Ranges
     [[nodiscard]] double ValueSum() const
     {
         double v = 0.0;
-        for (int p = 0; p < num_player_; p++)
+        for (int p = 0; p < num_player_; p++) {
             v += beliefs_[p].BeliefSum();
+        }
         return v;
     }
 
@@ -272,8 +295,9 @@ struct Ranges
         if (check_pruning) {
             //return if any side is all pruned. cuz it does not want to go down while it will be all zero even pruning is not on
             bool ready = beliefs_[0].AllPruned() || beliefs_[1].AllPruned();
-            if (ready)
+            if (ready) {
                 return true;
+            }
         }
         //then check the all zero condition.
         return beliefs_[0].AllZero() && beliefs_[1].AllZero();

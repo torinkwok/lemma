@@ -68,21 +68,29 @@ public:
         char line[1024];
         printState(game_, &ag->root_state_, 1024, line);
         logger::debug("    tree root state = %s", line);
-        ag->raw_ = raw_;
-        ag->game_ = *game_;
+        {
+            ag->raw_ = raw_;
+            ag->game_ = *game_;
+        }
         logger::trace("ag_builder -> building betting tree...");
-        ag->depth_limited_ = depth_limited;
-        ag->root_node_ = action_abs_->BuildBettingTree(&ag->game_, ag->root_state_, forced_state, depth_limited);
-        logger::trace("ag_builder -> building bucket reader...");
-        card_abs_->BuildReader(&ag->game_, &ag->root_state_, &ag->bucket_reader_);
+        {
+            ag->depth_limited_ = depth_limited;
+            ag->root_node_ = action_abs_->BuildBettingTree(&ag->game_, ag->root_state_, forced_state, depth_limited);
+        }
         Bucket_t bucket_count_by_round[4]{0, 0, 0, 0};
-        ag->bucket_reader_.GetBucketCounts(bucket_count_by_round);
+        logger::trace("ag_builder -> building bucket reader...");
+        {
+            card_abs_->BuildReader(&ag->game_, &ag->root_state_, &ag->bucket_reader_);
+            ag->bucket_reader_.GetBucketCounts(bucket_count_by_round);
+        }
         logger::trace("ag_builder -> building kernel...");
-        ag->BuildKernelFromRootNode(bucket_count_by_round);
-        //default if in new game.
+        {
+            ag->BuildKernelFromRootNode(bucket_count_by_round);
+            //default if in new game.
 #ifdef DEV
-        ag->Print();
+            ag->Print();
 #endif
+        }
     }
 
 private:

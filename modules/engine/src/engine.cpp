@@ -277,7 +277,7 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
 
     /* BUILD offline strategy. */
     if (playbook_stack_.empty()) {
-        auto blueprint = blueprint_pool_->FindStrategy(new_match_state, normalized_game_);
+        auto *blueprint = blueprint_pool_->FindStrategy(new_match_state, normalized_game_);
         playbook_stack_.emplace_back(blueprint, default_action_chooser_, STRATEGY_ZIPAVG);
     }
 
@@ -286,12 +286,12 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
     int cfr_return_code = -1;
     auto candidate_match_results = playbook_stack_.back().strategy_->FindSortedMatchedNodes(new_match_state->state);
     auto best_match_result = candidate_match_results.at(0);
-    for (auto s = 0; s < sgs_size_; s++) {
-        if (!subgame_solvers_[s].CheckTriggerCondition(best_match_result)) {
+    for (auto sg_i = 0; sg_i < sgs_size_; sg_i++) {
+        if (!subgame_solvers_[sg_i].CheckTriggerCondition(best_match_result)) {
             continue;
         }
 
-        selected_sgs = &subgame_solvers_[s];
+        selected_sgs = &subgame_solvers_[sg_i];
 
         /*
          * trying to build new playbook
@@ -303,7 +303,7 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
          */
 
         /* Step 1: Subgame building. */
-        auto sgs_ag = new AbstractGame();
+        auto *sgs_ag = new AbstractGame();
         // TODO: The pot requirement is by the match state, not by the new root. Change it?
         int subgame_built_code = selected_sgs->BuildSubgame(sgs_ag,
                                                             playbook_stack_.back().strategy_,
@@ -311,7 +311,7 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
                                                             new_match_state);
         // Do nothing if the sub-game gets skipped.
         if (subgame_built_code == SKIP_RESOLVING_SUBGAME) {
-            logger::debug("    [ENGINE %s] : build subgame skipped [code %s]",
+            logger::debug("    [ENGINE %sg_i] : build subgame skipped [code %sg_i]",
                           engine_name_,
                           SubgameBuiltCodeMap[subgame_built_code]);
             delete sgs_ag;
@@ -321,16 +321,15 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
         /* Step 2: Nested range estimation. */
         bool estimate_success;
         for (auto i = playbook_stack_.size() - 1; i >= 0; i--) {
-            auto cursor_strategy = playbook_stack_.at(i).strategy_;
+            auto *cursor_strategy = playbook_stack_.at(i).strategy_;
             STRATEGY_TYPE avg_type = playbook_stack_.at(i).playing_strategy_;
             estimate_success = cursor_strategy->EstimateNewAgReach(sgs_ag,
                                                                    new_match_state,
                                                                    avg_type);
             if (estimate_success) {
                 break;
-            } else {
-                logger::warn("    [ENGINE %s] : range estimate fails. try next strategy", engine_name_);
             }
+            logger::warn("    [ENGINE %sg_i] : range estimate fails. try next strategy", engine_name_);
         }
 
         // Tear down `sgs_ag` if all endeavors fail.
@@ -342,6 +341,7 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
 
         /* Step 3: Async CFR subgame solving. */
         sgs_strategy_stack_.push_back(new Strategy(sgs_ag));
+
         Strategy *&new_strategy = sgs_strategy_stack_.back();
         new_strategy->name_ = selected_sgs->name_;  // To make the destruction recognizable.
         new_strategy->InitMemoryAndValue(selected_sgs->cfr_->cfr_param_.cfr_mode_);
@@ -349,7 +349,7 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
                                               new_strategy,
                                               timeout_ms - timer.GetLapseFromBegin());
         if (cfr_return_code < 0) {
-            logger::error("    [ENGINE %s] : cfr solving error in subgame", engine_name_);
+            logger::error("    [ENGINE %sg_i] : cfr solving error in subgame", engine_name_);
             return GET_ACTION_FAILURE;
         }
 
@@ -369,42 +369,43 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
 
     /* GET ACTION from the last playbook. */
     auto pb_depth = playbook_stack_.size();
-    for (int pb_it = pb_depth - 1; pb_it >= 0; pb_it--) {
-        //try to find from this playbook
-        auto pb = playbook_stack_.at(pb_it);
+    for (auto pb_i = pb_depth - 1; pb_i >= 0; pb_i--) {
+        // Try to find from this playbook.
+        auto pb = playbook_stack_.at(pb_i);
         logger::debug("    [ENGINE %s] : get action from %d/%d playbooks (%s)",
                       engine_name_,
-                      pb_depth - pb_it,
+                      pb_depth - pb_i,
                       pb_depth,
                       pb.strategy_->name_);
 
-        auto matches_pbs = pb.strategy_->FindSortedMatchedNodes(new_match_state->state);
-        for (auto m: matches_pbs) {
-            if (!pb.strategy_->IsStrategyInitializedForMyHand(m.matched_node_,
+        auto match_results = pb.strategy_->FindSortedMatchedNodes(new_match_state->state);
+        for (auto mr: match_results) {
+            if (!pb.strategy_->IsStrategyInitializedForMyHand(mr.matched_node_,
                                                               pb.playing_strategy_,
                                                               new_match_state)) {
-                m.matched_node_->PrintState(" skip virgin node in get_action_final: ");
+                mr.matched_node_->PrintState(" skip virgin node in get_action_final: ");
                 continue;
             }
 
-            m.Print("trying to get action from this node : ");
+            mr.Print("trying to get action from this node : ");
 
             // Also check if the path is decent when using blueprint. Skip it if not.
             if (!IsNestedSgsStarted()) {
-                //skip if at root node, i.e. first to act.
-                if (m.matched_node_ != pb.strategy_->ag_->root_node_) {
+                // Skip if at the root node, i.e. the agent being first to act.
+                if (mr.matched_node_ != pb.strategy_->ag_->root_node_) {
                     logger::debug("check reach on blueprint");
+                    // FIXME(kwok): The number of players is not supposed to be fixed to 2.
                     std::array<sHandBelief, 2> new_base_reach;
                     new_base_reach[0].CopyValue(&pb.strategy_->ag_->root_hand_belief_[0]);
                     new_base_reach[1].CopyValue(&pb.strategy_->ag_->root_hand_belief_[1]);
                     auto estimate_return_code = pb.strategy_->EstimateReachProbAtNode(
                             new_match_state,
-                            m.matched_node_,
+                            mr.matched_node_,
                             new_base_reach,
                             pb.playing_strategy_,
                             DEFAULT_BAYESIAN_TRANSITION_FILTER);
                     if (estimate_return_code != RANGE_ESTIMATE_SUCCESS) {
-                        m.matched_node_->PrintState("[ blueprint ] node not reachable");
+                        mr.matched_node_->PrintState("[ blueprint ] node not reachable");
                         logger::warn("[ blueprint ] node not reachable [%s]",
                                      RangeEstimateCodeMap[estimate_return_code]);
                         continue;
@@ -412,12 +413,12 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
                 }
             }
 
-            m.matched_node_->PrintState("getting action from node : ");
+            mr.matched_node_->PrintState("getting action from node : ");
             pb.strategy_->PickAction(new_match_state,
                                      pb.action_chooser_,
                                      r_action,
                                      pb.playing_strategy_,
-                                     m.matched_node_);
+                                     mr.matched_node_);
             logger::debug("    [ENGINE %s] : pick action [%c%d] with mode [%s]",
                           engine_name_,
                           actionChars[r_action.type],

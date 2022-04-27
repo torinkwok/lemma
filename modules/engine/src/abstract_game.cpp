@@ -94,20 +94,23 @@ void AbstractGame::NormalizeRootReachProb()
 void AbstractGame::BuildKernelFromRootNode(Bucket_t *bucket_counts)
 {
     kernel_ = new sRNBAKernel{};
-    if (root_node_ == nullptr)
+    if (root_node_ == nullptr) {
         logger::critical("trying to build kernel from empty root node");
+    }
     kernel_->BuildInternal(root_node_, bucket_counts, depth_limited_);
 }
 
 void AbstractGame::PurifyLowProbRange() const
 {
-    for (auto p = 0; p < GetActivePlayerNum(); p++)
+    for (auto p = 0; p < GetActivePlayerNum(); p++) {
         root_hand_belief_[p].Purify();
+    }
 }
 
 int AbstractGame::GetMaxRound() const
 {
-    if (depth_limited_)
+    if (depth_limited_) {
         return root_node_->GetRound();
+    }
     return HOLDEM_MAX_ROUNDS - 1;
 }
