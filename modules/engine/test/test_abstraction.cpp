@@ -94,8 +94,8 @@ TEST_CASE("test node match condition", "[abstraction]") {
   auto L2_s2 = PotL2(match_state_ref.state, match_state_s2.state);
   REQUIRE(L2_s1 > L2_s2);
 
-  NodeMatchCondition n_s1{nullptr, L2_s1, betting_dist_s1_ref, decading_dist_s1};
-  NodeMatchCondition n_s2{nullptr, L2_s2, betting_dist_s2_ref, decading_dist_s2};
+  NodeMatchResult n_s1{nullptr, L2_s1, betting_dist_s1_ref, decading_dist_s1};
+  NodeMatchResult n_s2{nullptr, L2_s2, betting_dist_s2_ref, decading_dist_s2};
   REQUIRE(n_s1 < n_s2);
 
   free(game);

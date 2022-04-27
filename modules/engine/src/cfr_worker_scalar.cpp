@@ -240,7 +240,7 @@ double ScalarCfrWorker::WalkLeafTree(int trainee_pos,
 
 double ScalarCfrWorker::LeafRootRollout(int trainee_pos, Node *this_node, HandInfo &hand_info) {
   //map this_node to the node of blueprint
-  NodeMatchCondition condition;
+  NodeMatchResult condition;
   //todo: change the strategy match node
   blueprint_->ag_->MapToNode(this_node->state_, condition);
   auto matched_node = condition.matched_node_;

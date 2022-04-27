@@ -131,7 +131,7 @@ public:
 
     bool IsStrategyInitializedForMyHand(Node *matched_node, STRATEGY_TYPE strategy_type, MatchState *match_state) const;
 
-    std::vector<NodeMatchCondition>
+    std::vector<NodeMatchResult>
     FindSortedMatchedNodes(State &ref_state) const;
 };
 

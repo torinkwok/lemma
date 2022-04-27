@@ -97,7 +97,7 @@ bool Strategy::EstimateNewAgReach(AbstractGame *new_ag, MatchState *new_match_st
   }
 
   auto candidate_match = FindSortedMatchedNodes(new_ag->root_state_);
-  NodeMatchCondition last_condition;
+  NodeMatchResult last_condition;
   int attempt_cursor = 1;
   for (auto match : candidate_match) {
     logger::require_warn(last_condition < match, "should be sorted man!!");
@@ -290,7 +290,7 @@ void Strategy::PrintNodeStrategy(Node *node, Bucket_t b, STRATEGY_TYPE calc_mode
 
 void Strategy::InspectStrategyByMatchState(MatchState *match_state, STRATEGY_TYPE calc_mode) {
   //perform action mapping
-  NodeMatchCondition condition;
+  NodeMatchResult condition;
   ag_->MapToNode(match_state->state, condition);
   auto matched_node = condition.matched_node_;
 
@@ -730,10 +730,10 @@ bool Strategy::FreezePriorAction(Strategy *old_strategy, MatchState *real_match_
       logger::critical("stepping too many steps. u may have an empty state or invalid state. return false");
     };
     //match to both tree
-    NodeMatchCondition old_match_condition;
+    NodeMatchResult old_match_condition;
     old_strategy->ag_->MapToNode(step_back_state, old_match_condition);
     auto old_match_node = old_match_condition.matched_node_;
-    NodeMatchCondition new_match_condition;
+    NodeMatchResult new_match_condition;
     ag_->MapToNode(step_back_state, new_match_condition);
     auto new_match_node = new_match_condition.matched_node_;
     if (old_match_node->GetAmax() != new_match_node->GetAmax()) {
@@ -811,10 +811,10 @@ void Strategy::CheckFrozenStrategyConsistency(Strategy *old_strategy, MatchState
         StepBackAction(&ag_->game_, &real_match_state->state, &step_back_state, steps_to_reverse) == -1,
         "stepping too many steps. u may have an empty state or invalid state. return false");
     //match to both tree
-    NodeMatchCondition old_match_condition;
+    NodeMatchResult old_match_condition;
     old_strategy->ag_->MapToNode(step_back_state, old_match_condition);
     auto old_match_node = old_match_condition.matched_node_;
-    NodeMatchCondition new_match_condition;
+    NodeMatchResult new_match_condition;
     ag_->MapToNode(step_back_state, new_match_condition);
     auto new_match_node = new_match_condition.matched_node_;
     logger::require_critical(old_match_node->GetAmax() != new_match_node->GetAmax(),
@@ -874,7 +874,7 @@ bool Strategy::IsStrategyInitializedForMyHand(Node *matched_node,
   return !uniform;
 }
 
-std::vector<NodeMatchCondition> Strategy::FindSortedMatchedNodes(State &ref_state) const {
+std::vector<NodeMatchResult> Strategy::FindSortedMatchedNodes(State &ref_state) const {
   if (ag_->node_map_.empty()) {
     ag_->IndexBettingTree();
   }
@@ -884,10 +884,10 @@ std::vector<NodeMatchCondition> Strategy::FindSortedMatchedNodes(State &ref_stat
   auto all_player_nodes_range = ag_->node_map_[ref_state.round].equal_range(current_player);
 
   SimpleTimer timer;
-  std::vector<NodeMatchCondition> candidate_conditions;
+  std::vector<NodeMatchResult> candidate_conditions;
   for (auto it = all_player_nodes_range.first; it != all_player_nodes_range.second; it++) {
     auto node = (*it).second;
-    NodeMatchCondition new_condition(ref_state, node);
+    NodeMatchResult new_condition(ref_state, node);
     if (new_condition.bet_sim_dist_ > 2) {
         continue;
     }

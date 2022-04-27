@@ -21,7 +21,7 @@ void AbstractGame::IndexBettingTree(Node *this_node)
  * @param strategy
  * @return
  */
-void AbstractGame::MapToNode(State &real_state, NodeMatchCondition &condition)
+void AbstractGame::MapToNode(State &real_state, NodeMatchResult &condition)
 {
     if (node_map_.empty()) {
         IndexBettingTree();
@@ -31,7 +31,7 @@ void AbstractGame::MapToNode(State &real_state, NodeMatchCondition &condition)
     auto real_betting = GetBettingStr(&game_, real_state);
     auto range = node_map_[real_state.round].equal_range(current_player);
 
-    NodeMatchCondition min_condition;
+    NodeMatchResult min_condition;
     min_condition.bet_sim_dist_ = 100; // A hack to make sure it has composite less than.
 
     for (auto it = range.first; it != range.second; it++) {
@@ -47,10 +47,10 @@ void AbstractGame::MapToNode(State &real_state, NodeMatchCondition &condition)
         if (betting_similarity == 0) {
             sum_bet_size_abs_diff = DecayingBettingDistance(real_state, node->state_);
         }
-        auto new_condition = NodeMatchCondition{node,
-                                                L2_dist,
-                                                betting_similarity,
-                                                sum_bet_size_abs_diff};
+        auto new_condition = NodeMatchResult{node,
+                                             L2_dist,
+                                             betting_similarity,
+                                             sum_bet_size_abs_diff};
         if (new_condition < min_condition) {
             // And also the strategy is not uninitialized.
             min_condition.CopyValue(new_condition);

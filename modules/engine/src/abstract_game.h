@@ -12,17 +12,18 @@ extern "C" {
 #include <bulldog/game.h>
 };
 
-struct NodeMatchCondition
+// TODO(kwok): Move it to the `AbstractGame` namespace.
+struct NodeMatchResult
 {
-    NodeMatchCondition() = default;
+    NodeMatchResult() = default;
 
-    NodeMatchCondition(Node *matched_node, double off_tree_dist, int edit_distance, int betting_size_distance)
+    NodeMatchResult(Node *matched_node, double off_tree_dist, int edit_distance, int betting_size_distance)
             : matched_node_(matched_node),
               off_tree_dist_(off_tree_dist),
               bet_sim_dist_(edit_distance),
               betting_size_distance(betting_size_distance) {}
 
-    NodeMatchCondition(State &real_state, Node *node)
+    NodeMatchResult(State &real_state, Node *node)
     {
         off_tree_dist_ = PotL2(real_state, node->state_);
         bet_sim_dist_ = SumBettingPatternDiff(&real_state, &node->state_);
@@ -56,7 +57,7 @@ struct NodeMatchCondition
         }
     }
 
-    void CopyValue(NodeMatchCondition &that)
+    void CopyValue(NodeMatchResult &that)
     {
         matched_node_ = that.matched_node_;
         off_tree_dist_ = that.off_tree_dist_;
@@ -64,7 +65,7 @@ struct NodeMatchCondition
         betting_size_distance = that.betting_size_distance;
     }
 
-    bool operator<(const NodeMatchCondition &that) const
+    bool operator<(const NodeMatchResult &that) const
     {
         if (bet_sim_dist_ < that.bet_sim_dist_) return true;
         if (bet_sim_dist_ > that.bet_sim_dist_) return false;
@@ -145,7 +146,7 @@ public:
 
     void IndexBettingTree(Node *this_node = nullptr);
 
-    void MapToNode(State &real_state, NodeMatchCondition &condition);
+    void MapToNode(State &real_state, NodeMatchResult &condition);
 
     void NormalizeRootReachProb();
 

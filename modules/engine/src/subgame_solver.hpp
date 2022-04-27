@@ -69,7 +69,7 @@ struct SubgameSolver
      *  - then bet_seq
      *  - then off_tree
      */
-    bool CheckTriggerCondition(NodeMatchCondition &condition)
+    bool CheckTriggerCondition(NodeMatchResult &condition)
     {
         if (condition.matched_node_->GetRound() == active_round) {
             if (condition.matched_node_->GetSumPot() >= active_sumpot_min) {
@@ -102,7 +102,7 @@ struct SubgameSolver
      */
     int BuildSubgame(AbstractGame *ag,
                      Strategy *last_strategy,
-                     NodeMatchCondition &condition,
+                     NodeMatchResult &condition,
                      MatchState *real_match_state)
     {
         //never resolve back to the preflop.

@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
     //inspect by any match state
     MatchState match_state;
     readMatchState(result["match_state"].as<std::string>().c_str(), &strategy->ag_->game_, &match_state);
-    NodeMatchCondition condition;
+    NodeMatchResult condition;
     strategy->ag_->MapToNode(match_state.state, condition);
     //using open game just that we dont need to check the jupyter notebook code
     strategy->InspectNode(condition.matched_node_, prefix + "_" + mode + "_open_game", calc_mode);
