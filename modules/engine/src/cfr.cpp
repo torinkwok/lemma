@@ -18,7 +18,6 @@ int CFR::Solve(Strategy *blueprint,
                   starting_checkpoint,
                   cfr_param_.depth_limited);
 
-
     //more safegaurding codes
     if (strategy->ag_->root_node_->GetRound() != HOLDEM_ROUND_RIVER) {
         if (strategy->ag_->root_hand_belief_[0].NonZeroBeliefCount() <= 30
@@ -65,12 +64,12 @@ int CFR::Solve(Strategy *blueprint,
 #if DEV > 1
         SimpleTimer cmd_timer;
 #endif
-
         auto cmd = local_commands.front();
         if (cmd.trigger_iter_ >= starting_checkpoint) {
             //only print in blueprint training for now. not using sgs in preflop
-            if (strategy->ag_->root_node_->GetRound() == HOLDEM_ROUND_PREFLOP)
+            if (strategy->ag_->root_node_->GetRound() == HOLDEM_ROUND_PREFLOP) {
                 cmd.Print();
+            }
 
             switch (cmd.type_) {
                 case CMD_SCALAR_SOLVE :
@@ -90,8 +89,9 @@ int CFR::Solve(Strategy *blueprint,
                                          thread_pool_,
                                          cancelled);
                         //only update state if not abruptly cancelled from outside
-                        if (!cancelled)
+                        if (!cancelled) {
                             current_state.UpdateState(cmd.steps_, timer.GetLapseFromBegin(), total_result.avg_);
+                        }
                     } else {
                         //break all loops
                         keep_solving = false;
@@ -243,6 +243,7 @@ void *CFR::CfrSolve(void *thread_args)
         auto rng = std::default_random_engine{rd()};
         std::shuffle(my_flops.begin(), my_flops.end(), rng);
     }
+
     auto remaining_iter = args->iterations_;
     args->output_->Prepare(remaining_iter);
 
@@ -281,6 +282,7 @@ void *CFR::CfrSolve(void *thread_args)
         args->output_->AddIterResult(local_util);
     }
     args->output_->Process();
+
     //thread clean up.
     delete args;
     delete worker;
@@ -478,7 +480,11 @@ int CFR::AsyncCfrSolving(CFR *cfr,
                          int cfr_checkpoint)
 {
     logger::debug("Asyn CFR solving on.");
-    return cfr->Solve(blueprint, new_strategy, *convergence_state, cancelled, cfr_checkpoint);
+    return cfr->Solve(blueprint,
+                      new_strategy,
+                      *convergence_state,
+                      cancelled,
+                      cfr_checkpoint);
 }
 
 void CFR::Config(web::json::value data)

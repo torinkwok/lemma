@@ -4,8 +4,7 @@ void AbstractGame::IndexBettingTree(Node *this_node)
 {
     // if at the root node.
     if (this_node == nullptr) this_node = root_node_;
-    if (this_node->IsTerminal())
-        return;
+    if (this_node->IsTerminal()) return;
     //index choice node only
     node_map_[this_node->GetRound()].insert(
             std::make_pair(this_node->GetActingPlayer(), this_node));

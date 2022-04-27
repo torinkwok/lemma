@@ -878,6 +878,7 @@ std::vector<NodeMatchCondition> Strategy::FindSortedMatchedNodes(State &state) c
   if (ag_->node_map_.empty()) {
     ag_->IndexBettingTree();
   }
+
   auto current_player = currentPlayer(&ag_->game_, &state);
   auto real_betting = GetBettingStr(&ag_->game_, state);
   auto all_nodes = ag_->node_map_[state.round].equal_range(current_player);

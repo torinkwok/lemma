@@ -318,7 +318,7 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
             break;
         }
 
-        /* Step 2: Nested range estimatimation. */
+        /* Step 2: Nested range estimation. */
         bool estimate_success;
         for (auto i = playbook_stack_.size() - 1; i >= 0; i--) {
             auto cursor_strategy = playbook_stack_.at(i).strategy_;
