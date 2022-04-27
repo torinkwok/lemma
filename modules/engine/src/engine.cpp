@@ -284,10 +284,10 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
     /* BUILD online strategies. */
     SubgameSolver *selected_sgs = nullptr;
     int cfr_return_code = -1;
-    auto candidate_node_conditions = playbook_stack_.back().strategy_->FindSortedMatchedNodes(new_match_state->state);
-    auto best_match = candidate_node_conditions.at(0);
+    auto candidate_match_results = playbook_stack_.back().strategy_->FindSortedMatchedNodes(new_match_state->state);
+    auto best_match_result = candidate_match_results.at(0);
     for (auto s = 0; s < sgs_size_; s++) {
-        if (!subgame_solvers_[s].CheckTriggerCondition(best_match)) {
+        if (!subgame_solvers_[s].CheckTriggerCondition(best_match_result)) {
             continue;
         }
 
@@ -307,7 +307,7 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
         // TODO: The pot requirement is by the match state, not by the new root. Change it?
         int subgame_built_code = selected_sgs->BuildSubgame(sgs_ag,
                                                             playbook_stack_.back().strategy_,
-                                                            best_match,
+                                                            best_match_result,
                                                             new_match_state);
         // Do nothing if the sub-game gets skipped.
         if (subgame_built_code == SKIP_RESOLVING_SUBGAME) {

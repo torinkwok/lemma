@@ -887,11 +887,11 @@ std::vector<NodeMatchResult> Strategy::FindSortedMatchedNodes(State &ref_state) 
   std::vector<NodeMatchResult> candidate_conditions;
   for (auto it = all_player_nodes_range.first; it != all_player_nodes_range.second; it++) {
     auto node = (*it).second;
-    NodeMatchResult new_condition(ref_state, node);
-    if (new_condition.bet_sim_dist_ > 2) {
+    NodeMatchResult match_result(ref_state, node);
+    if (match_result.bet_similarity_dist_ > 2) {
         continue;
     }
-    candidate_conditions.push_back(new_condition);
+    candidate_conditions.push_back(match_result);
   }
 
   std::sort(candidate_conditions.begin(), candidate_conditions.end());

@@ -75,9 +75,9 @@ struct SubgameSolver
             if (condition.matched_node_->GetSumPot() >= active_sumpot_min) {
                 logger::debug("    [SGS %s] : triggers by sumpot %d", name_, condition.matched_node_->GetSumPot());
                 return true;
-            } else if (condition.bet_sim_dist_ >= active_bet_seq_min) {
+            } else if (condition.bet_similarity_dist_ >= active_bet_seq_min) {
                 logger::debug("    [SGS %s] : triggers by bet sequence pattern distance %d", name_,
-                              condition.bet_sim_dist_);
+                              condition.bet_similarity_dist_);
                 return true;
             } else if (condition.off_tree_dist_ >= active_offtree_min) {
                 logger::debug("    [SGS %s] : triggers by offtree distance %f", name_, condition.off_tree_dist_);
@@ -102,7 +102,7 @@ struct SubgameSolver
      */
     int BuildSubgame(AbstractGame *ag,
                      Strategy *last_strategy,
-                     NodeMatchResult &condition,
+                     NodeMatchResult &math_result,
                      MatchState *real_match_state)
     {
         //never resolve back to the preflop.
@@ -142,7 +142,7 @@ struct SubgameSolver
          * - off_tree trigger
          * - pot limit trigger?
          */
-        if (condition.off_tree_dist_ >= resolve_offtree_min) {
+        if (math_result.off_tree_dist_ >= resolve_offtree_min) {
             logger::debug("    [SGS %s] : subgame resolving activated by off_tree_dist", name_);
         } else if ((real_state.spent[0] + real_state.spent[1]) >= resolve_sumpot_min) {
             logger::debug("    [SGS %s] : subgame resolving activated by min_pot", name_);
@@ -192,7 +192,7 @@ struct SubgameSolver
                     "    [SGS %s] : stepping too many steps. u may have an empty state or invalid state. return false",
                     name_);
             return false;
-        };
+        }
         if (real_state.round != step_back_state->round) {
             logger::error("    [SGS %s] : can not step back to the last round", name_);
             return false;

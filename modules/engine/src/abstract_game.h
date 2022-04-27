@@ -20,14 +20,14 @@ struct NodeMatchResult
     NodeMatchResult(Node *matched_node, double off_tree_dist, int edit_distance, int betting_size_distance)
             : matched_node_(matched_node),
               off_tree_dist_(off_tree_dist),
-              bet_sim_dist_(edit_distance),
+              bet_similarity_dist_(edit_distance),
               betting_size_distance(betting_size_distance) {}
 
     NodeMatchResult(State &real_state, Node *node)
     {
         off_tree_dist_ = PotL2(real_state, node->state_);
-        bet_sim_dist_ = SumBettingPatternDiff(&real_state, &node->state_);
-        if (bet_sim_dist_ == 0) {
+        bet_similarity_dist_ = SumBettingPatternDiff(&real_state, &node->state_);
+        if (bet_similarity_dist_ == 0) {
             betting_size_distance = DecayingBettingDistance(real_state, node->state_);
         }
         matched_node_ = node;
@@ -35,7 +35,7 @@ struct NodeMatchResult
 
     Node *matched_node_ = nullptr;
     double off_tree_dist_ = -1;
-    int bet_sim_dist_ = -1;
+    int bet_similarity_dist_ = -1;
     //this is just for internal comparison with betting size considered. not used normally
     int betting_size_distance = -1;
 
@@ -45,15 +45,17 @@ struct NodeMatchResult
         sprintf(prefix, "%s MATCH NODE CONDITION [L2:%.3f][SIM:%d][ROUND:%d][BETTING_DIST:%d]: ",
                 msg.c_str(),
                 off_tree_dist_,
-                bet_sim_dist_,
+                bet_similarity_dist_,
                 matched_node_->GetRound(),
                 betting_size_distance);
+
         matched_node_->PrintState(std::string(prefix));
+
         if (off_tree_dist_ > 1000 && matched_node_->GetRound() == HOLDEM_ROUND_PREFLOP) {
             logger::warn("off_tree distance [%f] > 1000 | r = %d | sim_dist = %d",
                          off_tree_dist_,
                          matched_node_->GetRound(),
-                         bet_sim_dist_);
+                         bet_similarity_dist_);
         }
     }
 
@@ -61,24 +63,23 @@ struct NodeMatchResult
     {
         matched_node_ = that.matched_node_;
         off_tree_dist_ = that.off_tree_dist_;
-        bet_sim_dist_ = that.bet_sim_dist_;
+        bet_similarity_dist_ = that.bet_similarity_dist_;
         betting_size_distance = that.betting_size_distance;
     }
 
     bool operator<(const NodeMatchResult &that) const
     {
-        if (bet_sim_dist_ < that.bet_sim_dist_) return true;
-        if (bet_sim_dist_ > that.bet_sim_dist_) return false;
-        // path sim ==
-        if (bet_sim_dist_ == 0) {
-            //only if it is 0
+        if (bet_similarity_dist_ < that.bet_similarity_dist_) return true;
+        if (bet_similarity_dist_ > that.bet_similarity_dist_) return false;
+        if (bet_similarity_dist_ == 0) {
             if (betting_size_distance < that.betting_size_distance) return true;
             if (betting_size_distance > that.betting_size_distance) return false;
         }
-        // betting with size edit distance ====
+
         if (off_tree_dist_ < that.off_tree_dist_) return true;
         if (off_tree_dist_ > that.off_tree_dist_) return false;
-        // L2 ==, return the one with lower node_id, or u may have two diff match in a same round otherwise
+
+        // Prefer the one with lower sibling index (a.k.a. node ID).
         return matched_node_->GetN() < that.matched_node_->GetN();
     }
 };

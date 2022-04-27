@@ -31,8 +31,8 @@ void AbstractGame::MapStateToNode(State &real_state, NodeMatchResult &match_resu
     auto real_betting = GetBettingStr(&game_, real_state);
     auto range = node_map_[real_state.round].equal_range(current_player);
 
-    NodeMatchResult min_match_result;
-    min_match_result.bet_sim_dist_ = 100; // A hack to make sure it has composite less than.
+    NodeMatchResult best_match_result;
+    best_match_result.bet_similarity_dist_ = 100; // A hack to make sure it has composite less than.
 
     for (auto it = range.first; it != range.second; it++) {
         auto node = (*it).second;
@@ -51,20 +51,20 @@ void AbstractGame::MapStateToNode(State &real_state, NodeMatchResult &match_resu
                                                 L2_dist,
                                                 betting_similarity,
                                                 sum_bet_size_abs_diff};
-        if (new_match_result < min_match_result) {
+        if (new_match_result < best_match_result) {
             // And also the strategy is not uninitialized.
-            min_match_result.CopyValue(new_match_result);
+            best_match_result.CopyValue(new_match_result);
         }
     }
 
     // For extreme case where we got nothing matched.
-    if (min_match_result.bet_sim_dist_ == 100) {
+    if (best_match_result.bet_similarity_dist_ == 100) {
         logger::warn("none node matched. terrible tree");
-        min_match_result.matched_node_ = range.first->second;
+        best_match_result.matched_node_ = range.first->second;
     }
 
     //set return
-    match_result.CopyValue(min_match_result);
+    match_result.CopyValue(best_match_result);
 }
 
 void AbstractGame::NormalizeRootReachProb()
