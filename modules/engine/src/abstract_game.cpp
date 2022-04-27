@@ -23,40 +23,46 @@ void AbstractGame::IndexBettingTree(Node *this_node)
  */
 void AbstractGame::MapToNode(State &real_state, NodeMatchCondition &condition)
 {
-    if (node_map_.empty())
+    if (node_map_.empty()) {
         IndexBettingTree();
+    }
 
     auto current_player = currentPlayer(&game_, &real_state);
-
     auto real_betting = GetBettingStr(&game_, real_state);
     auto range = node_map_[real_state.round].equal_range(current_player);
 
     NodeMatchCondition min_condition;
-    min_condition.bet_sim_dist_ = 100;//a hack to make sure it has composite less than
+    min_condition.bet_sim_dist_ = 100; // A hack to make sure it has composite less than.
 
     for (auto it = range.first; it != range.second; it++) {
         auto node = (*it).second;
         auto betting_similarity = SumBettingPatternDiff(&node->state_, &real_state);
-        if (betting_similarity > 2)
-            continue; //greedy skipping
-        //      auto node_betting_str = GetBettingStr(node->game_, node->state_);
-        //      auto betting_similarity = uiLevenshteinDistance(real_betting, node_betting_str);
+        if (betting_similarity > 2) {
+            continue; // Skipping greedily.
+        }
+        // auto node_betting_str = GetBettingStr(node->game_, node->state_);
+        // auto betting_similarity = uiLevenshteinDistance(real_betting, node_betting_str);
         double L2_dist = PotL2(real_state, node->state_);
         int sum_bet_size_abs_diff = -1;
-        if (betting_similarity == 0)
+        if (betting_similarity == 0) {
             sum_bet_size_abs_diff = DecayingBettingDistance(real_state, node->state_);
-
-        auto new_condition = NodeMatchCondition{node, L2_dist, betting_similarity, sum_bet_size_abs_diff};
+        }
+        auto new_condition = NodeMatchCondition{node,
+                                                L2_dist,
+                                                betting_similarity,
+                                                sum_bet_size_abs_diff};
         if (new_condition < min_condition) {
-            //and also the strategy is not uninitialized.
+            // And also the strategy is not uninitialized.
             min_condition.CopyValue(new_condition);
         }
     }
-    //for extreme case where you have none matched nodes
+
+    // For extreme case where we got nothing matched.
     if (min_condition.bet_sim_dist_ == 100) {
         logger::warn("none node matched. terrible tree");
         min_condition.matched_node_ = range.first->second;
     }
+
     //set return
     condition.CopyValue(min_condition);
 }
