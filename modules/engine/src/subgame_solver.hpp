@@ -89,62 +89,65 @@ struct SubgameSolver
     }
 
     /*
-     * how to build the subgame defines the subgame solver
-     * we follow the design of pluribus impl (unsafe, but always solve from the street root)
+     * How to build the subgame defines the subgame solver.
+     *
+     * We follow the design of Pluribus implementation (unsafe, but always solve from the street root)
      *  - to force the previous unseen action into the abstraction
      *  - to force the strategy of already happened actions of mine frozen
-     * specifically,
-     * - CheckNewRound()
-     * - resolving if needed
+     *
+     * Specifically,
+     *  - CheckNewRound()
+     *  - resolving if needed
      *  - kth_action = 1, do step back, it is equivalent to the street root
      *  - > 1, step back to the root.
-     *
      */
     int BuildSubgame(AbstractGame *ag,
-                     Strategy *last_strategy,
-                     NodeMatchResult &math_result,
-                     MatchState *real_match_state)
+                     Strategy *strategy,
+                     NodeMatchResult &match_result,
+                     MatchState *ref_match_state)
     {
-        //never resolve back to the preflop.
-        State &real_state = real_match_state->state;
-        auto r = real_state.round;
-        if (r == HOLDEM_ROUND_PREFLOP) {
+        State &ref_state = ref_match_state->state;
+        auto round = ref_state.round;
+
+        // Never resolve back to pre-flop.
+        if (round == HOLDEM_ROUND_PREFLOP) {
             logger::warn("    [SGS %s] : subgame solving at preflop is not yet supported. build subgame fails", name_);
             return UNSUPPORTED_SUBGAME;
         }
 
         /*
-         * CHECK NEW ROUND
-         *  where the actor has taken none actions
+         * CHECK NEW ROUND where the acting player has taken none actions
          *
-         *  in 2p game, it can be kth_action = 0 | 1
+         * In 2-player game, `kth_action` can only be either 0 or 1.
          */
-        auto kth_action = real_state.numActions[r];
-        //hero act first _ new round
+        auto kth_action = ref_state.numActions[round];
+
+        // Kong I-Chi acts first - new round.
         if (kth_action == 0) {
-            logger::debug("    [SGS %s] : built subgame [step back 0] for new round for [r = %d] [kth_action = %d]",
-                          name_, r,
+            logger::debug("    [SGS %s] : built subgame [step back 0] for new round for [round = %d] [kth_action = %d]",
+                          name_, round,
                           kth_action);
-            ag_builder_->Build(ag, &real_state);
+            ag_builder_->Build(ag, &ref_state);
             return SOLVE_ON_NEW_ROUND_HERO_FIRST;
         }
 
-        //opp act first _ new round/ or resolving
+        // Opponents act first - new round or resolving.
+        // FIXME(kwok): The number of players is not supposed to be fixed to 2.
         if (kth_action == 1) {
-            if (!BuildResolvingSubgame(ag, real_match_state, 1)) {
+            if (!BuildResolvingSubgame(ag, ref_match_state, 1)) {
                 return SKIP_RESOLVING_SUBGAME;
             }
             return SOLVE_ON_NEW_ROUND_OPPO_FIRST;
         }
 
         /*
-         * check if we should resolve by
-         * - off_tree trigger
-         * - pot limit trigger?
+         * Check if we should resolve by
+         *  - off_tree trigger
+         *  - pot limit trigger?
          */
-        if (math_result.off_tree_dist_ >= resolve_offtree_min) {
+        if (match_result.off_tree_dist_ >= resolve_offtree_min) {
             logger::debug("    [SGS %s] : subgame resolving activated by off_tree_dist", name_);
-        } else if ((real_state.spent[0] + real_state.spent[1]) >= resolve_sumpot_min) {
+        } else if ((ref_state.spent[0] + ref_state.spent[1]) >= resolve_sumpot_min) {
             logger::debug("    [SGS %s] : subgame resolving activated by min_pot", name_);
         } else {
             logger::debug("    [SGS %s] : skip resolving subgame. resolving requirement not met", name_);
@@ -152,15 +155,15 @@ struct SubgameSolver
         }
 
         /*
-         * do resolving, firstly decide how many steps to take back
-         * - if last strategy is at the prior round, resolve to street root. todo: not very likely to happen
-         * - if last startegy is at the same round, resolve to the root of last strategy.
+         * Do resolving, firstly decide how many steps to take back
+         *  - if the last strategy is within the prior round, resolve to the root of the street. (TODO: Not very likely to happen.)
+         *  - if the last startegy is within the same round, resolve to the root of last strategy.
          */
-        auto this_round = real_match_state->state.round;
-        auto last_root_pot = last_strategy->ag_->root_state_.spent[0] + last_strategy->ag_->root_state_.spent[0];
+        auto this_round = ref_match_state->state.round;
+        auto last_root_pot = strategy->ag_->root_state_.spent[0] + strategy->ag_->root_state_.spent[0];
         // last strategy is at the same round && sumpot_min requirements meets
         bool step_back_to_last_root =
-                last_strategy->ag_->root_node_->GetRound() == this_round
+                strategy->ag_->root_node_->GetRound() == this_round
                 && last_root_pot >= resolve_last_root_sumpot_min;
 
         int steps_to_reverse;
@@ -169,12 +172,12 @@ struct SubgameSolver
                           resolve_last_root_sumpot_min);
             steps_to_reverse = 1;
         } else {
-            uint8_t step_to_last_root = kth_action - last_strategy->ag_->root_state_.numActions[this_round];
+            uint8_t step_to_last_root = kth_action - strategy->ag_->root_state_.numActions[this_round];
             steps_to_reverse = step_to_last_root;
         }
 
         // logger::debug("    [SGS %s] : resolving takes [step back %d]", name_, steps_to_reverse);
-        if (!BuildResolvingSubgame(ag, real_match_state, steps_to_reverse)) {
+        if (!BuildResolvingSubgame(ag, ref_match_state, steps_to_reverse)) {
             return SKIP_RESOLVING_SUBGAME;
         }
 
@@ -228,6 +231,7 @@ struct SubgameSolver
             auto action_conf = sgs_conf.at("action_chooser");
             action_chooser_->ConfFromJson(action_conf);
         }
+
 #if 0
         //make convergence self enclosed in the cfr
         auto conv_config = sgs_conf.at("convergence");
@@ -240,6 +244,7 @@ struct SubgameSolver
         convergence_state_->expl_std =
             conv_config.has_field("expl_std") ? conv_config.at("expl_std").as_double() : -1;
 #endif
+
         cfr_ = new CFR(sgs_conf.at("cfr_file").as_string().c_str());
         convergence_state_->iteration = cfr_->cfr_param_.iteration;
         cfr_->BuildCMDPipeline();
