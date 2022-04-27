@@ -188,6 +188,7 @@ int CFR::Solve(Strategy *blueprint,
         //pop outside of the checkpoint_check loop
         local_commands.pop_front();
     }
+
     delete[] pub_bucket_flop_boards;
     delete[] thread_board;
 

@@ -888,13 +888,16 @@ std::vector<NodeMatchCondition> Strategy::FindSortedMatchedNodes(State &state) c
   for (auto it = all_nodes.first; it != all_nodes.second; it++) {
     auto node = (*it).second;
     NodeMatchCondition new_condition(state, node);
-    if (new_condition.bet_sim_dist_ > 2)
-      continue;
+    if (new_condition.bet_sim_dist_ > 2) {
+        continue;
+    }
     candidate_conditions.push_back(new_condition);
   }
+
   std::sort(candidate_conditions.begin(), candidate_conditions.end());
 //  timer.Checkpoint("selecting match node candidates");
   //for extreme case where you have none matched nodes
   logger::require_critical(!candidate_conditions.empty(), "none node matched. terrible tree");
+
   return candidate_conditions;
 }

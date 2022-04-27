@@ -377,8 +377,9 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
                       pb_depth - pb_it,
                       pb_depth,
                       pb.strategy_->name_);
-        auto matches_pb = pb.strategy_->FindSortedMatchedNodes(new_match_state->state);
-        for (auto m: matches_pb) {
+
+        auto matches_pbs = pb.strategy_->FindSortedMatchedNodes(new_match_state->state);
+        for (auto m: matches_pbs) {
             if (!pb.strategy_->IsStrategyInitializedForMyHand(m.matched_node_,
                                                               pb.playing_strategy_,
                                                               new_match_state)) {
@@ -388,7 +389,7 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
 
             m.Print("trying to get action from this node : ");
 
-            // Also check if the path is strong when using blueprint. Skip it if not.
+            // Also check if the path is decent when using blueprint. Skip it if not.
             if (!IsNestedSgsStarted()) {
                 //skip if at root node, i.e. first to act.
                 if (m.matched_node_ != pb.strategy_->ag_->root_node_) {
@@ -428,6 +429,7 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
         }
     }
 
+    // If everything's going fine, the execution flow would never reach this point.
     logger::error("not a single action any history playbook valid. wrong wrong");
     AsynStartDaemonSolving(selected_sgs, cfr_return_code);
     return GET_ACTION_FAILURE;

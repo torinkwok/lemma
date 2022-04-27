@@ -14,7 +14,7 @@ extern "C" {
 
 struct NodeMatchCondition
 {
-    NodeMatchCondition() {}
+    NodeMatchCondition() = default;
 
     NodeMatchCondition(Node *matched_node, double off_tree_dist, int edit_distance, int betting_size_distance)
             : matched_node_(matched_node),
@@ -26,8 +26,9 @@ struct NodeMatchCondition
     {
         off_tree_dist_ = PotL2(real_state, node->state_);
         bet_sim_dist_ = SumBettingPatternDiff(&real_state, &node->state_);
-        if (bet_sim_dist_ == 0)
+        if (bet_sim_dist_ == 0) {
             betting_size_distance = DecayingBettingDistance(real_state, node->state_);
+        }
         matched_node_ = node;
     }
 
@@ -47,11 +48,12 @@ struct NodeMatchCondition
                 matched_node_->GetRound(),
                 betting_size_distance);
         matched_node_->PrintState(std::string(prefix));
-        if (off_tree_dist_ > 1000 && matched_node_->GetRound() == HOLDEM_ROUND_PREFLOP)
+        if (off_tree_dist_ > 1000 && matched_node_->GetRound() == HOLDEM_ROUND_PREFLOP) {
             logger::warn("off_tree distance [%f] > 1000 | r = %d | sim_dist = %d",
                          off_tree_dist_,
                          matched_node_->GetRound(),
                          bet_sim_dist_);
+        }
     }
 
     void CopyValue(NodeMatchCondition &that)
