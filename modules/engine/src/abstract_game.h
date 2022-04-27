@@ -25,6 +25,7 @@ struct NodeMatchResult
 
     NodeMatchResult(State &real_state, Node *node)
     {
+        // TODO(kwok): We need to figure out a way to calculate off-tree distance for multiple players.
         off_tree_dist_ = PotL2(real_state, node->state_);
         bet_similarity_dist_ = SumBettingPatternDiff(&real_state, &node->state_);
         if (bet_similarity_dist_ == 0) {
@@ -34,9 +35,11 @@ struct NodeMatchResult
     }
 
     Node *matched_node_ = nullptr;
+
     double off_tree_dist_ = -1;
     int bet_similarity_dist_ = -1;
-    //this is just for internal comparison with betting size considered. not used normally
+
+    // This is just for internal comparison with betting size considered. Not used normally.
     int betting_size_distance = -1;
 
     void Print(std::string msg = "") const

@@ -4,6 +4,7 @@ Copyright (C) 2011 by the Computer Poker Research Group, University of Alberta
 
 #ifndef _GAME_H
 #define _GAME_H
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <inttypes.h>
@@ -49,25 +50,34 @@ Copyright (C) 2011 by the Computer Poker Research Group, University of Alberta
 
 static const int PREMATURE_FOLD = 5;
 
-typedef union {
-  uint16_t bySuit[4];
-  uint64_t cards;
+typedef union
+{
+    uint16_t bySuit[4];
+    uint64_t cards;
 } Cardset;
 
-enum BettingType { limitBetting, noLimitBetting };
-enum ActionType {
-  a_fold = 0, a_call = 1, a_raise = 2,
-  a_invalid = NUM_ACTION_TYPES
+enum BettingType
+{
+    limitBetting, noLimitBetting
+};
+enum ActionType
+{
+    a_fold = 0, a_call = 1, a_raise = 2,
+    a_invalid = NUM_ACTION_TYPES
 };
 
-enum RAISE_MODE {
-  POT_NET,
-  POT_AFTER_CALL,
-  NET_OR_X,
-  X_LAST_RAISE
+enum RAISE_MODE
+{
+    POT_NET,
+    POT_AFTER_CALL,
+    NET_OR_X,
+    X_LAST_RAISE
 };
 
-enum BettingParseType { ACPCSTANDARD, SLUMBOTSTANDARD };
+enum BettingParseType
+{
+    ACPCSTANDARD, SLUMBOTSTANDARD
+};
 
 static const char actionChars[a_invalid + 1] = "fcr";
 
@@ -93,114 +103,120 @@ static const uint8_t RANK_QUEEN = 10;
 static const uint8_t RANK_KING = 11;
 static const uint8_t RANK_ACE = 12;
 
-typedef struct {
-  enum ActionType type; /* is action a fold, call, or raise? */
-  int32_t size; /* for no-limit raises, we need a size
+typedef struct
+{
+    enum ActionType type; /* is action a fold, call, or raise? */
+    int32_t size; /* for no-limit raises, we need a size
 		   MUST BE 0 IN ALL CASES WHERE IT IS NOT USED */
 } Action;
 
-typedef struct {
+typedef struct
+{
 
-  /* stack sizes for each player */
-  int32_t stack[MAX_PLAYERS];
+    /* stack sizes for each player */
+    int32_t stack[MAX_PLAYERS];
 
-  /* must set this to true if overriding player stack
-   * otherwise initState will replace the changes
-   */
-  uint8_t use_state_stack;
+    /* must set this to true if overriding player stack
+     * otherwise initState will replace the changes
+     */
+    uint8_t use_state_stack;
 
-  /* entry fee for game, per player */
-  int32_t blind[MAX_PLAYERS];
+    /* entry fee for game, per player */
+    int32_t blind[MAX_PLAYERS];
 
-  /* size of fixed raises for limitBetting games */
-  int32_t raiseSize[MAX_ROUNDS];
+    /* size of fixed raises for limitBetting games */
+    int32_t raiseSize[MAX_ROUNDS];
 
-  /* general class of game */
-  enum BettingType bettingType;
+    /* general class of game */
+    enum BettingType bettingType;
 
-  /* number of players in the game */
-  uint8_t numPlayers;
+    /* number of players in the game */
+    uint8_t numPlayers;
 
-  /* number of betting rounds */
-  uint8_t numRounds;
+    /* number of betting rounds */
+    uint8_t numRounds;
 
-  /* first player to act in a round */
-  uint8_t firstPlayer[MAX_ROUNDS];
+    /* first player to act in a round */
+    uint8_t firstPlayer[MAX_ROUNDS];
 
-  /* number of bets/raises that may be made in each round */
-  uint8_t maxRaises[MAX_ROUNDS];
+    /* number of bets/raises that may be made in each round */
+    uint8_t maxRaises[MAX_ROUNDS];
 
-  /* number of suits and ranks in the deck of cards */
-  uint8_t numSuits;
-  uint8_t numRanks;
+    /* number of suits and ranks in the deck of cards */
+    uint8_t numSuits;
+    uint8_t numRanks;
 
-  /* number of private player cards */
-  uint8_t numHoleCards;
+    /* number of private player cards */
+    uint8_t numHoleCards;
 
-  /* number of shared public cards each round */
-  uint8_t numBoardCards[MAX_ROUNDS];
+    /* number of shared public cards each round */
+    uint8_t numBoardCards[MAX_ROUNDS];
 } Game;
 
-typedef struct {
-  uint32_t handId;
+typedef struct
+{
+    uint32_t handId;
 
-  /* largest bet so far, including all previous rounds */
-  int32_t maxSpent;
+    /* largest bet so far, including all previous rounds */
+    int32_t maxSpent;
 
-  /* minimum number of chips a player must have spend in total to raise
-     only used for noLimitBetting games */
-  int32_t minNoLimitRaiseTo;
+    /* minimum number of chips a player must have spend in total to raise
+       only used for noLimitBetting games */
+    int32_t minNoLimitRaiseTo;
 
-  /* spent[ p ] gives the total amount put into the pot by player p */
-  int32_t spent[MAX_PLAYERS];
+    /* spent[ p ] gives the total amount put into the pot by player p */
+    int32_t spent[MAX_PLAYERS];
 
-  /* stackPlayer is by player, not seat */
-  int32_t stackPlayer[MAX_PLAYERS];
+    /* stackPlayer is by player, not seat */
+    int32_t stackPlayer[MAX_PLAYERS];
 
-  /* spent[ r ][ p ] gives the total amount put into the boy by player p up to a particular round */
-  int32_t sum_round_spent[MAX_ROUNDS][MAX_PLAYERS];
+    /* spent[ r ][ p ] gives the total amount put into the boy by player p up to a particular round */
+    int32_t sum_round_spent[MAX_ROUNDS][MAX_PLAYERS];
 
-  /* action[ r ][ i ] gives the i'th action in round r */
-  Action action[MAX_ROUNDS][MAX_NUM_ACTIONS];
+    /* action[ r ][ i ] gives the i'th action in round r */
+    Action action[MAX_ROUNDS][MAX_NUM_ACTIONS];
 
-  /* actingPlayer[ r ][ i ] gives the player who made action i in round r
-     we can always figure this out from the actions taken, but it's
-     easier to just remember this in multiplayer (because of folds) */
-  uint8_t actingPlayer[MAX_ROUNDS][MAX_NUM_ACTIONS];
+    /* actingPlayer[ r ][ i ] gives the player who made action i in round r
+       we can always figure this out from the actions taken, but it's
+       easier to just remember this in multiplayer (because of folds) */
+    uint8_t actingPlayer[MAX_ROUNDS][MAX_NUM_ACTIONS];
 
-  /* numActions[ r ] gives the number of actions made in round r.
-   * the actual value of it, starting from 1 not 0
-   * e.g. cc = 2 actions. cr600c = 3 actions*/
-  uint8_t numActions[MAX_ROUNDS];
+    /* numActions[ r ] gives the number of actions made in round r.
+     * the actual value of it, starting from 1 not 0
+     * e.g. cc = 2 actions. cr600c = 3 actions*/
+    uint8_t numActions[MAX_ROUNDS];
 
-  /* current round: a value between 0 and game.numRounds-1
-     a showdown is still in numRounds-1, not a separate round */
-  uint8_t round;
+    /* current round: a value between 0 and game.numRounds-1
+       a showdown is still in numRounds-1, not a separate round */
+    uint8_t round;
 
-  /* finished is non-zero if and only if the game is over */
-  uint8_t finished;
+    /* finished is non-zero if and only if the game is over */
+    uint8_t finished;
 
-  /* playerFolded[ p ] is non-zero if and only player p has folded */
-  uint8_t playerFolded[MAX_PLAYERS];
+    /* playerFolded[ p ] is non-zero if and only player p has folded */
+    uint8_t playerFolded[MAX_PLAYERS];
 
-  /* public cards (including cards which may not yet be visible to players) */
-  uint8_t boardCards[MAX_BOARD_CARDS];
+    /* public cards (including cards which may not yet be visible to players) */
+    uint8_t boardCards[MAX_BOARD_CARDS];
 
-  /* private cards */
-  uint8_t holeCards[MAX_PLAYERS][MAX_HOLE_CARDS];
+    /* private cards */
+    uint8_t holeCards[MAX_PLAYERS][MAX_HOLE_CARDS];
 } State;
 
-typedef struct {
-  State state;
-  /// In ACPC, the `position` field tells the clients their position relative to
-  /// the dealer button. A value of `0` indicates that for the current hand, the
-  /// client is the first player after the button (the *small* blind in ring
-  /// games, or the *big* blind in reverse-blind heads-up games.)
-  uint8_t viewingPlayer;
+typedef struct
+{
+    State state;
+    /// In ACPC, the `position` field tells the clients their position relative to
+    /// the dealer button. A value of `0` indicates that for the current hand, the
+    /// client is the first player after the button (the *small* blind in ring
+    /// games, or the *big* blind in reverse-blind heads-up games.)
+    uint8_t viewingPlayer;
 } MatchState;
 
 int rankCardset(const Cardset cards);
+
 Cardset emptyCardset();
+
 void addCardToCardset(Cardset *c, int suit, int rank);
 
 /* returns a game structure, or NULL on failure */
@@ -217,6 +233,7 @@ void initState(const Game *game, const uint32_t handId, State *state);
 
 /* shuffle a deck of cards and deal them out, writing the results to state */
 void dealCards(const Game *game, rng_state_t *rng, State *state);
+
 void dealRemainingCards(const Game *game, rng_state_t *rng, State *state);
 
 //copy a -> b
@@ -244,12 +261,15 @@ int isValidAction(const Game *game, const State *curState,
 /* record the given action in state
     does not check that action is valid */
 void doAction(const Game *game, const Action *action, State *state);
-int TotalAction(State* state);
+
+int TotalAction(State *state);
+
 /*
  * target_state should be precisely one step backward from the reference state
  * return -1 if fails. 0 otherwise.
  */
 int StepBackAction(const Game *game, State *reference_state, State *target_state, int back_steps);
+
 Action GetLastActionFromState(State *reference_state);
 
 /* returns non-zero if hand is finished, zero otherwise */
@@ -328,11 +348,13 @@ int readAction(const char *string, const Game *game, Action *action);
    DOES NOT COUNT FINAL 0 TERMINATOR IN THIS COUNT!!! */
 int printAction(const Game *game, const Action *action,
                 const int maxLen, char *string);
+
 /* print actions to a string
    returns number of characters printed to string, or -1 on failure
    DOES NOT COUNT FINAL 0 TERMINATOR IN THIS COUNT!!! */
 int printBetting(const Game *game, const State *state,
                  const int maxLen, char *string);
+
 int printStack(const Game *game, const State *state,
                const int maxLen, char *string);
 
@@ -373,15 +395,24 @@ int printCards(const Game *game,
  * BULLDOG newly added
  */
 int32_t actionToCode(Action *action);
-int BigBlind(Game* game);
-int GameDefaultStackDepth(Game* game);
-int StateStackDepth(State* state, Game* game);
-int InSameMatch(Game* game, MatchState* old_state, MatchState* new_state);
-int32_t GetRaiseBase(Game* game, State* state, enum RAISE_MODE mode);
-int CompatibleGame(const Game *lhs, Game* rhs);
-int BigBlindPosition(Game* game);
-int32_t PotStake(State* state); //only support 2p now, return the min
-int SumBettingPatternDiff(State* lhs, State* rhs);
+
+int BigBlind(Game *game);
+
+int GameDefaultStackDepth(Game *game);
+
+int StateStackDepth(State *state, Game *game);
+
+int InSameMatch(Game *game, MatchState *old_state, MatchState *new_state);
+
+int32_t GetRaiseBase(Game *game, State *state, enum RAISE_MODE mode);
+
+int CompatibleGame(const Game *lhs, Game *rhs);
+
+int BigBlindPosition(Game *game);
+
+int32_t PotStake(State *state); //only support 2p now, return the min
+int SumBettingPatternDiff(State *lhs, State *rhs);
+
 int StateEqual(const Game *game, const State *a, const State *b);
 
 

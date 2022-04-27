@@ -93,7 +93,7 @@ struct SubgameSolver
      *
      * We follow the design of Pluribus implementation (unsafe, but always solve from the street root)
      *  - to force the previous unseen action into the abstraction
-     *  - to force the strategy of already happened actions of mine frozen
+     *  - to force the last_strategy of already happened actions of mine frozen
      *
      * Specifically,
      *  - CheckNewRound()
@@ -102,7 +102,7 @@ struct SubgameSolver
      *  - > 1, step back to the root.
      */
     int BuildSubgame(AbstractGame *ag,
-                     Strategy *strategy,
+                     Strategy *last_strategy,
                      NodeMatchResult &match_result,
                      MatchState *ref_match_state)
     {
@@ -118,33 +118,30 @@ struct SubgameSolver
         /*
          * CHECK NEW ROUND where the acting player has taken none actions
          *
-         * In 2-player game, `kth_action` can only be either 0 or 1.
+         * In 2-player game, `action_kth` can only be either 0 or 1.
          */
-        auto kth_action = ref_state.numActions[round];
+        auto action_kth = ref_state.numActions[round];
 
-        // Kong I-Chi acts first - new round.
-        if (kth_action == 0) {
-            logger::debug("    [SGS %s] : built subgame [step back 0] for new round for [round = %d] [kth_action = %d]",
+        // New round: Kong I-Chi acts first.
+        if (action_kth == 0) {
+            logger::debug("    [SGS %s] : built subgame [step back 0] for new round for [round = %d] [action_kth = %d]",
                           name_, round,
-                          kth_action);
+                          action_kth);
             ag_builder_->Build(ag, &ref_state);
             return SOLVE_ON_NEW_ROUND_HERO_FIRST;
         }
 
-        // Opponents act first - new round or resolving.
+        // New round: Opponents act first.
         // FIXME(kwok): The number of players is not supposed to be fixed to 2.
-        if (kth_action == 1) {
+        // if (action_kth < ag->game_.numPlayers) {
+        if (action_kth == 1) {
             if (!BuildResolvingSubgame(ag, ref_match_state, 1)) {
                 return SKIP_RESOLVING_SUBGAME;
             }
             return SOLVE_ON_NEW_ROUND_OPPO_FIRST;
         }
 
-        /*
-         * Check if we should resolve by
-         *  - off_tree trigger
-         *  - pot limit trigger?
-         */
+        /* Check which condition triggered sub-game solving: off-tree or pot-limit? */
         if (match_result.off_tree_dist_ >= resolve_offtree_min) {
             logger::debug("    [SGS %s] : subgame resolving activated by off_tree_dist", name_);
         } else if ((ref_state.spent[0] + ref_state.spent[1]) >= resolve_sumpot_min) {
@@ -155,51 +152,56 @@ struct SubgameSolver
         }
 
         /*
-         * Do resolving, firstly decide how many steps to take back
-         *  - if the last strategy is within the prior round, resolve to the root of the street. (TODO: Not very likely to happen.)
-         *  - if the last startegy is within the same round, resolve to the root of last strategy.
+         * Do sub-game resolving. Firstly decide how many steps to take back:
+         *  - If `last_strategy` is within the prior round, resolve to the root of the street. (TODO: Not very likely to happen though.)
+         *  - If `last_startegy` is within the same round, resolve to the root of last `last_strategy`.
          */
         auto this_round = ref_match_state->state.round;
-        auto last_root_pot = strategy->ag_->root_state_.spent[0] + strategy->ag_->root_state_.spent[0];
-        // last strategy is at the same round && sumpot_min requirements meets
-        bool step_back_to_last_root =
-                strategy->ag_->root_node_->GetRound() == this_round
-                && last_root_pot >= resolve_last_root_sumpot_min;
+        auto last_root_pot = last_strategy->ag_->root_state_.spent[0] + last_strategy->ag_->root_state_.spent[0];
+        // `last_strategy` belongs to the same round && sumpot_min requirements are met.
+        bool needs_step_back_to_last_root = last_strategy->ag_->root_node_->GetRound() == this_round
+                                            && last_root_pot >= resolve_last_root_sumpot_min;
 
-        int steps_to_reverse;
-        if (!step_back_to_last_root) {
+        uint8_t nsteps_to_reverse;
+        if (!needs_step_back_to_last_root) {
             logger::debug("    [SGS %s] : skipping resolve to street root cuz %d < %d", name_, last_root_pot,
                           resolve_last_root_sumpot_min);
-            steps_to_reverse = 1;
+            nsteps_to_reverse = 1;
         } else {
-            uint8_t step_to_last_root = kth_action - strategy->ag_->root_state_.numActions[this_round];
-            steps_to_reverse = step_to_last_root;
+            uint8_t nsteps_to_last_root = action_kth - last_strategy->ag_->root_state_.numActions[this_round];
+            nsteps_to_reverse = nsteps_to_last_root;
         }
 
-        // logger::debug("    [SGS %s] : resolving takes [step back %d]", name_, steps_to_reverse);
-        if (!BuildResolvingSubgame(ag, ref_match_state, steps_to_reverse)) {
+        // TODO(kwok): To uncomment this line of code.
+        // logger::debug("    [SGS %s] : resolving takes [step back %d]", name_, nsteps_to_reverse);
+        if (!BuildResolvingSubgame(ag, ref_match_state, nsteps_to_reverse)) {
             return SKIP_RESOLVING_SUBGAME;
         }
 
         ag->root_node_->PrintState("    new subgame root : ");
-        return (steps_to_reverse > 1) ? RESOLVING_WITH_PRIOR_ACTION : RESOLVING_NONE_PRIOR_ACTION;
+        return (nsteps_to_reverse > 1) ? RESOLVING_WITH_PRIOR_ACTION : RESOLVING_NONE_PRIOR_ACTION;
     }
 
-    bool BuildResolvingSubgame(AbstractGame *ag, MatchState *real_match_state, int steps_to_reverse)
+    /*
+     * Build a sub-game with `steps_to_reverse` steps back.
+     */
+    bool BuildResolvingSubgame(AbstractGame *ag, MatchState *real_match_state, int steps_to_reverse) const
     {
         State &real_state = real_match_state->state;
-        //build with a step back
-        State *step_back_state = new State;
+        auto *step_back_state = new State;
+
         if (StepBackAction(ag_builder_->game_, &real_state, step_back_state, steps_to_reverse) == -1) {
             logger::warn(
                     "    [SGS %s] : stepping too many steps. u may have an empty state or invalid state. return false",
                     name_);
             return false;
         }
+
         if (real_state.round != step_back_state->round) {
             logger::error("    [SGS %s] : can not step back to the last round", name_);
             return false;
         }
+
         ag_builder_->Build(ag, step_back_state, &real_state, cfr_->cfr_param_.depth_limited);
         delete step_back_state;
         logger::debug("    [SGS %s] : built subgame [step back %d] for r = %d", name_, steps_to_reverse,

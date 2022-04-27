@@ -126,6 +126,7 @@ static inline std::string GetBettingStr(Game *game, State &state)
 
 static inline double PotL2(State &ref_state, State &target_state)
 {
+    // FIXME(kwok): The number of players is not supposed to be fixed to 2.
     auto diff_0 = ref_state.spent[0] - target_state.spent[0];
     auto diff_1 = ref_state.spent[1] - target_state.spent[1];
     return sqrt(diff_0 * diff_0 + diff_1 * diff_1);
