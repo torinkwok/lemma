@@ -43,12 +43,14 @@ void Strategy::InitMemoryAndValue(CFR_MODE cfr_mode) {
  * - check if hero reach is already 0.
  */
 bool Strategy::EstimateNewAgReach(AbstractGame *new_ag, MatchState *new_match_state, STRATEGY_TYPE type) const {
+  // FIXME(kwok): The number of players is not supposed to be fixed to 2.
   std::array<sHandBelief, 2> new_base_reach;
   new_base_reach[0].CopyValue(&ag_->root_hand_belief_[0]);
   new_base_reach[1].CopyValue(&ag_->root_hand_belief_[1]);
 
   if (StateBettingEqual(&ag_->root_node_->state_, &new_ag->root_state_)) {
     logger::debug("the new strategy having the same root node. it happens when step back to last root");
+    // FIXME(kwok): The number of players is not supposed to be fixed to 2.
     new_ag->root_hand_belief_[0].CopyValue(&new_base_reach[0]);
     new_ag->root_hand_belief_[1].CopyValue(&new_base_reach[1]);
     new_ag->NormalizeRootReachProb();

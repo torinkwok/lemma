@@ -101,7 +101,7 @@ struct SubgameSolver
      *  - kth_action = 1, do step back, it is equivalent to the street root
      *  - > 1, step back to the root.
      */
-    int BuildSubgame(AbstractGame *ag,
+    int BuildSubgame(AbstractGame *ag_out,
                      Strategy *last_strategy,
                      NodeMatchResult &match_result,
                      MatchState *ref_match_state) const
@@ -128,7 +128,7 @@ struct SubgameSolver
             logger::debug("    [SGS %s] : built subgame [step back 0] for new round for [round = %d] [action_kth = %d]",
                           name_, round,
                           action_kth);
-            ag_builder_->Build(ag, &ref_state);
+            ag_builder_->Build(ag_out, &ref_state);
             return SOLVE_ON_NEW_ROUND_HERO_FIRST;
         }
 
@@ -136,7 +136,7 @@ struct SubgameSolver
         // FIXME(kwok): The number of players is not supposed to be fixed to 2.
         // if (action_kth < ag->game_.numPlayers) {
         if (action_kth == 1) {
-            if (!BuildResolvingSubgame(ag, ref_match_state, 1)) {
+            if (!this->BuildResolvingSubgame_(ag_out, ref_match_state, 1)) {
                 return SKIP_RESOLVING_SUBGAME;
             }
             return SOLVE_ON_NEW_ROUND_OPPO_FIRST;
@@ -176,39 +176,12 @@ struct SubgameSolver
 
         // TODO(kwok): To uncomment this line of code.
         // logger::debug("    [SGS %s] : resolving takes [step back %d]", name_, nsteps_to_reverse);
-        if (!BuildResolvingSubgame(ag, ref_match_state, nsteps_to_reverse)) {
+        if (!this->BuildResolvingSubgame_(ag_out, ref_match_state, nsteps_to_reverse)) {
             return SKIP_RESOLVING_SUBGAME;
         }
 
-        ag->root_node_->PrintState("    new subgame root : ");
+        ag_out->root_node_->PrintState("    new subgame root : ");
         return (nsteps_to_reverse > 1) ? RESOLVING_WITH_PRIOR_ACTION : RESOLVING_NONE_PRIOR_ACTION;
-    }
-
-    /*
-     * Build a sub-game with `steps_to_reverse` steps back.
-     */
-    bool BuildResolvingSubgame(AbstractGame *ag, MatchState *ref_match_state, int steps_to_reverse) const
-    {
-        State &ref_state = ref_match_state->state;
-        auto *step_back_state = new State;
-
-        if (StepBackAction(ag_builder_->game_, &ref_state, step_back_state, steps_to_reverse) == -1) {
-            logger::warn(
-                    "    [SGS %s] : stepping too many steps. you may have an empty state or invalid state. return false",
-                    name_);
-            return false;
-        }
-
-        if (ref_state.round != step_back_state->round) {
-            logger::error("    [SGS %s] : can not step back to the last round", name_);
-            return false;
-        }
-
-        ag_builder_->Build(ag, step_back_state, &ref_state, cfr_->cfr_param_.depth_limited);
-        delete step_back_state;
-        logger::debug("    [SGS %s] : built subgame [step back %d] for r = %d", name_, steps_to_reverse,
-                      ref_state.round);
-        return true;
     }
 
     void ConfigWithJson(const char *config_file, BucketPool *bucket_pool)
@@ -303,6 +276,34 @@ struct SubgameSolver
                 }
             }
         }
+    }
+
+private:
+    /*
+     * Build a sub-game with `steps_to_reverse` steps back.
+     */
+    bool BuildResolvingSubgame_(AbstractGame *ag_out, MatchState *ref_match_state, int steps_to_reverse) const
+    {
+        State &ref_state = ref_match_state->state;
+        auto *step_back_state = new State;
+
+        if (StepBackAction(ag_builder_->game_, &ref_state, step_back_state, steps_to_reverse) == -1) {
+            logger::warn(
+                    "    [SGS %s] : stepping too many steps. you may have an empty state or invalid state. return false",
+                    name_);
+            return false;
+        }
+
+        if (ref_state.round != step_back_state->round) {
+            logger::error("    [SGS %s] : can not step back to the last round", name_);
+            return false;
+        }
+
+        ag_builder_->Build(ag_out, step_back_state, &ref_state, cfr_->cfr_param_.depth_limited);
+        delete step_back_state;
+        logger::debug("    [SGS %s] : built subgame [step back %d] for r = %d", name_, steps_to_reverse,
+                      ref_state.round);
+        return true;
     }
 };
 

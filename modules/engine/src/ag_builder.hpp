@@ -54,41 +54,46 @@ public:
     /*
      * need to set the ag.root_reach_prob separately, unless it is an empty game.
      */
-    void Build(AbstractGame *ag, State *root_state = nullptr, State *forced_state = nullptr, bool depth_limited = false)
+    void Build(AbstractGame *ag_out,
+               State *root_state = nullptr, State *forced_state = nullptr,
+               bool depth_limited = false)
     {
         if (root_state == nullptr) {
             // Building an empty game.
             State state;
             initState(game_, 0, &state);
-            ag->root_state_ = state;
+            ag_out->root_state_ = state;
         } else {
             // Please set the root reach prob outside.
-            ag->root_state_ = *root_state;
+            ag_out->root_state_ = *root_state;
         }
+
         char line[1024];
-        printState(game_, &ag->root_state_, 1024, line);
+        printState(game_, &ag_out->root_state_, 1024, line);
+
         logger::debug("    tree root state = %s", line);
         {
-            ag->raw_ = raw_;
-            ag->game_ = *game_;
+            ag_out->raw_ = raw_;
+            ag_out->game_ = *game_;
         }
         logger::trace("ag_builder -> building betting tree...");
         {
-            ag->depth_limited_ = depth_limited;
-            ag->root_node_ = action_abs_->BuildBettingTree(&ag->game_, ag->root_state_, forced_state, depth_limited);
+            ag_out->depth_limited_ = depth_limited;
+            ag_out->root_node_ = action_abs_->BuildBettingTree(&ag_out->game_, ag_out->root_state_, forced_state,
+                                                               depth_limited);
         }
         Bucket_t bucket_count_by_round[4]{0, 0, 0, 0};
         logger::trace("ag_builder -> building bucket reader...");
         {
-            card_abs_->BuildReader(&ag->game_, &ag->root_state_, &ag->bucket_reader_);
-            ag->bucket_reader_.GetBucketCounts(bucket_count_by_round);
+            card_abs_->BuildReader(&ag_out->game_, &ag_out->root_state_, &ag_out->bucket_reader_);
+            ag_out->bucket_reader_.GetBucketCounts(bucket_count_by_round);
         }
         logger::trace("ag_builder -> building kernel...");
         {
-            ag->BuildKernelFromRootNode(bucket_count_by_round);
+            ag_out->BuildKernelFromRootNode(bucket_count_by_round);
             //default if in new game.
 #ifdef DEV
-            ag->Print();
+            ag_out->Print();
 #endif
         }
     }

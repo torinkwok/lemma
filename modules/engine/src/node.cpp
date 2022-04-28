@@ -1,27 +1,30 @@
 #include <stack>
-#include <bulldog/card_util.h>
 #include "node.h"
 #include "cfr_param.h"
 
 //include both showdown and folding
 int Node::GetStake(int my_pos)
 {
-    if (!IsTerminal())
+    if (!IsTerminal()) {
         logger::critical("trying to Get folding value from non folding node");
+    }
     int pot = PotStake(&state_);
-    if (IsShowdown())
+    if (IsShowdown()) {
         return pot;
+    }
     //folding
-    if (state_.playerFolded[my_pos] == 1)
+    if (state_.playerFolded[my_pos] == 1) {
         return -pot;     //I lost
+    }
     return pot;  //I win
 }
 
 std::stack<int> Node::GetPathFromRoot() const
 {
     std::stack<int> path;
-    if (parent_node_ == nullptr)
+    if (parent_node_ == nullptr) {
         return path;
+    }
     path.push(sibling_idx_);
     Node *last_node = parent_node_;
     while (last_node->parent_node_ != nullptr) {
@@ -40,8 +43,9 @@ void Node::SortChildNodes()
     });
 
     //set their sibling idx
-    for (auto a = 0; a < (int) children.size(); a++)
+    for (auto a = 0; a < (int) children.size(); a++) {
         children[a]->sibling_idx_ = a;
+    }
 }
 
 int Node::GetSumPot()
@@ -52,8 +56,9 @@ int Node::GetSumPot()
 int Node::GetTotalActionDepth()
 {
     int depth = 0;
-    for (auto r = 0; r <= GetRound(); r++)
+    for (auto r = 0; r <= GetRound(); r++) {
         depth += state_.numActions[r];
+    }
     return depth;
 }
 
@@ -66,18 +71,21 @@ Node::~Node()
 
 void Node::InitAdjustmentFactor_r(Bucket_t *buckets_by_round)
 {
-    if (IsTerminal())
+    if (IsTerminal()) {
         return;
+    }
     auto r = GetRound();
     auto local_b_max = buckets_by_round[r];
     //init reach adjustment vector of the node
     if (reach_adjustment == nullptr) {
         reach_adjustment = new uint8_t[local_b_max];
-        for (int b = 0; b < (int) local_b_max; b++)
+        for (int b = 0; b < (int) local_b_max; b++) {
             reach_adjustment[b] = 4;
+        }
     }
-    for (auto c: children)
+    for (auto *c: children) {
         c->InitAdjustmentFactor_r(buckets_by_round);
+    }
 }
 
 /*
@@ -101,34 +109,42 @@ int Node::GetDebugCode()
 
 bool Node::IsShowdown()
 {
-    if (!IsTerminal()) return false;
+    if (!IsTerminal()) {
+        return false;
+    }
     //finished, not sure it is a call or fold
-    if (state_.playerFolded[0] == 1) return false;
+    if (state_.playerFolded[0] == 1) {
+        return false;
+    }
     return state_.playerFolded[1] != 1;
 }
 
 int Node::GetActingPlayer()
 {
-    if (IsTerminal())
+    if (IsTerminal()) {
         logger::critical("terminal node has no acting player.");
+    }
     auto player = currentPlayer(game_, &state_);
     // FIXME(kwok): The number of players is not supposed to be fixed to 2.
-    if (!(player == 0 || player == 1))
+    if (!(player == 0 || player == 1)) {
         logger::critical("get player error %d", player);
+    }
     return currentPlayer(game_, &state_);
 }
 
 int Node::GetSpent(uint8_t position)
 {
-    if (position >= 2)
+    if (position >= 2) {
         logger::critical("yet to support multiple players");
+    }
     return state_.spent[position];
 }
 
 Action Node::GetLastAction()
 {
-    if (state_.round == 0 && state_.numActions[0] == 0)
+    if (state_.round == 0 && state_.numActions[0] == 0) {
         logger::critical("no last action for empty game root node");
+    }
     return GetLastActionFromState(&state_);
 }
 
@@ -155,9 +171,10 @@ bool Node::IsLeafNode() const
 
 void Node::DestroyBettingTreeR(Node *this_node)
 {
-    if (this_node->IsTerminal())
+    if (this_node->IsTerminal()) {
         return;
-    for (auto child_node: this_node->children) {
+    }
+    for (auto *child_node: this_node->children) {
         DestroyBettingTreeR(child_node);
         delete child_node;
     }
@@ -175,8 +192,9 @@ Round_t Node::GetRound() const
 
 void Node::PrintAllChildState()
 {
-    for (auto c: children)
+    for (auto *c: children) {
         c->PrintState();
+    }
 }
 
 void Node::PrintState(const std::string &prefix)
@@ -188,8 +206,9 @@ void Node::PrintState(const std::string &prefix)
 
 int Node::GetAmax()
 {
-    if (a_max == -1)
+    if (a_max == -1) {
         a_max = children.size();
+    }
     return a_max;
 }
 

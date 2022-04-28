@@ -320,12 +320,10 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
 
         /* Step 2: Nested range estimation. */
         bool estimate_success;
-        for (auto i = playbook_stack_.size() - 1; i >= 0; i--) {
+        for (int i = playbook_stack_.size() - 1; i >= 0; i--) {
             auto *cursor_strategy = playbook_stack_.at(i).strategy_;
             STRATEGY_TYPE avg_type = playbook_stack_.at(i).strategy_type;
-            estimate_success = cursor_strategy->EstimateNewAgReach(sgs_ag,
-                                                                   new_match_state,
-                                                                   avg_type);
+            estimate_success = cursor_strategy->EstimateNewAgReach(sgs_ag, new_match_state, avg_type);
             if (estimate_success) {
                 break;
             }
@@ -432,7 +430,8 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
 
     // If everything's going fine, the execution flow would never reach this point.
     logger::error("not a single action any history playbook valid. wrong wrong");
-    AsynStartDaemonSolving(selected_sgs, cfr_return_code);
+    // AsynStartDaemonSolving(selected_sgs, cfr_return_code);
+    this->RefreshEngineState();
     return GET_ACTION_FAILURE;
 }
 

@@ -49,7 +49,9 @@ void Bucket::LoadRangeColex(Board_t *board, int round)
     for (Card_t low = 0; low < HOLDEM_MAX_CARDS - 1; low++) {
         for (Card_t high = low + 1; high < HOLDEM_MAX_CARDS; high++) {
             auto hand = Hand_t{high, low};
-            if (board->HandCrash(hand)) continue;
+            if (board->HandCrash(hand)) {
+                continue;
+            }
             auto colex = ComputeColexFromAllCards(high, low, *board, round);
             if (colex_set.find(colex) == colex_set.end()) {
                 //insert, and increment the value.
@@ -104,8 +106,9 @@ void Bucket::LoadHierarchical(std::string name)
     Bucket_t total_bucket_count = priv_bucket_count * pub_bucket_count;
     std::vector<bool> bucket_tally;
     bucket_tally.reserve(total_bucket_count);
-    for (Bucket_t i = 0; i < total_bucket_count; i++)
+    for (Bucket_t i = 0; i < total_bucket_count; i++) {
         bucket_tally.emplace_back(false);
+    }
 #endif
 
     for (unsigned int pub_bucket = 0; pub_bucket < pub_bucket_count; pub_bucket++) {
@@ -155,10 +158,12 @@ unsigned int Bucket::GetPublicBucket(unsigned int pub_colex)
  */
 void Bucket::LoadHierarchicalColex(Board_t *board, uint8_t r)
 {
-    if (r > HOLDEM_ROUND_RIVER)
+    if (r > HOLDEM_ROUND_RIVER) {
         logger::critical("round %d does not exist in holdem", r);
-    if (r == HOLDEM_ROUND_PREFLOP)
+    }
+    if (r == HOLDEM_ROUND_PREFLOP) {
         logger::critical("does not support board hand colex for preflop", r);
+    }
     type_ = HIERARCHICAL_COLEX;
     int board_count = r == 1 ? 3 :
                       r == 2 ? 4 : 5;
@@ -193,7 +198,7 @@ void Bucket::LoadHierarchicalColex(Board_t *board, uint8_t r)
         }
         iso_board_cursor++;
     }
-//  logger::debug("total [%d board colex] [%d hier colex] buckets", iso_board_cursor, bucket_idx_cursor);
+    //  logger::debug("total [%d board colex] [%d hier colex] buckets", iso_board_cursor, bucket_idx_cursor);
 }
 
 void Bucket::LoadSubgameColex(Board_t *board, int round)
@@ -204,7 +209,7 @@ void Bucket::LoadSubgameColex(Board_t *board, int round)
                          "use other abstraction algorithms instead.");
     }
     type_ = HIERARCHICAL_COLEX;
-//  auto cmd_begin = std::chrono::steady_clock::now();
+    //  auto cmd_begin = std::chrono::steady_clock::now();
     int bucket_idx_cursor = 0;
     for (Card_t c = 0; c < HOLDEM_MAX_CARDS; c++) {
         if (board->CardCrash(c)) continue;
@@ -231,10 +236,10 @@ void Bucket::LoadSubgameColex(Board_t *board, int round)
             }
         }
     }
-//  auto cmd_time =
-//      std::chrono::duration_cast<std::chrono::milliseconds>(
-//          std::chrono::steady_clock::now() - cmd_begin).count();
-//  logger::debug("generate subgame colex takes %d ms", cmd_time);
+    //  auto cmd_time =
+    //      std::chrono::duration_cast<std::chrono::milliseconds>(
+    //          std::chrono::steady_clock::now() - cmd_begin).count();
+    //  logger::debug("generate subgame colex takes %d ms", cmd_time);
 }
 
 void Bucket::Save(std::map<unsigned int, unsigned short> &entries, const std::string &ofile)
@@ -312,7 +317,7 @@ uint32_t Bucket::Size()
         //it is alright, because we never use this for subgame solving for flop
         int sum = 0;
         for (auto [key, val]: master_map_) {
-//      logger::debug("ket  = %d", key);
+            //      logger::debug("ket  = %d", key);
             sum += val.size();
         }
         logger::trace("hierarchical colex with iso flop = %d total = %d", master_map_.size(), sum);

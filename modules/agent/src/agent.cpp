@@ -194,6 +194,7 @@ int main(int argc, char *argv[])
 #endif
 
             /* Craft a request. */
+            // FIXME(kwok): If `engine->GetActionBySession` failed, `action` remains as an undefined value.
             if (connector->build(game, &action, &match_state.state) == EXIT_FAILURE) {
                 logger::error(" [AGENT] : failed to build action");
                 break;
