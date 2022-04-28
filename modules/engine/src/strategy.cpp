@@ -317,120 +317,124 @@ int Strategy::EstimateReachProbAtNode(MatchState *last_match_state,
                                       Node *target_node,
                                       std::array<sHandBelief, 2> &new_ag_reach,
                                       STRATEGY_TYPE calc_mode,
-                                      double min_filter) const {
+                                      double min_filter) const
+{
 
-  ag_->root_node_->PrintState("[range estimate] from state --> ");
-  target_node->PrintState("[range estimate] to state --> ");
-  SimpleTimer timer;
+    ag_->root_node_->PrintState("[range estimate] from state --> ");
+    target_node->PrintState("[range estimate] to state --> ");
+    SimpleTimer timer;
 
-  //common value
-  auto root_round = ag_->root_node_->GetRound();
-  Board_t reach_board{};
-  BoardFromState(&ag_->game_, &last_match_state->state, &reach_board);
+    //common value
+    auto root_round = ag_->root_node_->GetRound();
+    Board_t reach_board{};
+    BoardFromState(&ag_->game_, &last_match_state->state, &reach_board);
 
-  //refine reach that crashes with board. do it once here.
-  new_ag_reach[0].ExcludeBoard(reach_board);
-  new_ag_reach[1].ExcludeBoard(reach_board);
+    //refine reach that crashes with board. do it once here.
+    new_ag_reach[0].ExcludeBoard(reach_board);
+    new_ag_reach[1].ExcludeBoard(reach_board);
 
-  int hero_pos = last_match_state->viewingPlayer;
-  auto my_hand_vector_idx = ToVectorIndex(last_match_state->state.holeCards[hero_pos][0],
-                                          last_match_state->state.holeCards[hero_pos][1]);
+    int hero_pos = last_match_state->viewingPlayer;
+    auto my_hand_vector_idx = ToVectorIndex(last_match_state->state.holeCards[hero_pos][0],
+                                            last_match_state->state.holeCards[hero_pos][1]);
 
-  //find the travel path from ag.root to matched node;
-  std::stack<int> node_path = target_node->GetPathFromRoot();
-  if (node_path.empty()) {
-    logger::warn("no step nodes to the root. already at root");
-  }
-  Node *stepping_node = ag_->root_node_;
-  int step_size = node_path.size();
-  int done_step_count = 0;
-  while (!node_path.empty()) {
-    auto action_idx = node_path.top();
-    if (action_idx == -1) {
-      logger::warn("node path wrong. cannot find the matched node. matched to terminal node");
-      return false;
+    //find the travel path from ag.root to matched node;
+    std::stack<int> node_path = target_node->GetPathFromRoot();
+    if (node_path.empty()) {
+        logger::warn("no step nodes to the root. already at root");
     }
-    auto action_code = stepping_node->children[action_idx]->GetLastActionCode();
-    auto n = stepping_node->GetN();
-    int acting_player = stepping_node->GetActingPlayer();
-    auto step_node_round = stepping_node->GetRound();
-    //tallying parameters
-    int prune_count = 0;
-
-    //do bayesian estimate on each ligit hand
-    for (auto i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {
-      if (new_ag_reach[acting_player].IsZero(i) || new_ag_reach[acting_player].IsPruned(i))
-        continue;
-
-      auto high_low = FromVectorIndex(i);
-      auto b =
-          ag_->bucket_reader_.GetBucketWithHighLowBoard(high_low.first, high_low.second, &reach_board, step_node_round);
-      auto a_max = stepping_node->children.size();
-
-      //use only zipavg/wavg in transition.
-      float rnb_avg[a_max];
-      ComputeStrategy(step_node_round, n, b, a_max, rnb_avg, calc_mode);
-      float action_prob = 0.0;
-
-      //a uniform strategy means likely the reach of a node of the same acting player (either at root or other step nodes) is 0. So it should not happen much
-      if (!IsAvgUniform(rnb_avg, a_max)){
-        action_prob = rnb_avg[action_idx];
-      } else {
-        //what"?
-        logger::warn("weird uniform strategy in transition. the reach should be 0 already and filtered at start.");
-      }
-
-
-      //perform heuristically pruning in bayesian estimation. incomplete convergence.
-      if (action_prob < min_filter) {
-        //safe check
-        if (hero_pos == acting_player && i == my_hand_vector_idx) {
-          logger::debug("[player %d] [real hand %d %s] was pruned [%f < %f]",
-                        hero_pos, my_hand_vector_idx, VectorIdxToString(my_hand_vector_idx), action_prob, min_filter);
-          PrintNodeStrategy(stepping_node, b, calc_mode);
-          return REAL_HAND_PRUNED_IN_TRANSITION;
+    Node *stepping_node = ag_->root_node_;
+    int step_size = node_path.size();
+    int done_step_count = 0;
+    while (!node_path.empty()) {
+        auto action_idx = node_path.top();
+        if (action_idx == -1) {
+            logger::warn("node path wrong. cannot find the matched node. matched to terminal node");
+            return false;
         }
-        if (root_round > HOLDEM_ROUND_PREFLOP) //not likely to have zero wavg at preflop
-          prune_count++;
-        action_prob = 0.0;
-      }
-      new_ag_reach[acting_player].belief_[i] *= action_prob;
+        auto action_code = stepping_node->children[action_idx]->GetLastActionCode();
+        auto n = stepping_node->GetN();
+        int acting_player = stepping_node->GetActingPlayer();
+        auto step_node_round = stepping_node->GetRound();
+        //tallying parameters
+        int prune_count = 0;
+
+        //do bayesian estimate on each ligit hand
+        for (auto i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {
+            if (new_ag_reach[acting_player].IsZero(i) || new_ag_reach[acting_player].IsPruned(i))
+                continue;
+
+            auto high_low = FromVectorIndex(i);
+            auto b =
+                    ag_->bucket_reader_.GetBucketWithHighLowBoard(high_low.first, high_low.second, &reach_board,
+                                                                  step_node_round);
+            auto a_max = stepping_node->children.size();
+
+            //use only zipavg/wavg in transition.
+            float rnb_avg[a_max];
+            ComputeStrategy(step_node_round, n, b, a_max, rnb_avg, calc_mode);
+            float action_prob = 0.0;
+
+            //a uniform strategy means likely the reach of a node of the same acting player (either at root or other step nodes) is 0. So it should not happen much
+            if (!IsAvgUniform(rnb_avg, a_max)) {
+                action_prob = rnb_avg[action_idx];
+            } else {
+                //what"?
+                logger::warn(
+                        "weird uniform strategy in transition. the reach should be 0 already and filtered at start.");
+            }
+
+
+            //perform heuristically pruning in bayesian estimation. incomplete convergence.
+            if (action_prob < min_filter) {
+                //safe check
+                if (hero_pos == acting_player && i == my_hand_vector_idx) {
+                    logger::debug("[player %d] [real hand %d %s] was pruned [%f < %f]",
+                                  hero_pos, my_hand_vector_idx, VectorIdxToString(my_hand_vector_idx), action_prob,
+                                  min_filter);
+                    PrintNodeStrategy(stepping_node, b, calc_mode);
+                    return REAL_HAND_PRUNED_IN_TRANSITION;
+                }
+                if (root_round > HOLDEM_ROUND_PREFLOP) //not likely to have zero wavg at preflop
+                    prune_count++;
+                action_prob = 0.0;
+            }
+            new_ag_reach[acting_player].belief_[i] *= action_prob;
+        }
+
+        logger::debug(
+                "    step %d -> [player %d] [action_code %d] [at round %d] [%d hands pruned]",
+                done_step_count + 1,
+                acting_player,
+                action_code,
+                step_node_round,
+                prune_count);
+
+        if (new_ag_reach[acting_player].BeliefSum() == 0.0) {
+            logger::debug(
+                    "    range estimate failed --> [player %d] [fails at %d/%d steps (action %d) from round %d to %d]",
+                    acting_player,
+                    done_step_count + 1,
+                    step_size,
+                    action_code,
+                    root_round,
+                    target_node->GetRound());
+            return acting_player == hero_pos ? ALL_HERO_HAND_PRUNED_IN_TRANSITION : ALL_OPP_HAND_PRUNED_IN_TRANSITION;
+        }
+
+        stepping_node = stepping_node->children[action_idx];
+        node_path.pop();
+        done_step_count++;
     }
 
-    logger::debug(
-        "    step %d -> [player %d] [action_code %d] [at round %d] [%d hands pruned]",
-        done_step_count + 1,
-        acting_player,
-        action_code,
-        step_node_round,
-        prune_count);
+    if (step_size != done_step_count)
+        logger::warn("the transition path is not legal. Check it.");
 
-    if (new_ag_reach[acting_player].BeliefSum() == 0.0) {
-      logger::debug(
-          "    range estimate failed --> [player %d] [fails at %d/%d steps (action %d) from round %d to %d]",
-          acting_player,
-          done_step_count + 1,
-          step_size,
-          action_code,
-          root_round,
-          target_node->GetRound());
-      return acting_player == hero_pos ? ALL_HERO_HAND_PRUNED_IN_TRANSITION : ALL_OPP_HAND_PRUNED_IN_TRANSITION;
-    }
-
-    stepping_node = stepping_node->children[action_idx];
-    node_path.pop();
-    done_step_count++;
-  }
-
-  if (step_size != done_step_count)
-    logger::warn("the transition path is not legal. Check it.");
-
-  logger::debug("range estimate success [path size %d] [round %d to %d]",
-                step_size,
-                root_round,
-                target_node->GetRound());
-  timer.Checkpoint("reach estimate");
-  return RANGE_ESTIMATE_SUCCESS;
+    logger::debug("range estimate success [path size %d] [round %d to %d]",
+                  step_size,
+                  root_round,
+                  target_node->GetRound());
+    timer.Checkpoint("reach estimate");
+    return RANGE_ESTIMATE_SUCCESS;
 }
 
 //todo: test code
