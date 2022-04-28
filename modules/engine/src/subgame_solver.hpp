@@ -60,7 +60,7 @@ struct SubgameSolver
     CFR *cfr_ = nullptr;
     sCFRState *convergence_state_;
     ActionChooser *action_chooser_;
-    STRATEGY_TYPE playing_strategy_ = STRATEGY_REG; //default at reg
+    STRATEGY_TYPE strategy_type = STRATEGY_REG; //default at reg
 
     /*
      * water fall detection
@@ -256,7 +256,7 @@ struct SubgameSolver
 
         // Setting playing strategy.
         if (sgs_conf.has_field("playing_strategy")) {
-            playing_strategy_ = StrategyMap[sgs_conf.at("playing_strategy").as_string()];
+            strategy_type = StrategyMap[sgs_conf.at("playing_strategy").as_string()];
         }
 
         std::filesystem::path file(sgs_conf.at("builder_file").as_string());

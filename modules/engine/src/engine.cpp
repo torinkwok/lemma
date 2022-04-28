@@ -322,7 +322,7 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
         bool estimate_success;
         for (auto i = playbook_stack_.size() - 1; i >= 0; i--) {
             auto *cursor_strategy = playbook_stack_.at(i).strategy_;
-            STRATEGY_TYPE avg_type = playbook_stack_.at(i).playing_strategy_;
+            STRATEGY_TYPE avg_type = playbook_stack_.at(i).strategy_type;
             estimate_success = cursor_strategy->EstimateNewAgReach(sgs_ag,
                                                                    new_match_state,
                                                                    avg_type);
@@ -356,7 +356,7 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
         /* Step 4: Validate the pending playbook. */
         auto pending_playbook = PlayBook{sgs_strategy_stack_.back(),
                                          selected_sgs->action_chooser_,
-                                         selected_sgs->playing_strategy_};
+                                         selected_sgs->strategy_type};
         if (ValidatePlaybook(pending_playbook, new_match_state, subgame_built_code)) {
             playbook_stack_.push_back(pending_playbook);
         } else {
@@ -381,7 +381,7 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
         auto match_results = pb.strategy_->FindSortedMatchedNodes(new_match_state->state);
         for (auto mr: match_results) {
             if (!pb.strategy_->IsStrategyInitializedForMyHand(mr.matched_node_,
-                                                              pb.playing_strategy_,
+                                                              pb.strategy_type,
                                                               new_match_state)) {
                 mr.matched_node_->PrintState(" skip virgin node in get_action_final: ");
                 continue;
@@ -402,7 +402,7 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
                             new_match_state,
                             mr.matched_node_,
                             new_base_reach,
-                            pb.playing_strategy_,
+                            pb.strategy_type,
                             DEFAULT_BAYESIAN_TRANSITION_FILTER);
                     if (estimate_return_code != RANGE_ESTIMATE_SUCCESS) {
                         mr.matched_node_->PrintState("[ blueprint ] node not reachable");
@@ -417,13 +417,13 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
             pb.strategy_->PickAction(new_match_state,
                                      pb.action_chooser_,
                                      r_action,
-                                     pb.playing_strategy_,
+                                     pb.strategy_type,
                                      mr.matched_node_);
             logger::debug("    [ENGINE %s] : pick action [%c%d] with mode [%s]",
                           engine_name_,
                           actionChars[r_action.type],
                           r_action.size,
-                          StrategyToNameMap[pb.playing_strategy_]);
+                          StrategyToNameMap[pb.strategy_type]);
 
             busy_flag_ = false;
             return GET_ACTION_SUCCESS;

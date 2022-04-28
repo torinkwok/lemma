@@ -55,14 +55,14 @@ struct PlayBook
 {
     PlayBook(Strategy *strategy,
              ActionChooser *default_action_chooser,
-             STRATEGY_TYPE playing_strategy)
+             STRATEGY_TYPE strategy_type)
             : strategy_(strategy),
               action_chooser_(default_action_chooser),
-              playing_strategy_(playing_strategy) {}
+              strategy_type(strategy_type) {}
 
     Strategy *strategy_ = nullptr;
     ActionChooser *action_chooser_ = nullptr;
-    STRATEGY_TYPE playing_strategy_;
+    STRATEGY_TYPE strategy_type;
 };
 
 class Engine

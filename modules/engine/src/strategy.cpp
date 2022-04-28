@@ -319,7 +319,6 @@ int Strategy::EstimateReachProbAtNode(MatchState *last_match_state,
                                       STRATEGY_TYPE calc_mode,
                                       double min_filter) const
 {
-
     ag_->root_node_->PrintState("[range estimate] from state --> ");
     target_node->PrintState("[range estimate] to state --> ");
     SimpleTimer timer;
@@ -334,8 +333,9 @@ int Strategy::EstimateReachProbAtNode(MatchState *last_match_state,
     new_ag_reach[1].ExcludeBoard(reach_board);
 
     int hero_pos = last_match_state->viewingPlayer;
-    auto my_hand_vector_idx = ToVectorIndex(last_match_state->state.holeCards[hero_pos][0],
-                                            last_match_state->state.holeCards[hero_pos][1]);
+    auto my_hand_vector_idx = ToVectorIndex(
+            last_match_state->state.holeCards[hero_pos][0],
+            last_match_state->state.holeCards[hero_pos][1]);
 
     //find the travel path from ag.root to matched node;
     std::stack<int> node_path = target_node->GetPathFromRoot();
@@ -382,7 +382,6 @@ int Strategy::EstimateReachProbAtNode(MatchState *last_match_state,
                 logger::warn(
                         "weird uniform strategy in transition. the reach should be 0 already and filtered at start.");
             }
-
 
             //perform heuristically pruning in bayesian estimation. incomplete convergence.
             if (action_prob < min_filter) {
