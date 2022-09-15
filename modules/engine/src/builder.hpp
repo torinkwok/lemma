@@ -213,7 +213,7 @@ public:
         }
     }
 
-    ~KMeansEMDBuilder() override {};
+    ~KMeansEMDBuilder() override = default;;
 
     void run() override
     {
@@ -318,7 +318,7 @@ public:
         }
     }
 
-    ~KMeansEuclideanBuilder() override {};
+    ~KMeansEuclideanBuilder() override = default;;
 
     void run() override
     {
@@ -358,7 +358,7 @@ private:
 class HierarchicalBuilder : public BaseBuilder
 {
 public:
-    ~HierarchicalBuilder()
+    ~HierarchicalBuilder() override
     {
         for (int i = 0; i < CanonCardsetCount[num_public_]; i++) {
             delete[] transition_table_[i];
@@ -420,12 +420,15 @@ public:
         if (pub_cards_num > 5 || pub_cards_num < 0) {
             logger::critical("incompatible public cards number");
         }
+
         if (!std::filesystem::exists(ifile_)) {
             logger::critical("missing %s", ifile_);
         }
+
         if (num_threads_ > (int) std::thread::hardware_concurrency()) {
             logger::critical("threads > hardware availability");
         }
+
         if (mode_ == KMeans::InitCheckpoint) {
             std::filesystem::path dir(BULLDOG_DIR_DATA_ABS);
             std::filesystem::path file(BUCKET_CP_PREFIX + "_" + ofilemeta_ + BUCKET_CP_EXT);
