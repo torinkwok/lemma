@@ -215,36 +215,35 @@ public:
 
     ~KMeansEMDBuilder() override = default;;
 
-    void run() override
-    {
-        KMeans::sRawData raw_data{};
-        raw_data.prefix_ = ofilemeta_;
+    void run() override {
+        KMeans::sRawData kmeans_raw_data{};
+        kmeans_raw_data.prefix_ = ofilemeta_;
         std::vector<Entry> entries;
 
         read_entries(entries, ifile_);
         int size = entries.size();
         logger::info("read %d entries from %s", size, ifile_);
 
-        raw_data.data_ = new double[size * HISTOGRAM_SIZE];
-        raw_data.index_ = new unsigned int[size];
+        kmeans_raw_data.data_ = new double[size * HISTOGRAM_SIZE];
+        kmeans_raw_data.index_ = new unsigned int[size];
         std::map<std::vector<double>, int> unquie_keys;
         int max_cache_index = 0;
-        raw_data.cache_key_ = new int[size];
+        kmeans_raw_data.cache_key_ = new int[size];
         for (int i = 0; i < size; i++) {
             std::vector<double> histogram;
-            raw_data.index_[i] = entries[i].index_;
+            kmeans_raw_data.index_[i] = entries[i].index_;
             for (int j = 0; j < HISTOGRAM_SIZE; j++) {
-                raw_data.data_[i * HISTOGRAM_SIZE + j] = entries[i].histo_[j];
+                kmeans_raw_data.data_[i * HISTOGRAM_SIZE + j] = entries[i].histo_[j]; /* A 2D-array. */
                 histogram.push_back(entries[i].histo_[j]);
             }
             auto it = unquie_keys.find(histogram);
             if (it == unquie_keys.end()) {
                 //not found
                 unquie_keys[histogram] = max_cache_index;
-                raw_data.cache_key_[i] = max_cache_index;
+                kmeans_raw_data.cache_key_[i] = max_cache_index;
                 max_cache_index++;
             } else {
-                raw_data.cache_key_[i] = (*it).second;
+                kmeans_raw_data.cache_key_[i] = (*it).second;
             }
         }
 
@@ -254,13 +253,13 @@ public:
         kmeans->SetMaxIterNum(max_iterr_);
         kmeans->SetCacheSize(max_cache_index);
         kmeans->SetEndError(end_error_);
-        kmeans->Cluster(raw_data, size);
+        kmeans->Cluster(kmeans_raw_data, size);
         kmeans->SaveBuckets(ofilemeta_);
 
         delete kmeans;
-        delete[] raw_data.data_;
-        delete[] raw_data.index_;
-        delete[] raw_data.cache_key_;
+        delete[] kmeans_raw_data.data_;
+        delete[] kmeans_raw_data.index_;
+        delete[] kmeans_raw_data.cache_key_;
     }
 
 private:
