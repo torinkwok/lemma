@@ -13,6 +13,7 @@ set(ENGINE_LIB src/bucket_reader.hpp
         src/subgame_solver.hpp
         src/cfr_command.hpp
         src/action_chooser.hpp src/hand_belief.cpp src/engine.cpp src/abstract_game.cpp src/engine_util.cpp src/strategy_pool.hpp)
+
 add_library(engine ${ENGINE_LIB})
 target_include_directories(engine PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
 
@@ -28,16 +29,18 @@ add_executable(build_buckets src/build_buckets.cpp
 #generic
 target_link_libraries(eval-h2h core engine cpprestsdk::cpprest)
 
+find_package(Flatbuffers CONFIG REQUIRED)
+
 #platform specific
 if (UNIX AND NOT APPLE)
     target_link_libraries(engine core stdc++fs cpprestsdk::cpprest)
-    target_link_libraries(build_buckets PRIVATE stdc++fs core Threads::Threads peval ${Boost_LIBRARIES})
+    target_link_libraries(build_buckets PRIVATE stdc++fs core Threads::Threads peval ${Boost_LIBRARIES} flatbuffers::flatbuffers)
     target_link_libraries(train PRIVATE engine Threads::Threads)
     target_link_libraries(check_strategy PRIVATE engine Threads::Threads)
     target_link_libraries(check_kernel PRIVATE engine Threads::Threads)
 else ()
     target_link_libraries(engine core cpprestsdk::cpprest)
-    target_link_libraries(build_buckets PRIVATE core Threads::Threads peval ${Boost_LIBRARIES})
+    target_link_libraries(build_buckets PRIVATE core Threads::Threads peval ${Boost_LIBRARIES} flatbuffers::flatbuffers)
     target_link_libraries(train PRIVATE engine Threads::Threads)
     target_link_libraries(check_strategy PRIVATE engine Threads::Threads)
     target_link_libraries(check_kernel PRIVATE engine Threads::Threads)
