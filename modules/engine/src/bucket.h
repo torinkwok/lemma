@@ -20,7 +20,8 @@ enum BUCKET_TYPE
     HIERARCHICAL_BUCKET,
     CLASSIC_BUCKET,
     COLEX_BUCKET,
-    HIERARCHICAL_COLEX
+    HIERARCHICAL_COLEX,
+    WAUGH_BUCKET,
 };
 
 class Bucket
@@ -31,6 +32,8 @@ public:
     static void Save(std::map<unsigned int, unsigned short> &entries, const std::string &ofile);
 
     void LoadClassicFromFile(const std::string &ofile);
+
+    void LoadClassicFromFlexbuffers();
 
     /*
      * bucket type
@@ -59,7 +62,7 @@ public:
     //aware that the master_map should return Bucket_t type
     std::unordered_map<unsigned int, std::unordered_map<Colex, uint32_t>> master_map_;
 private:
-    std::map<unsigned int, unsigned short> cluster_map_;
+    std::map<uint8_t, uint32_t> cluster_map_;
     std::unordered_map<Colex, unsigned short> pub_colex_bucket_;//should use unsigned int
     friend class cereal::access;
 
@@ -68,6 +71,8 @@ private:
     {
         ar(cluster_map_);
     }
+
+    size_t _LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r);
 };
 
 #endif //BULLDOG_MODULES_ENGINE_SRC_BUCKET_H_

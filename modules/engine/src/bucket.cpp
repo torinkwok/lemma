@@ -1,3 +1,6 @@
+// FIXME(kwok): If this directive is put below the import of "node.h", "expected body of lambda expression" error pops up.
+#include <flatbuffers/flexbuffers.h>
+
 #include "bucket.h"
 #include "node.h"
 #include <bulldog/logger.hpp>
@@ -11,6 +14,64 @@
 
 extern "C" {
 #include <bulldog/game.h>
+}
+
+void Bucket::LoadClassicFromFlexbuffers()
+{
+    type_ = WAUGH_BUCKET;
+    auto paths = std::vector{
+            std::filesystem::path(std::string(BULLDOG_DIR_DATA_ABS) + std::string("/emd-abs-r0-d50-1_chunks")),
+            std::filesystem::path(std::string(BULLDOG_DIR_DATA_ABS) + std::string("/emd-abs-r1-d50-1_chunks")),
+            std::filesystem::path(std::string(BULLDOG_DIR_DATA_ABS) + std::string("/emd-abs-r2-d50-1_chunks")),
+            std::filesystem::path(std::string(BULLDOG_DIR_DATA_ABS) + std::string("/ochs-abs-r3-d8-8_chunks")),
+    };
+    for (size_t r = 0; r < paths.size(); r++) {
+        auto num_loaded = _LoadClassicFromFlexbuffers(paths[r], r);
+        std::cout << num_loaded << " Waugh indices loaded for round " << r << std::endl;
+        assert((r == 0 && num_loaded == 169) ||
+                       (r == 1 && num_loaded == 1286792) ||
+                       (r == 2 && num_loaded == 13960050) ||
+                       (r == 3 && num_loaded == 123156254));
+    }
+}
+
+size_t Bucket::_LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r)
+{
+    assert(type_ == WAUGH_BUCKET);
+
+    std::filesystem::path fxb_chunks_dir_path(dir);
+    assert(exists(fxb_chunks_dir_path) && is_directory(fxb_chunks_dir_path));
+
+    using std::filesystem::directory_iterator;
+    size_t fxb_num_chunks = std::distance(directory_iterator(fxb_chunks_dir_path), directory_iterator{});
+    size_t processed_count = 0;
+    for (size_t chunk_id = 0; chunk_id < fxb_num_chunks; chunk_id++) {
+        auto fxb_chunk_path = fxb_chunks_dir_path / ("chunk_" + std::to_string(chunk_id) + ".fxb");
+        std::ifstream fxb_chunk_file(fxb_chunk_path, std::ios::binary | std::ios::ate);
+        if (fxb_chunk_file.is_open()) {
+            std::streamsize size = fxb_chunk_file.tellg();
+            fxb_chunk_file.seekg(0, std::ios::beg);
+            auto buffer = std::vector<uint8_t>(size);
+            if (fxb_chunk_file.read(reinterpret_cast<char *>(buffer.data()), size).bad()) {
+                // TODO:(kwok) More informative exception.
+                throw std::runtime_error("Failed to read from " + fxb_chunk_path.string());
+            }
+            auto fxb_tmp = flexbuffers::GetRoot(buffer).AsMap();
+            assert(!fxb_tmp.IsTheEmptyMap());
+            auto global_offset = std::stoul(fxb_tmp.Keys()[0].AsString().str());
+            auto vec = fxb_tmp.Values()[0].AsTypedVector();
+            for (size_t local_index = 0; local_index < vec.size(); local_index++) {
+                auto isomorphic_index = local_index + global_offset;
+                master_map_[r][isomorphic_index] = vec[local_index].AsUInt32();
+            }
+            processed_count += vec.size();
+        } else {
+            logger::error("unable to open " + dir);
+            exit(EXIT_FAILURE);
+        }
+        fxb_chunk_file.close();
+    }
+    return processed_count;
 }
 
 void Bucket::LoadClassicFromFile(const std::string &ofile)
@@ -61,7 +122,7 @@ void Bucket::LoadRangeColex(Board_t *board, int round)
             }
         }
     }
-    logger::trace("colex bucket at round = %d || unique colex = %d || bucket count = %d",
+    logger::trace("colex bucket at round = %d || num of unique colexes = %d || bucket count = %d",
                   round, colex_set.size(), bucket_index);
 }
 
@@ -255,6 +316,7 @@ void Bucket::Save(std::map<unsigned int, unsigned short> &entries, const std::st
 }
 
 //todo: all these can be handled on the outside, at the bucket reader level
+// TODO(kwok): `board_colex` will be ignored for classic and colex bucket. Make it explicit.
 uint32_t Bucket::Get(unsigned long all_colex, unsigned long board_colex)
 {
     if (board_colex > 4294967295 && type_ == HIERARCHICAL_COLEX) {
@@ -266,6 +328,9 @@ uint32_t Bucket::Get(unsigned long all_colex, unsigned long board_colex)
     }
 
     switch (type_) {
+        case WAUGH_BUCKET: {
+            break;
+        }
         case HIERARCHICAL_COLEX:
         case HIERARCHICAL_BUCKET: {
             if (master_map_.empty()) {
