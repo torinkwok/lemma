@@ -32,17 +32,17 @@ TEST_CASE("canonize") {
 }
 
 TEST_CASE("to_waugh_cards") {
-    REQUIRE(std::set<uint32_t>{49} == CardsToWaughCards(CardsetFromString("Ah").cards));
-    REQUIRE(std::set<uint32_t>{50, 49} == CardsToWaughCards(CardsetFromString("AdAh").cards));
+    REQUIRE(std::set<WaughCard_t>{49} == CardsToWaughCards(CardsetFromString("Ah").cards));
+    REQUIRE(std::set<WaughCard_t>{50, 49} == CardsToWaughCards(CardsetFromString("AdAh").cards));
 
-    REQUIRE(std::set<uint32_t>{0, 40, 33} == CardsToWaughCards(CardsetFromString("2sQsTh").cards));
-    REQUIRE(std::set<uint32_t>{1, 41, 32} == CardsToWaughCards(CardsetFromString("2hQhTs").cards));
+    REQUIRE(std::set<WaughCard_t>{0, 40, 33} == CardsToWaughCards(CardsetFromString("2sQsTh").cards));
+    REQUIRE(std::set<WaughCard_t>{1, 41, 32} == CardsToWaughCards(CardsetFromString("2hQhTs").cards));
 
-    REQUIRE(std::set<uint32_t>{17, 50, 49, 24} == CardsToWaughCards(CardsetFromString("6hAdAh8s").cards));
-    REQUIRE(std::set<uint32_t>{17, 50, 49, 24} == CardsToWaughCards(CardsetFromString("Ad6h8sAh").cards));
+    REQUIRE(std::set<WaughCard_t>{17, 50, 49, 24} == CardsToWaughCards(CardsetFromString("6hAdAh8s").cards));
+    REQUIRE(std::set<WaughCard_t>{17, 50, 49, 24} == CardsToWaughCards(CardsetFromString("Ad6h8sAh").cards));
 
-    REQUIRE(std::set<uint32_t>{8, 12, 5, 37, 39} == CardsToWaughCards(CardsetFromString("4s5s3hJhJc").cards));
-    REQUIRE(std::set<uint32_t>{48, 5, 13, 17, 21, 33, 27} == CardsToWaughCards(CardsetFromString("As3h5h6h7hTh8c").cards));
+    REQUIRE(std::set<WaughCard_t>{8, 12, 5, 37, 39} == CardsToWaughCards(CardsetFromString("4s5s3hJhJc").cards));
+    REQUIRE(std::set<WaughCard_t>{48, 5, 13, 17, 21, 33, 27} == CardsToWaughCards(CardsetFromString("As3h5h6h7hTh8c").cards));
 }
 
 TEST_CASE("colex") {

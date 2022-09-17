@@ -62,7 +62,7 @@ inline std::string CardsTo64Bitstr(uint64_t cardmask) {
     return bitstr;
 }
 
-inline WaughSuit_t SuitToWaughSuit(uint8_t suit) {
+inline WaughSuit_t SuitToWaughSuit(CardSuit_t suit) {
     /*
      * Bitstr | This | Waugh
      * ---------------------
@@ -76,7 +76,7 @@ inline WaughSuit_t SuitToWaughSuit(uint8_t suit) {
 
 std::set<WaughCard_t> CardsToWaughCards(uint64_t cardmask) {
     std::set<WaughCard_t> result;
-    uint8_t card;
+    Card_t card;
     while (cardmask) {
         card = __builtin_ctzll(cardmask); // Return the number of trailing 0-bits in x, starting at the least significant bit position. If x is 0, the result is undefined.
         uint32_t waugh_card = (card & 15) << 2 | SuitToWaughSuit(card >> 4);

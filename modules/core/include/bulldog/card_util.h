@@ -29,10 +29,11 @@ const double IMPOSSIBLE_HAND_VALUE = -1231512341234; // a dirty hack.
 const double IMPOSSIBLE_RANK_PROB = 0.0;
 const uint8_t IMPOSSIBLE_CARD = 60;
 using Card_t = uint8_t;
+using CardSuit_t = uint8_t;
 using Colex = unsigned int;
 
 using WaughSuit_t = uint8_t;
-using WaughCard_t = uint32_t;
+using WaughCard_t = uint8_t;
 
 static std::map<int, int> HoldemSumBoardMap{
         {0, 0},
@@ -186,7 +187,7 @@ std::string CardsToString(uint64_t cardmask);
 
 std::string CardsTo64Bitstr(uint64_t cardmask);
 
-WaughSuit_t SuitToWaughSuit(uint8_t suit);
+WaughSuit_t SuitToWaughSuit(CardSuit_t suit);
 
 std::set<WaughCard_t> CardsToWaughCards(uint64_t cardmask);
 
