@@ -56,6 +56,36 @@ std::string CardsToString(uint64_t cardmask)
     return out;
 }
 
+inline std::string CardsTo64Bitstr(uint64_t cardmask) {
+    std::bitset<64> x(cardmask);
+    std::string bitstr = x.to_string();
+    return bitstr;
+}
+
+inline WaughSuit_t SuitToWaughSuit(uint8_t suit) {
+    /*
+     * Bitstr | This | Waugh
+     * ---------------------
+     *  0b00  |  c   |   s
+     *  0b01  |  d   |   h
+     *  0b10  |  h   |   d
+     *  0b11  |  s   |   c
+     */
+    return ~suit & 3;
+}
+
+std::set<WaughCard_t> CardsToWaughCards(uint64_t cardmask) {
+    std::set<WaughCard_t> result;
+    uint8_t card;
+    while (cardmask) {
+        card = __builtin_ctzll(cardmask); // Return the number of trailing 0-bits in x, starting at the least significant bit position. If x is 0, the result is undefined.
+        uint32_t waugh_card = (card & 15) << 2 | SuitToWaughSuit(card >> 4);
+        result.insert(waugh_card);
+        cardmask &= cardmask - 1;  // clear the least significant bit set
+    }
+    return result;
+}
+
 uint64_t Canonize(uint64_t cardmask)
 {
     std::string instr = CardsToString(cardmask);

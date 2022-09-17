@@ -31,6 +31,9 @@ const uint8_t IMPOSSIBLE_CARD = 60;
 using Card_t = uint8_t;
 using Colex = unsigned int;
 
+using WaughSuit_t = uint8_t;
+using WaughCard_t = uint32_t;
+
 static std::map<int, int> HoldemSumBoardMap{
         {0, 0},
         {1, 3},
@@ -180,6 +183,12 @@ Colex ComputeColexFromAllCards(Card_t high, Card_t low, Board_t &board, int roun
 Cardset CardsetFromString(const std::string &str);
 
 std::string CardsToString(uint64_t cardmask);
+
+std::string CardsTo64Bitstr(uint64_t cardmask);
+
+WaughSuit_t SuitToWaughSuit(uint8_t suit);
+
+std::set<WaughCard_t> CardsToWaughCards(uint64_t cardmask);
 
 void AddCardTToCardset(Cardset *c, uint8_t card);
 

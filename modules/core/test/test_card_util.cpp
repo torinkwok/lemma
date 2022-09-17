@@ -26,6 +26,23 @@ TEST_CASE("canonize") {
   REQUIRE("2c3c" == CardsToString(Canonize(CardsetFromString("2c3c").cards)));
   REQUIRE("2c3c" == CardsToString(Canonize(CardsetFromString("2s3s").cards)));
   REQUIRE("4c3d2h" == CardsToString(Canonize(CardsetFromString("2s3h4c").cards)));
+  REQUIRE("4c3d2h" == CardsToString(Canonize(CardsetFromString("3d2s4c").cards)));
+  REQUIRE("3c5c6c7cTc8d" == CardsToString(Canonize(CardsetFromString("3dTd5d6d7d8s").cards)));
+  REQUIRE("3c5c6c7cTc8d" == CardsToString(Canonize(CardsetFromString("6hTh7h3h5h8c").cards)));
+}
+
+TEST_CASE("to_waugh_cards") {
+    REQUIRE(std::set<uint32_t>{49} == CardsToWaughCards(CardsetFromString("Ah").cards));
+    REQUIRE(std::set<uint32_t>{50, 49} == CardsToWaughCards(CardsetFromString("AdAh").cards));
+
+    REQUIRE(std::set<uint32_t>{0, 40, 33} == CardsToWaughCards(CardsetFromString("2sQsTh").cards));
+    REQUIRE(std::set<uint32_t>{1, 41, 32} == CardsToWaughCards(CardsetFromString("2hQhTs").cards));
+
+    REQUIRE(std::set<uint32_t>{17, 50, 49, 24} == CardsToWaughCards(CardsetFromString("6hAdAh8s").cards));
+    REQUIRE(std::set<uint32_t>{17, 50, 49, 24} == CardsToWaughCards(CardsetFromString("Ad6h8sAh").cards));
+
+    REQUIRE(std::set<uint32_t>{8, 12, 5, 37, 39} == CardsToWaughCards(CardsetFromString("4s5s3hJhJc").cards));
+    REQUIRE(std::set<uint32_t>{48, 5, 13, 17, 21, 33, 27} == CardsToWaughCards(CardsetFromString("As3h5h6h7hTh8c").cards));
 }
 
 TEST_CASE("colex") {
@@ -35,6 +52,9 @@ TEST_CASE("colex") {
   REQUIRE(6225 == ComputeColex(CardsetFromString("QcJdTh").cards));
   REQUIRE(749 == ComputeColex(CardsetFromString("5cAc6d").cards));
   REQUIRE(1377 == ComputeColex(CardsetFromString("4cQcTd").cards));
+
+  // std::cout << ComputeColex(Canonize(CardsetFromString("3dTd5dAc6d7d8s").cards)) << std::endl;
+  // std::cout << ComputeColex(Canonize(CardsetFromString("As6hTh7h3h5h8c").cards)) << std::endl;
 
   REQUIRE(ComputeColex(CardsetFromString("4c3d2h").cards) == ComputeColex(Canonize(CardsetFromString("2s3h4c").cards)));
   REQUIRE(ComputeColex(CardsetFromString("2c3c").cards) == ComputeColex(Canonize(CardsetFromString("2s3s").cards)));
