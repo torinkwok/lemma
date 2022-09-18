@@ -5,7 +5,7 @@
     "disk" : true,
     "strategy_prefix": [
       // "upoker-p_nlh2_200bb_cfrs_r0_30000000"
-      "upoker-p_nlh2_200bb__cfrs_r0_10" // FIXME(kwok):
+      "upoker-p_nlh2_200bb_cfrs_r0_1000" // FIXME(kwok):
     ],
     "action_chooser": {
       "purification": false,
@@ -14,7 +14,7 @@
       "prune_threshold": 0.08
     }
   },
-  // "random_action": true,
+//   "random_action": true,
   "subgame_solvers": [
   ]
 }
