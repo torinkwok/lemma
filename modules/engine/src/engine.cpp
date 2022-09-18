@@ -366,8 +366,8 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
     }
 
     /* GET ACTION from the last playbook. */
-    auto pb_depth = playbook_stack_.size();
-    for (auto pb_i = pb_depth - 1; pb_i >= 0; pb_i--) {
+    int pb_depth = playbook_stack_.size();
+    for (int pb_i = pb_depth - 1; pb_i >= 0; pb_i--) { // FIXME(kwok): If pb_i is of size_t, pb_i-- will underflow.
         // Try to find from this playbook.
         auto pb = playbook_stack_.at(pb_i);
         logger::debug("    [ENGINE %s] : get action from %d/%d playbooks (%s)",
