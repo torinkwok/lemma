@@ -3,6 +3,7 @@
 
 #include "bucket.h"
 #include "node.h"
+
 #include <bulldog/logger.hpp>
 
 #include <cereal/archives/binary.hpp>
@@ -16,23 +17,49 @@ extern "C" {
 #include <bulldog/game.h>
 }
 
-void Bucket::LoadClassicFromFlexbuffers()
+void Bucket::LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r)
 {
+    assert(r >=0 && r < 4);
     type_ = WAUGH_BUCKET;
-    auto paths = std::vector{
-            std::filesystem::path(std::string(BULLDOG_DIR_DATA_ABS) + std::string("/emd-abs-r0-d50-1_chunks")),
-            std::filesystem::path(std::string(BULLDOG_DIR_DATA_ABS) + std::string("/emd-abs-r1-d50-1_chunks")),
-            std::filesystem::path(std::string(BULLDOG_DIR_DATA_ABS) + std::string("/emd-abs-r2-d50-1_chunks")),
-            std::filesystem::path(std::string(BULLDOG_DIR_DATA_ABS) + std::string("/ochs-abs-r3-d8-8_chunks")),
-    };
-    for (size_t r = 0; r < paths.size(); r++) {
-        auto num_loaded = _LoadClassicFromFlexbuffers(paths[r], r);
-        std::cout << num_loaded << " Waugh indices loaded for round " << r << std::endl;
-        assert((r == 0 && num_loaded == 169) ||
-                       (r == 1 && num_loaded == 1286792) ||
-                       (r == 2 && num_loaded == 13960050) ||
-                       (r == 3 && num_loaded == 123156254));
+
+    // TODO(kwok): Justify it.
+    uint_fast32_t rounds = 0;
+    uint8_t* cards_per_round = nullptr;
+    hand_indexer_t* out_indexer = nullptr;
+    switch (r) {
+        case 0: rounds = 1; cards_per_round = (uint8_t[]){2}; out_indexer = &_preflop_indexer; break;
+        case 1: rounds = 2; cards_per_round = (uint8_t[]){2, 3}; out_indexer = &_flop_indexer; break;
+        case 2: rounds = 2; cards_per_round = (uint8_t[]){2, 4}; out_indexer = &_turn_indexer; break;
+        case 3: rounds = 2; cards_per_round = (uint8_t[]){2, 5}; out_indexer = &_river_indexer; break;
+        default: throw std::runtime_error("Invalid round number " + std::to_string(r));
     }
+    // assert(hand_indexer_init(1, (uint8_t[]){2}, &_preflop_indexer));
+    // assert(hand_indexer_init(2, (uint8_t[]){2, 3}, &_flop_indexer));
+    // assert(hand_indexer_init(2, (uint8_t[]){2, 4}, &_turn_indexer));
+    // assert(hand_indexer_init(2, (uint8_t[]){2, 5}, &_river_indexer));
+    assert(hand_indexer_init(rounds, cards_per_round, out_indexer));
+
+    auto num_loaded = _LoadClassicFromFlexbuffers(std::filesystem::path(dir), r);
+    std::cout << num_loaded << " Waugh indices loaded for round " << r << std::endl;
+    assert((r == 0 && num_loaded == 169) ||
+           (r == 1 && num_loaded == 1286792) ||
+           (r == 2 && num_loaded == 13960050) ||
+           (r == 3 && num_loaded == 123156254));
+
+    // auto paths = std::vector{
+    //         std::filesystem::path(std::string(BULLDOG_DIR_DATA_ABS) + std::string("/emd-abs-r0-d50-1_chunks")),
+    //         std::filesystem::path(std::string(BULLDOG_DIR_DATA_ABS) + std::string("/emd-abs-r1-d50-1_chunks")),
+    //         // std::filesystem::path(std::string(BULLDOG_DIR_DATA_ABS) + std::string("/emd-abs-r2-d50-1_chunks")),
+    //         // std::filesystem::path(std::string(BULLDOG_DIR_DATA_ABS) + std::string("/ochs-abs-r3-d8-8_chunks")),
+    // };
+    // for (size_t r = 0; r < paths.size(); r++) {
+    //     auto num_loaded = _LoadClassicFromFlexbuffers(paths[r], r);
+    //     std::cout << num_loaded << " Waugh indices loaded for round " << r << std::endl;
+    //     assert((r == 0 && num_loaded == 169) ||
+    //                    (r == 1 && num_loaded == 1286792) ||
+    //                    (r == 2 && num_loaded == 13960050) ||
+    //                    (r == 3 && num_loaded == 123156254));
+    // }
 }
 
 size_t Bucket::_LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r)
@@ -40,7 +67,8 @@ size_t Bucket::_LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r)
     assert(type_ == WAUGH_BUCKET);
 
     std::filesystem::path fxb_chunks_dir_path(dir);
-    assert(exists(fxb_chunks_dir_path) && is_directory(fxb_chunks_dir_path));
+    assert(exists(fxb_chunks_dir_path));
+    assert(is_directory(fxb_chunks_dir_path));
 
     using std::filesystem::directory_iterator;
     size_t fxb_num_chunks = std::distance(directory_iterator(fxb_chunks_dir_path), directory_iterator{});
@@ -319,6 +347,10 @@ void Bucket::Save(std::map<unsigned int, unsigned short> &entries, const std::st
 // TODO(kwok): `board_colex` will be ignored for classic and colex bucket. Make it explicit.
 uint32_t Bucket::Get(unsigned long all_colex, unsigned long board_colex)
 {
+    if (type_ == WAUGH_BUCKET) {
+        throw std::runtime_error("For Waugh bucket, invoke `uint32_t Bucket::Get(Cardset*, Cardset*)`");
+    }
+
     if (board_colex > 4294967295 && type_ == HIERARCHICAL_COLEX) {
         logger::critical("now the master map is indexed with unsigned int. so the public colex is not safe.");
     }
@@ -328,9 +360,6 @@ uint32_t Bucket::Get(unsigned long all_colex, unsigned long board_colex)
     }
 
     switch (type_) {
-        case WAUGH_BUCKET: {
-            break;
-        }
         case HIERARCHICAL_COLEX:
         case HIERARCHICAL_BUCKET: {
             if (master_map_.empty()) {
@@ -372,6 +401,24 @@ uint32_t Bucket::Get(unsigned long all_colex, unsigned long board_colex)
 
 uint32_t Bucket::Get(Cardset *all_cards, Cardset *board_cards)
 {
+    if (type_ == WAUGH_BUCKET) {
+        std::set<WaughCard_t> waugh_cards_set = CardsToWaughCards(all_cards->cards);
+        auto waugh_cards_vec = std::vector(waugh_cards_set.begin(), waugh_cards_set.end());
+        WaughCard_t* c_arr = &waugh_cards_vec[0];
+        uint8_t r = 0;
+        hand_index_t index = 0;
+        // TODO(kwok): Refactor these deliberately redundant code.
+        switch (waugh_cards_vec.size()) {
+            case 2: r = 0; index = hand_index_last(&_preflop_indexer, c_arr); break;
+            case 5: r = 1; index = hand_index_last(&_flop_indexer, c_arr); break;
+            case 6: r = 2; index = hand_index_last(&_turn_indexer, c_arr); break;
+            case 7: r = 3; index = hand_index_last(&_river_indexer, c_arr); break;
+            default: throw std::runtime_error("Invalid size of Waugh cards");
+        }
+        // TODO(kwok): Validate the bucket to return.
+        auto bucket = master_map_[r][index];
+        return bucket;
+    }
     return Get(ComputeColex(Canonize(all_cards->cards)),
                ComputeColex(Canonize(board_cards->cards)));
 }

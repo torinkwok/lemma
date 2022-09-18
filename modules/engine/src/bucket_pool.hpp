@@ -52,6 +52,15 @@ public:
             meta->bucket_.LoadHierarchical(name);
             meta->bucket_count_ = std::atoi(parsed_str[1].c_str()) * std::atoi(parsed_str[2].c_str());
             meta->post_flop_bucket_count_ = std::atoi(parsed_str[2].c_str());
+        } else if (name.substr(0, 5) == "waugh") {
+            std::filesystem::path bucket_dir(name);
+            std::vector<std::string> parsed_str;
+            split_string(name, "_", parsed_str);
+            uint8_t num_buckets = std::stoul(parsed_str[5]);
+            uint8_t r = std::stoul(parsed_str[2]);
+            logger::debug("number of buckets %u; round %u", num_buckets, r);
+            meta->bucket_.LoadClassicFromFlexbuffers(dir / bucket_dir, r);
+            meta->bucket_count_ = num_buckets;
         } else {
             std::filesystem::path bucket_file(name + ".bin");
             meta->bucket_.LoadClassicFromFile(dir / bucket_file);

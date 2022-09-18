@@ -10,6 +10,7 @@
 
 extern "C" {
 #include <bulldog/game.h>
+#include <hand_indexer/src/hand_index.h>
 }
 
 const short HIER_PUB_BUCKET = 60;
@@ -33,7 +34,7 @@ public:
 
     void LoadClassicFromFile(const std::string &ofile);
 
-    void LoadClassicFromFlexbuffers();
+    void LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r);
 
     /*
      * bucket type
@@ -73,6 +74,11 @@ private:
     }
 
     size_t _LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r);
+
+    hand_indexer_t _preflop_indexer;
+    hand_indexer_t _flop_indexer;
+    hand_indexer_t _turn_indexer;
+    hand_indexer_t _river_indexer;
 };
 
 #endif //BULLDOG_MODULES_ENGINE_SRC_BUCKET_H_
