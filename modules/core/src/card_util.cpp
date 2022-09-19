@@ -86,6 +86,21 @@ std::set<WaughCard_t> CardsToWaughCards(uint64_t cardmask) {
     return result;
 }
 
+std::string WaughCardsToString(const std::set<WaughCard_t>& waugh_cards) {
+    /// char to u8 rank table
+    static const char WAUGH_RANK_TO_CHAR[] = {'2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A'};
+    /// char to u8 suit table
+    static const char WAUGH_SUIT_TO_CHAR[] = {'s', 'h', 'd', 'c'};
+    std::string out;
+    for (auto card : waugh_cards) {
+        auto rank = card / 4;
+        auto suit = card % 4;
+        out += WAUGH_RANK_TO_CHAR[rank];
+        out += WAUGH_SUIT_TO_CHAR[suit];
+    }
+    return out;
+}
+
 uint64_t Canonize(uint64_t cardmask)
 {
     std::string instr = CardsToString(cardmask);

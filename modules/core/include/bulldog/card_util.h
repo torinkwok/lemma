@@ -191,6 +191,8 @@ WaughSuit_t SuitToWaughSuit(CardSuit_t suit);
 
 std::set<WaughCard_t> CardsToWaughCards(uint64_t cardmask);
 
+std::string WaughCardsToString(const std::set<WaughCard_t>&);
+
 void AddCardTToCardset(Cardset *c, uint8_t card);
 
 void AddBoardToCardSetByRound(Cardset *c, Board_t *board, int round);
