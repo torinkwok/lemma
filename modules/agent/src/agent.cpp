@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
                 break;
             }
 
-            /* Ignoring game-over message */
+            /* Ignoring game-over message */ // FIXME(kwok): Check if the `finished` state has been set correctly.
             if (stateFinished(&match_state.state)) {
                 // TODO: 2p hack.
                 std::string players[2];

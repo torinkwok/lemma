@@ -312,6 +312,7 @@ CFR::CFR(const char *config_file)
     }
 }
 
+// NOTE(kwok): Only useful for hierarchical buckets.
 void CFR::AllocateFlops(std::vector<Board_t> *pub_flop_boards,
                         std::vector<int> *thread_board,
                         int num_thread,

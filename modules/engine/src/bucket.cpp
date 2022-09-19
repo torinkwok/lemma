@@ -403,6 +403,8 @@ uint32_t Bucket::Get(Cardset *all_cards, Cardset *board_cards)
 {
     if (type_ == WAUGH_BUCKET) {
         std::set<WaughCard_t> waugh_cards_set = CardsToWaughCards(all_cards->cards);
+        // TODO(kwok): Assert the two are identical.
+        // logger::debug("☄️%s - %s", WaughCardsToString(waugh_cards_set), CardsToString(all_cards->cards));
         auto waugh_cards_vec = std::vector(waugh_cards_set.begin(), waugh_cards_set.end());
         WaughCard_t* c_arr = &waugh_cards_vec[0];
         uint8_t r = 0;

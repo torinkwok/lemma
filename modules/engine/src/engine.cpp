@@ -365,7 +365,7 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
         break;
     }
 
-    /* GET ACTION from the last playbook. */
+    /* GET ACTION from the last playbook, descendingly. */
     int pb_depth = playbook_stack_.size();
     for (int pb_i = pb_depth - 1; pb_i >= 0; pb_i--) { // FIXME(kwok): If pb_i is of size_t, pb_i-- will underflow.
         // Try to find from this playbook.
@@ -385,9 +385,10 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
                 continue;
             }
 
-            mr.Print("trying to get action from this node : ");
+            mr.Print("\n🔍trying to get action from this node : ");
 
             // Also check if the path is decent when using blueprint. Skip it if not.
+            // TODO(kwok): Why only check for using blueprint?
             if (!IsNestedSgsStarted()) {
                 // Skip if at the root node, i.e. the agent being first to act.
                 if (mr.matched_node_ != pb.strategy_->ag_->root_node_) {
@@ -404,7 +405,7 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
                             DEFAULT_BAYESIAN_TRANSITION_FILTER);
                     if (estimate_return_code != RANGE_ESTIMATE_SUCCESS) {
                         mr.matched_node_->PrintState("[ blueprint ] node not reachable");
-                        logger::warn("[ blueprint ] node not reachable [%s]",
+                        logger::warn("🚧[ blueprint ] node not reachable [%s]",
                                      RangeEstimateCodeMap[estimate_return_code]);
                         continue;
                     }
@@ -417,7 +418,7 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
                                      r_action,
                                      pb.strategy_type,
                                      mr.matched_node_);
-            logger::debug("    [ENGINE %s] : pick action [%c%d] with mode [%s]",
+            logger::debug("    [ENGINE %s] : ✅pick action [%c%d] with mode [%s]",
                           engine_name_,
                           actionChars[r_action.type],
                           r_action.size,
@@ -545,19 +546,19 @@ void Engine::EvalShowdown(MatchState &match_state)
 int Engine::GetActionBySession(MatchState &normalized_match_state, Action &r_action, int timeout_ms)
 {
     if (busy_flag_) {
-        logger::error("    [ENGINE %s] : still busy from the last request man");
+        logger::error("    [ENGINE %s] : 💢still busy from the last request man");
         return GET_ACTION_FAILURE;
     }
 
     if (timeout_ms <= 1000) {
-        logger::warn("    [ENGINE %s] : time_out %d is too short", engine_name_, timeout_ms);
+        logger::warn("    [ENGINE %s] : 🚨time_out %d is too short", engine_name_, timeout_ms);
         return GET_ACTION_FAILURE;
     }
 
     // Leave 500ms leeway for other miscel expenses.
     auto code = GetAction(&normalized_match_state, r_action, timeout_ms - 500);
     if (code != GET_ACTION_SUCCESS) {
-        logger::error("    [ENGINE %s] : get action failure for some reason", engine_name_);
+        logger::error("    [ENGINE %s] : 💢get action failure for some reason", engine_name_);
         return GET_ACTION_FAILURE;
     }
 
@@ -568,7 +569,7 @@ int Engine::GetActionBySession(MatchState &normalized_match_state, Action &r_act
      */
 
     if (!isValidAction(normalized_game_, &normalized_match_state.state, 0, &r_action)) {
-        logger::debug("    [ENGINE %s] : invalid action from engine: %c%d",
+        logger::debug("    [ENGINE %s] : 💢invalid action from engine: %c%d",
                       engine_name_,
                       actionChars[r_action.type],
                       r_action.size);
@@ -577,18 +578,18 @@ int Engine::GetActionBySession(MatchState &normalized_match_state, Action &r_act
         Action original_action = r_action;
         //try to fix it.
         if (!isValidAction(normalized_game_, &normalized_match_state.state, 1, &r_action)) {
-            logger::warn("    [ENGINE %s] : unable to fix action", engine_name_);
+            logger::warn("    [ENGINE %s] : 💢unable to fix action", engine_name_);
             //normally it is a r20000 invalid. return call as a hack
             r_action.type = a_call;
         }
 
         if (abs(original_action.size - r_action.size) >= 1000) {
-            logger::warn("    [ENGINE %s] : invalid action has been SUBSTANTIALLY fixed to: %c%d",
+            logger::warn("    [ENGINE %s] : 💢invalid action has been SUBSTANTIALLY fixed to: %c%d",
                          engine_name_,
                          actionChars[r_action.type],
                          r_action.size);
         } else {
-            logger::debug("    [ENGINE %s] : invalid action has been MARGINALLY fixed to: %c%d",
+            logger::debug("    [ENGINE %s] : 💢invalid action has been MARGINALLY fixed to: %c%d",
                           engine_name_,
                           actionChars[r_action.type],
                           r_action.size);
