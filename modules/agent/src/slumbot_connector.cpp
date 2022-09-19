@@ -71,7 +71,7 @@ void from_json(const web::json::value &j, sSlumbotMatchState *s) {
   // -1200, 'session_baseline_total': -750}
 
   // p1_
-  s->p1_ = j.has_field("client_pos") ? (j.at("client_pos").as_integer() ?: 0) : 0;
+  s->p1_ = j.has_field("client_pos") ? j.at("client_pos").as_integer() : 0;
 
   // holes_
   s->holes_ = "";
@@ -316,17 +316,21 @@ int SlumbotConnector::build(const Game *game, Action *action, State *state) {
   } else {
     action_str_ = actionChars[action->type];
   }
-    
+
   if (game->bettingType == noLimitBetting && action->type == a_raise) {
+      // FIXME(kwok): A hack only suitable for heads-up.
     unsigned short viewingPlayer = slumbot_match_state_->p1_ == 1 ? 0 : 1;
-    int32_t lower_bound = state->spent[1 - viewingPlayer]; // FIXME(kwok): A hack only suitable for heads-up.
-    int32_t upper_bound = state->stackPlayer[viewingPlayer];
+    int32_t lower_bound = state->spent[1 - viewingPlayer]; // NOTE(kwok): Total spent by the opponent.
+    int32_t upper_bound = state->stackPlayer[viewingPlayer]; // NOTE(kwok): The depth of my stack.
     int32_t action_size_by_game = action->size;
     int32_t action_size_by_round = actionTranslate_bsbg2bsbr(action, state, game);
-    if (action_size_by_game <= lower_bound || action_size_by_game > upper_bound) {
+    // NOTE(kwok): In no-limit betting strings, the raise action includes a size, which indicates the total number of
+    // chips the player will have put into the pot after raising (i.e. the value they are raising to, not the value they
+    // are raising by.)
+    if (action_size_by_game < lower_bound || action_size_by_game > upper_bound) {
       logger::critical("engine action size (by game): " + std::to_string(action_size_by_game) +
-                       ", raise size (by game) must be within the range of (" +
-                       std::to_string(lower_bound) + " - " +
+                       ", raise size (by game) must be inclusively within the range of [" +
+                       std::to_string(lower_bound) + ", " +
                        std::to_string(upper_bound) + "]");
     }
     if (action_size_by_round < 0) {

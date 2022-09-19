@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
 
     // Run Sessions.
     for (int i = 1; i <= result["sessions"].as<int>(); i++) {
-        logger::info(" [AGENT] : RUNNING SESSION %d", i);
+        logger::info(" [AGENT] : RUNNING SESSION %d\n", i);
 
         // Connector initialization.
         BaseConnector *connector = nullptr;
@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
             if (connector->parse(game, &match_state) == EXIT_FAILURE) {
                 logger::error(" [AGENT] : failed to parse into game state");
                 break;
-            };
+            }
 
             /* Ignoring game-over message */
             if (stateFinished(&match_state.state)) {
@@ -151,6 +151,8 @@ int main(int argc, char *argv[])
                 logger::info(" [AGENT] : %s", full_match_str);
 
                 total_hands_played++;
+
+                // NOTE(kwok): It's me.
                 double net = valueOfState(game, &match_state.state, match_state.viewingPlayer);
                 session_total += net;
                 logger::debug(" [AGENT] : net win of this hand: %.3f | %s", net, full_match_str);
@@ -163,11 +165,10 @@ int main(int argc, char *argv[])
 
             /* Ignore states that we are not acting in */
             // FIXME(kwok): Is this guardian code necessary?
-            //      if (currentPlayer(game, &match_state.state)
-            //          != match_state.viewingPlayer) {
-            //          logger::debug(" [AGENT] : ignore state, not acting player");
-            //          continue;
-            //      }
+             if (currentPlayer(game, &match_state.state) != match_state.viewingPlayer) {
+                 logger::debug(" [AGENT] : 🚨ignore state, not acting player");
+                 continue;
+             }
 
             /* Pick an action to play. */
             char line[MAX_LINE_LEN];
@@ -205,6 +206,8 @@ int main(int argc, char *argv[])
                 logger::error(" [AGENT] : failed to send action");
                 break;
             }
+
+            logger::debug("\n\n\n");
         }
 
         logger::info(" [AGENT] : Session total = %d ", session_total);
