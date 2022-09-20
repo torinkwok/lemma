@@ -12,7 +12,7 @@ void CheckAvgSum(float *avg, int size) {
 //return true if all strategy are the same. i.e. uninitialized.
 bool IsAvgUniform(float *avg, int size) {
   if (size == 1) {
-    logger::warn("avg with size 1. consider enlarging the abstraction");
+    // logger::warn("avg with size 1. consider enlarging the abstraction");
     return true; //does not matter
   }
   float uniform_v = (float) 1.0 / (float) size;

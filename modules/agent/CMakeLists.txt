@@ -43,6 +43,11 @@ add_executable(test_sdk ${CMAKE_CURRENT_SOURCE_DIR}/test/test_sdk.cpp
         src/basic_controller.cpp
         src/bulldog_sdk.cpp)
 
+add_executable(waugh_bucket_test
+        test/waugh_bucket_test.cpp
+        src/slumbot_connector.cpp
+        src/acpc_connector.cpp)
+
 if (UNIX AND NOT APPLE)
     target_link_libraries(agent PRIVATE stdc++fs core engine cpprestsdk::cpprest ${Boost_SYSTEM_LIBRARY} hand_indexer)
     target_link_libraries(test_agent PRIVATE stdc++fs core engine cpprestsdk::cpprest ${Boost_SYSTEM_LIBRARY} Catch2::Catch2)
@@ -57,6 +62,8 @@ else ()
     target_link_libraries(engine_eval PRIVATE core engine cpprestsdk::cpprest ${Boost_SYSTEM_LIBRARY})
 endif ()
 target_link_libraries(dealer PRIVATE core)
+
+target_link_libraries(waugh_bucket_test PRIVATE core engine cpprestsdk::cpprest hand_indexer)
 
 include(Catch)
 include(CTest)

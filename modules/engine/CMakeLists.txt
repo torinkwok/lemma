@@ -17,8 +17,6 @@ set(ENGINE_LIB src/bucket_reader.hpp
 add_library(engine ${ENGINE_LIB})
 target_include_directories(engine PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
 
-add_executable(waugh_bucket_test test/waugh_bucket_test.cpp)
-
 add_executable(train src/train.cpp)
 add_executable(check_strategy src/check_strategy.cpp)
 add_executable(check_kernel src/check_kernel_size.cpp)
@@ -47,7 +45,6 @@ else ()
     target_link_libraries(train PRIVATE engine Threads::Threads hand_indexer)
     target_link_libraries(check_strategy PRIVATE engine Threads::Threads)
     target_link_libraries(check_kernel PRIVATE engine Threads::Threads)
-    target_link_libraries(waugh_bucket_test hand_indexer engine)
 endif ()
 
 set_property(TARGET engine PROPERTY CXX_STANDARD 17)
