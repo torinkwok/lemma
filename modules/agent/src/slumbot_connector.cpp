@@ -320,18 +320,30 @@ int SlumbotConnector::build(const Game *game, Action *action, State *state) {
   if (game->bettingType == noLimitBetting && action->type == a_raise) {
       // FIXME(kwok): A hack only suitable for heads-up.
     unsigned short viewingPlayer = slumbot_match_state_->p1_ == 1 ? 0 : 1;
-    int32_t lower_bound = state->spent[1 - viewingPlayer]; // NOTE(kwok): Total spent by the opponent.
-    int32_t upper_bound = state->stackPlayer[viewingPlayer]; // NOTE(kwok): The depth of my stack.
+    unsigned short opponentPlayer = 1 - viewingPlayer;
+    int32_t lower_bound_by_game = state->spent[opponentPlayer]; // NOTE(kwok): Total spent by the opponent.
+      int32_t upper_bound_by_game = state->stackPlayer[viewingPlayer]; // NOTE(kwok): The depth of my stack.
+
+      int32_t lower_bound_by_round = state->round > 0
+              ? state->sum_round_spent[state->round][opponentPlayer] -
+                                     state->sum_round_spent[state->round - 1][opponentPlayer]
+                                     : lower_bound_by_game;
+
     int32_t action_size_by_game = action->size;
     int32_t action_size_by_round = actionTranslate_bsbg2bsbr(action, state, game);
+
+      if (action_size_by_round < lower_bound_by_round * 2) {
+          logger::critical("💢the raise (by round) size must be at least twice as large as the opponent's last bet (by round), " +
+                           std::to_string(action_size_by_round) + "recieved");
+      }
     // NOTE(kwok): In no-limit betting strings, the raise action includes a size, which indicates the total number of
     // chips the player will have put into the pot after raising (i.e. the value they are raising to, not the value they
     // are raising by.)
-    if (action_size_by_game < lower_bound || action_size_by_game > upper_bound) {
-      logger::critical("engine action size (by game): " + std::to_string(action_size_by_game) +
+    if (action_size_by_game > upper_bound_by_game) {
+      logger::critical("💢engine action size (by game): " + std::to_string(action_size_by_game) +
                        ", raise size (by game) must be inclusively within the range of [" +
-                       std::to_string(lower_bound) + ", " +
-                       std::to_string(upper_bound) + "]");
+                       std::to_string(lower_bound_by_game) + ", " +
+                       std::to_string(upper_bound_by_game) + "]");
     }
     if (action_size_by_round < 0) {
       logger::critical("raise cannot be less than 0, " + std::to_string(action_size_by_round) + "recieved");
