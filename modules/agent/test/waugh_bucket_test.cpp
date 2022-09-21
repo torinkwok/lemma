@@ -125,5 +125,24 @@ int main(int argc, char *argv[]) {
         assert("b1500" == connector->action_str_);
     }
 
+    { // Call
+        auto json_str = R"({"action":"b200c/kk/b264c/kb336","board":["Qc","Jh","Jc","Js","Th"],"client_pos":0,"hole_cards":["Ac","8h"],"old_action":"b200c/kk/b264c/k"})";
+        auto json = web::json::value::parse(json_str);
+        connector->previous_act_result_json_ = json;
+        from_json(connector->previous_act_result_json_, connector->slumbot_match_state_);
+
+        MatchState match_state;
+        connector->parse(game, &match_state);
+
+        char line[MAX_LINE_LEN];
+        printMatchState(game, &match_state, MAX_LINE_LEN, line);
+        logger::info(" [AGENT] : %s", line);
+
+        Action action{a_call, 0};
+        auto build_result = connector->build(game, &action, &match_state.state);
+        assert(build_result == EXIT_SUCCESS);
+        assert("c" == connector->action_str_);
+    }
+
     return 0;
 }
