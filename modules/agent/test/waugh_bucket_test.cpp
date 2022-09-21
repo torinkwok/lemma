@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
         Action action{a_raise, 20000}; // All-in
         auto build_result = connector->build(game, &action, &match_state.state);
         assert(build_result == EXIT_SUCCESS);
-        assert("b16400" == connector->action_str_);
+        assert("b18800" == connector->action_str_);
     }
 
     { // Raise to 400
@@ -122,7 +122,7 @@ int main(int argc, char *argv[]) {
         Action action{a_raise, 2400};
         auto build_result = connector->build(game, &action, &match_state.state);
         assert(build_result == EXIT_SUCCESS);
-        assert("b1500" == connector->action_str_);
+        assert("b2100" == connector->action_str_);
     }
 
     { // Call
@@ -142,6 +142,63 @@ int main(int argc, char *argv[]) {
         auto build_result = connector->build(game, &action, &match_state.state);
         assert(build_result == EXIT_SUCCESS);
         assert("c" == connector->action_str_);
+    }
+
+    // { // Call
+    //     auto json_str = R"({"action":"b200b800c/b400c/cc/b2400b9600","board":["Qs","5d","3h","Jc","9c"],"client_pos":0,"hole_cards":["Jh","Jd"],"old_action":"b200c/kk/b264c/k"})";
+    //     auto json = web::json::value::parse(json_str);
+    //     connector->previous_act_result_json_ = json;
+    //     from_json(connector->previous_act_result_json_, connector->slumbot_match_state_);
+    //
+    //     MatchState match_state;
+    //     connector->parse(game, &match_state);
+    //
+    //     char line[MAX_LINE_LEN];
+    //     printMatchState(game, &match_state, MAX_LINE_LEN, line);
+    //     logger::info(" [AGENT] : %s", line);
+    //
+    //     Action action{a_raise, 20000};
+    //     auto build_result = connector->build(game, &action, &match_state.state);
+    //     assert(build_result == EXIT_SUCCESS);
+    //     assert("c" == connector->action_str_);
+    // }
+
+    { // All-in
+        auto json_str = R"({"action": "b300c/k", "client_pos": 1, "hole_cards": ["Qs","3d"], "board": ["Kh","Ts","7s"], "old_action": ""})";
+        auto json = web::json::value::parse(json_str);
+        connector->previous_act_result_json_ = json;
+        from_json(connector->previous_act_result_json_, connector->slumbot_match_state_);
+
+        MatchState match_state;
+        connector->parse(game, &match_state);
+
+        char line[MAX_LINE_LEN];
+        printMatchState(game, &match_state, MAX_LINE_LEN, line);
+        logger::info(" [AGENT] : %s", line);
+
+        Action action{a_raise, 20000};
+        auto build_result = connector->build(game, &action, &match_state.state);
+        assert(build_result == EXIT_SUCCESS);
+        assert("b19700" == connector->action_str_);
+    }
+
+    { // All-in
+        auto json_str = R"({"action": "b300c/kb300c/kk/b600b3600b10200", "client_pos": 1, "hole_cards": ["Ad","2s"], "board": ["Qs","8h","2c", "Qd", "4c"], "old_action": "b300c/kb300c/kk/b600"})";
+        auto json = web::json::value::parse(json_str);
+        connector->previous_act_result_json_ = json;
+        from_json(connector->previous_act_result_json_, connector->slumbot_match_state_);
+
+        MatchState match_state;
+        connector->parse(game, &match_state);
+
+        char line[MAX_LINE_LEN];
+        printMatchState(game, &match_state, MAX_LINE_LEN, line);
+        logger::info(" [AGENT] : %s", line);
+
+        Action action{a_raise, 20000};
+        auto build_result = connector->build(game, &action, &match_state.state);
+        assert(build_result == EXIT_SUCCESS);
+        assert("b19400" == connector->action_str_);
     }
 
     return 0;
