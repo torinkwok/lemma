@@ -26,13 +26,15 @@ public:
 static inline long int actionTranslate_bsbr2bsbg(Action *action, State *state, const Game *game)
 {
     if (state->round > 0) {
-        // cb300c/b300b900c/cb2400b9600
-        //                       ^
-        //              Turn (multiple bets)
-        //
-        // Players may place bets multiple times within a single round.
-        // Shouldn't pretend that the viewing player hasn't bet for the current round.
-        return action->size + state->spent[currentPlayer(game, state)];
+        //                      cb300c/b300b900c/cb2400b9600
+        //                      \----/\--------/\----------/
+        //                         v       v         v
+        //         $300 added to the pot   |         |
+        //                                 v         |
+        //                    $900 added to the pot  |
+        //                                           v
+        //                                    To be determined
+        return action->size + state->sum_round_spent[state->round - 1][currentPlayer(game, state)];
     }
     return action->size;
 }
@@ -42,12 +44,14 @@ static inline long int actionTranslate_bsbg2bsbr(Action *action, State *state, c
 {
     if (state->round > 0) {
         // MATCHSTATE:0:0:20000|20000:cr300c/r600r1200c/cr3600r10800:Qc7c|/Jc7h2c/
-        //                              ^        ^             ^
-        //                          Pre-Flop   Flop     Turn (multiple bets)
-        //
-        // Players may place bets multiple times within a single round.
-        // Shouldn't pretend that the viewing player hasn't bet for the current round.
-        return action->size - state->spent[currentPlayer(game, state)];
+        //                            \----/\---------/\-----------/
+        //                              v        v           v
+        //      Total $300 added to the pot      |           |
+        //                                       v           |
+        //                   Total $1200 added to the pot    |
+        //                                                   v
+        //                                         Total to be determined
+        return action->size - state->sum_round_spent[state->round - 1][currentPlayer(game, state)];
     }
     return action->size;
 }
