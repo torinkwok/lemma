@@ -343,9 +343,15 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
         Strategy *&new_strategy = sgs_strategy_stack_.back();
         new_strategy->name_ = selected_sgs->name_;  // To make the destruction recognizable.
         new_strategy->InitMemoryAndValue(selected_sgs->cfr_->cfr_param_.cfr_mode_);
+
+        // NOTE(kwok): I often drop breakpoints inside `CheckTriggerCondition()`. Such a pause
+        // will more than likely increase the time elapsed and render the result reported by
+        // `timer.GetLapseFromBegin()` invalid.
+        auto remaining_ms = timeout_ms - timer.GetLapseFromBegin();
+        logger::debug("⏳remaining ms = %g", remaining_ms);
         cfr_return_code = AsynStartCFRSolving(selected_sgs,
                                               new_strategy,
-                                              timeout_ms - timer.GetLapseFromBegin());
+                                              remaining_ms);
         if (cfr_return_code < 0) {
             logger::error("    [ENGINE %sg_i] : cfr solving error in subgame", engine_name_);
             return GET_ACTION_FAILURE;
@@ -834,6 +840,7 @@ int Engine::AsynStartCFRSolving(SubgameSolver *selected_sgs, Strategy *&new_stra
     int count = 0;
     while (cfr_result_future.wait_for(span) == std::future_status::timeout) {
         count++;
+        // FIXME(kwok): If `remaining_ms` is negative, it would not be useful.
         if (count == async_span_count) {
             AsynStopCFRSolving();
         }
