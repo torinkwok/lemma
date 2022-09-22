@@ -48,7 +48,7 @@ struct sRNBAKernel {
     int max_round = depth_limited ? root_node->GetRound() + 1 : max_rounds_;
     for (int r = root_node->GetRound(); r < max_round; r++) {
       if (bucket_counts[r] == 0) {
-        logger::warn("bucket index at round (%d) = 0. error except in subgame solving", r);
+        logger::warn("🚨bucket index at round (%d) = 0. error except in subgame solving", r);
       }
       if (bucket_counts[r] > std::numeric_limits<Bucket_t>::max()) {
         logger::critical("rnba kernel bucket overflow");
@@ -78,7 +78,7 @@ struct sRNBAKernel {
             bmax_by_r_[3] * action_total_count_by_round_[3];
 
     if (max_index_lean > (pow(2, 40))) {
-      logger::warn("kernel index overflow > 2 ^ 40. enlarge it!");
+      logger::warn("🚨kernel index overflow > 2 ^ 40. enlarge it!");
     }
 
     max_index_ = max_index_lean;

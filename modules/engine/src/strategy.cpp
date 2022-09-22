@@ -584,15 +584,17 @@ void Strategy::ConvertWavgToZipAvg(pthread_t *thread_pool, unsigned int num_thre
     for (auto r = 0; r < HOLDEM_MAX_ROUNDS; r++) {
         auto b_max = ag_->kernel_->bmax_by_r_[r];
         if (b_max < num_threads) {
-            logger::critical("b_max %d must >= numthread %d", b_max, num_threads);
+            // FIXME(kwok): This fatal error will be triggered by the "save_final" option in cfrs_r0.json or cfrv_r3_upoker-p_bigpot.json being on.
+            logger::critical("b_max %d must >= num_threads %d", b_max, num_threads);
         }
-        unsigned int step = floor((double) b_max / num_threads);
+
+        unsigned int batch_size = floor((double) b_max / num_threads);
 
         //launch threads
         for (unsigned int i = 0; i < num_threads; i++) {
-            Bucket_t b_begin = i * step;
+            Bucket_t b_begin = i * batch_size;
             //force the last to be b_max. so the last may solve with more
-            Bucket_t b_end = (i == num_threads - 1) ? b_max : (i + 1) * step;
+            Bucket_t b_end = (i == num_threads - 1) ? b_max : (i + 1) * batch_size;
             auto thread_input = new sThreadInputZipavgConvert(this, b_begin, b_end, r);
             logger::debug("thread %d converting from %d to %d", i, b_begin, b_end);
             if (pthread_create(&thread_pool[i], nullptr, Strategy::ThreadedZipAvgConvert, thread_input)) {
