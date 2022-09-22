@@ -166,6 +166,8 @@ struct SubgameSolver
             // If `last_startegy` belongs to the same round, resolve to the root of `last_strategy`.
             nsteps_to_reverse =
                     action_kth - last_strategy->ag_->root_state_.numActions[this_round]; // n-steps to the last root.
+            logger::debug("    [SGS %s] : needs to step back to the last root. steps to reverse = ", name_,
+                          nsteps_to_reverse);
         } else {
             logger::debug("    [SGS %s] : skipping resolve to street root cuz %d < %d", name_, last_root_pot,
                           resolve_last_root_sumpot_min);
