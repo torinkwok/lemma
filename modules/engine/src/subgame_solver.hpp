@@ -23,18 +23,15 @@ inline std::map<int, std::string> SubgameBuiltCodeMap{
         {RESOLVING_WITH_PRIOR_ACTION,   "RESOLVING_WITH_PRIOR_ACTION"}
 };
 
-struct SubgameSolver
-{
-    virtual ~SubgameSolver()
-    {
+struct SubgameSolver {
+    virtual ~SubgameSolver() {
         delete cfr_;
         delete ag_builder_;
         delete convergence_state_;
         delete action_chooser_;
     }
 
-    SubgameSolver()
-    {
+    SubgameSolver() {
         convergence_state_ = new sCFRState();
         action_chooser_ = new ActionChooser();
     }
@@ -68,8 +65,7 @@ struct SubgameSolver
      *  - then bet_seq
      *  - then off_tree
      */
-    bool CheckTriggerCondition(NodeMatchResult &condition) const
-    {
+    bool CheckTriggerCondition(NodeMatchResult &condition) const {
         if (condition.matched_node_->GetRound() == active_round) {
             if (condition.matched_node_->GetSumPot() >= active_sumpot_min) {
                 logger::debug("    [SGS %s] : triggers by sumpot %d", name_, condition.matched_node_->GetSumPot());
@@ -103,8 +99,7 @@ struct SubgameSolver
     int BuildSubgame(AbstractGame *ag_out,
                      Strategy *last_strategy,
                      NodeMatchResult &match_result,
-                     MatchState *ref_match_state) const
-    {
+                     MatchState *ref_match_state) const {
         State &ref_state = ref_match_state->state;
         auto round = ref_state.round;
 
@@ -185,8 +180,7 @@ struct SubgameSolver
         return (nsteps_to_reverse > 1) ? RESOLVING_WITH_PRIOR_ACTION : RESOLVING_NONE_PRIOR_ACTION;
     }
 
-    void ConfigWithJson(const char *config_file, BucketPool *bucket_pool)
-    {
+    void ConfigWithJson(const char *config_file, BucketPool *bucket_pool) {
         std::filesystem::path dir(BULLDOG_DIR_CFG_ENG);
         std::filesystem::path filename(config_file);
         std::ifstream sgs_file(dir / filename);
@@ -283,8 +277,7 @@ private:
     /*
      * Build a sub-game with `steps_to_reverse` steps back.
      */
-    bool BuildResolvingSubgame_(AbstractGame *ag_out, MatchState *ref_match_state, int steps_to_reverse) const
-    {
+    bool BuildResolvingSubgame_(AbstractGame *ag_out, MatchState *ref_match_state, int steps_to_reverse) const {
         State &ref_state = ref_match_state->state;
         auto *step_back_state = new State;
 
