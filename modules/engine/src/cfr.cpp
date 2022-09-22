@@ -162,6 +162,7 @@ int CFR::Solve(Strategy *blueprint,
                      * no need regret checkpoint to merge strategy. so make it simple
                      */
                     strategy->InitMemory(STRATEGY_ZIPAVG, CFR_SCALAR_SOLVE);
+                    // FIXME(kwok): This command potentially triggers the "b_max %d must >= num_threads %d" fatal error.
                     strategy->ConvertWavgToZipAvg(thread_pool_, num_thread);
                     SaveStrategy(strategy, STRATEGY_ZIPAVG, name);
                     strategy->ClearZipAvgMemory();
