@@ -4,7 +4,8 @@
     "algo": "vector_alt",
     "checkpoint": {
       // FIXME(kwok): The "save_final" option being on will potentially lead us to a "b_max %d must >= numthread %d" error.
-      "save_final": true,
+//      "save_final": true,
+      "save_final": false,
       "save_root_prob": true
     },
     "regret_matching": {
