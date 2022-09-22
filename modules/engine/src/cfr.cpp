@@ -173,7 +173,11 @@ int CFR::Solve(Strategy *blueprint,
                     break;
                 }
                 case CMD_PRINT_ROOT_STG: {
-                    strategy->InspectNode(strategy->ag_->root_node_, profiling_writer_.prefix_, STRATEGY_WAVG);
+                    STRATEGY_TYPE calc_mode = STRATEGY_WAVG;
+                    logger::debug("🔬%s printing the inspection of the root subgame with %s",
+                                  profiling_writer_.prefix_,
+                                  StrategyToNameMap[calc_mode]);
+                    strategy->InspectNode(strategy->ag_->root_node_, profiling_writer_.prefix_, calc_mode);
                     break;
                 }
                 default:
