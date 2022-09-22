@@ -1,8 +1,7 @@
 #include <bulldog/engine.h>
 #include <cpprest/json.h>
 
-int Engine::SetTableContext(const TableContext &table_context)
-{
+int Engine::SetTableContext(const TableContext &table_context) {
     // Check game compatibility.
     auto compatible_flag = CompatibleGame(&table_context.session_game, normalized_game_);
     if (compatible_flag == 0) {
@@ -13,8 +12,7 @@ int Engine::SetTableContext(const TableContext &table_context)
     return NEW_SESSION_SUCCESS;
 }
 
-Engine::Engine(const char *engine_conf_file, Game *game)
-{
+Engine::Engine(const char *engine_conf_file, Game *game) {
     normalized_game_ = game;
     owning_pool_ = true;
 
@@ -128,8 +126,7 @@ Engine::Engine(const char *engine_conf_file, Game *game)
     RefreshEngineState();
 }
 
-Engine::Engine(const char *engine_conf_file, Game *game, BucketPool *bucket_pool, StrategyPool *blueprint_pool)
-{
+Engine::Engine(const char *engine_conf_file, Game *game, BucketPool *bucket_pool, StrategyPool *blueprint_pool) {
     // Fixed blueprint pool
     normalized_game_ = game;
     bucket_pool_ = bucket_pool;
@@ -251,8 +248,7 @@ Engine::Engine(const char *engine_conf_file, Game *game, BucketPool *bucket_pool
  * @param r_action
  * @return
  */
-int Engine::GetAction(MatchState *new_match_state, Action &r_action, double timeout_ms)
-{
+int Engine::GetAction(MatchState *new_match_state, Action &r_action, double timeout_ms) {
     if (random_action_) {
         return GetRandomAction(new_match_state, r_action);
     }
@@ -442,8 +438,7 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
     return GET_ACTION_FAILURE;
 }
 
-int Engine::RefreshEngineState()
-{
+int Engine::RefreshEngineState() {
     logger::debug("    [ENGINE %s] : ===== REFRESH STATE =====", engine_name_);
     logger::debug("    [ENGINE %s] : safe delete [%d playbooks] [%d new strategy]",
                   engine_name_,
@@ -460,8 +455,7 @@ int Engine::RefreshEngineState()
     return NEW_HAND_SUCCESS;
 }
 
-void Engine::EvalShowdown(MatchState &match_state)
-{
+void Engine::EvalShowdown(MatchState &match_state) {
     // No need to analyze blueprint.
     if (!IsNestedSgsStarted()) {
         logger::debug("    [ENGINE %s] : skip final state eval for blueprint-played games", engine_name_);
@@ -549,8 +543,7 @@ void Engine::EvalShowdown(MatchState &match_state)
 /**
  * do match state translation and get action and do backward translation accordingly
  */
-int Engine::GetActionBySession(MatchState &normalized_match_state, Action &r_action, int timeout_ms)
-{
+int Engine::GetActionBySession(MatchState &normalized_match_state, Action &r_action, int timeout_ms) {
     if (busy_flag_) {
         logger::error("    [ENGINE %s] : 💢still busy from the last request man");
         return GET_ACTION_FAILURE;
@@ -617,8 +610,7 @@ int Engine::GetActionBySession(MatchState &normalized_match_state, Action &r_act
     return GET_ACTION_SUCCESS;
 }
 
-int Engine::TranslateToNormState(const std::string &match_state_str, MatchState &normalized_match_state)
-{
+int Engine::TranslateToNormState(const std::string &match_state_str, MatchState &normalized_match_state) {
     logger::debug("    [ENGINE %s] :     real match state = %s", engine_name_, match_state_str);
     //real match state should be translated with the game def of the session. or u may have invalid betting ctions
     MatchState real_match_state;
@@ -665,8 +657,7 @@ int Engine::TranslateToNormState(const std::string &match_state_str, MatchState 
  * solve it the subgame solving is on
  * and the last strategy is not yet converged (all command finished)
  */
-void Engine::AsynStartDaemonSolving(SubgameSolver *sgs, int checkpoint)
-{
+void Engine::AsynStartDaemonSolving(SubgameSolver *sgs, int checkpoint) {
     if (is_daemon_engine) {
         if (checkpoint < CFR_SOLVING_TERMINATED_ASYNC) {
             logger::debug("    [ENGINE %s] : DAEMON solving not needed", engine_name_);
@@ -682,32 +673,30 @@ void Engine::AsynStartDaemonSolving(SubgameSolver *sgs, int checkpoint)
             logger::critical("does not make sense");
         }
         daemon_cancel_token_ = false;
-        std::thread([&]
-                    {
-                        auto cfr_result_future = std::async(
-                                std::launch::async,
-                                CFR::AsyncCfrSolving,
-                                sgs->cfr_,
-                                target_strategy,
-                                blueprint,
-                                sgs->convergence_state_,
-                                std::ref(daemon_cancel_token_),
-                                checkpoint);
-                        try {
-                            int cfr_return_code = cfr_result_future.get();
-                            logger::debug("    [ENGINE %s] : DAEMON solving ended with status %s",
-                                          engine_name_,
-                                          PrintCfrResultCode(cfr_return_code));
-                        } catch (std::exception &e) {
-                            logger::error(e.what());
-                        }
+        std::thread([&] {
+            auto cfr_result_future = std::async(
+                    std::launch::async,
+                    CFR::AsyncCfrSolving,
+                    sgs->cfr_,
+                    target_strategy,
+                    blueprint,
+                    sgs->convergence_state_,
+                    std::ref(daemon_cancel_token_),
+                    checkpoint);
+            try {
+                int cfr_return_code = cfr_result_future.get();
+                logger::debug("    [ENGINE %s] : DAEMON solving ended with status %s",
+                              engine_name_,
+                              PrintCfrResultCode(cfr_return_code));
+            } catch (std::exception &e) {
+                logger::error(e.what());
+            }
 
-                    }).detach();
+        }).detach();
     }
 }
 
-void Engine::AsynStopDaemonSolving()
-{
+void Engine::AsynStopDaemonSolving() {
     if (is_daemon_engine && !daemon_cancel_token_) {
         logger::debug("    [ENGINE %s] : asyn stopping DAEMON solving", engine_name_);
         daemon_cancel_token_ = true;
@@ -718,8 +707,7 @@ void Engine::AsynStopDaemonSolving()
     };
 }
 
-bool Engine::InputSanityCheck(MatchState *new_match_state)
-{
+bool Engine::InputSanityCheck(MatchState *new_match_state) {
     //check if the match state is valid. e.g. does it have the same board card.
     if (!IsStateCardsValid(normalized_game_, &new_match_state->state)) {
         logger::debug("match states invalid. probably got the same cards");
@@ -728,14 +716,12 @@ bool Engine::InputSanityCheck(MatchState *new_match_state)
     return true;
 }
 
-bool Engine::IsNestedSgsStarted()
-{
+bool Engine::IsNestedSgsStarted() {
     return playbook_stack_.size() > 1;
 }
 
 //if the last sgs solves to the ALL_COMMAND_FINISH,then sgs_cancel token would be true.
-void Engine::AsynStopCFRSolving()
-{
+void Engine::AsynStopCFRSolving() {
     if (!sgs_cancel_token_) {
         logger::debug("Asyn stopping CFR");
         sgs_cancel_token_ = true;
@@ -743,8 +729,7 @@ void Engine::AsynStopCFRSolving()
     }
 }
 
-bool Engine::EngineStateStaleCheck(MatchState *new_match_state)
-{
+bool Engine::EngineStateStaleCheck(MatchState *new_match_state) {
     // check game state continuity.
     // FIXME(kwok): Is the logic here proper?
     if (!playbook_stack_.empty() && InSameMatch(normalized_game_, &last_matchstate_, new_match_state) > 0) {
@@ -754,8 +739,7 @@ bool Engine::EngineStateStaleCheck(MatchState *new_match_state)
     return true;
 }
 
-int Engine::GetRandomAction(MatchState *new_match_state, Action &r_action)
-{
+int Engine::GetRandomAction(MatchState *new_match_state, Action &r_action) {
     auto act_abs = Fcpa();
     act_abs.raise_mode_ = NET_OR_X;
     act_abs.raise_config_.emplace_back(RaiseConfig{POT_NET, 1.0, 0, 10});
@@ -776,8 +760,7 @@ int Engine::GetRandomAction(MatchState *new_match_state, Action &r_action)
  * @param subgame_built_code
  * @return
  */
-bool Engine::ValidatePlaybook(PlayBook &playbook, MatchState *new_match_state, int subgame_built_code)
-{
+bool Engine::ValidatePlaybook(PlayBook &playbook, MatchState *new_match_state, int subgame_built_code) {
     Strategy *&new_strategy = playbook.strategy_;
     auto selected_candidates = new_strategy->FindSortedMatchedNodes(new_match_state->state);
     int cursor = 1;
@@ -822,8 +805,7 @@ bool Engine::ValidatePlaybook(PlayBook &playbook, MatchState *new_match_state, i
     return false;
 }
 
-int Engine::AsynStartCFRSolving(SubgameSolver *selected_sgs, Strategy *&new_strategy, double remaining_ms)
-{
+int Engine::AsynStartCFRSolving(SubgameSolver *selected_sgs, Strategy *&new_strategy, double remaining_ms) {
     sgs_cancel_token_ = false; //safegaurding
     auto cfr_result_future = std::async(
             std::launch::async,
@@ -851,18 +833,15 @@ int Engine::AsynStartCFRSolving(SubgameSolver *selected_sgs, Strategy *&new_stra
     return cfr_result_future.get();
 }
 
-std::string Engine::GetName() const
-{
+std::string Engine::GetName() const {
     return engine_name_;
 }
 
-Game *Engine::GetGame()
-{
+Game *Engine::GetGame() {
     return normalized_game_;
 }
 
-Engine::~Engine()
-{
+Engine::~Engine() {
     RefreshEngineState();//clearing up old states.
     sleep(3); //give it 3 seconds to process.
     delete[] subgame_solvers_;
