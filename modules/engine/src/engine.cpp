@@ -431,8 +431,8 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
 
     // If everything's going fine, the execution flow would never reach this point.
     logger::error("not a single action any history playbook valid. wrong wrong");
-    // AsynStartDaemonSolving(selected_sgs, cfr_return_code);
-    this->RefreshEngineState();
+    AsynStartDaemonSolving(selected_sgs, cfr_return_code);
+    // this->RefreshEngineState();
     return GET_ACTION_FAILURE;
 }
 
