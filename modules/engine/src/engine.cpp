@@ -344,6 +344,11 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
         // will more than likely increase the time elapsed and render the result reported by
         // `timer.GetLapseFromBegin()` invalid.
         auto remaining_ms = timeout_ms - timer.GetLapseFromBegin();
+        if (remaining_ms > 0) {
+            logger::debug("⏳remaining ms = %g", remaining_ms);
+        } else {
+            logger::debug("🚨malformed ⏳remaining ms = %g", remaining_ms);
+        }
         logger::debug("⏳remaining ms = %g", remaining_ms);
         cfr_return_code = AsynStartCFRSolving(selected_sgs,
                                               new_strategy,
