@@ -620,7 +620,9 @@ void *Strategy::ThreadedZipAvgConvert(void *thread_args) {
     for (Node_t n = 0; n < strategy->ag_->kernel_->nmax_by_r_[r]; n++) {
       auto a_max = strategy->ag_->kernel_->amax_by_rn_[r][n];
       float avg[a_max];
-      strategy->ComputeStrategy(r, n, b, a_max, avg, STRATEGY_WAVG);
+      // FIXME(kwok): `uint_wavg_` remains empty up to this point.
+     strategy->ComputeStrategy(r, n, b, a_max, avg, STRATEGY_WAVG);
+      // strategy->ComputeStrategy(r, n, b, a_max, avg, STRATEGY_REG);
       //map to uint, normalized by 250, where uint8_max = 256.
       for (auto a = 0; a < a_max; a++) {
         auto rnba = strategy->ag_->kernel_->hash_rnba(r, n, b, a);
