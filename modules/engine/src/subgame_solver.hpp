@@ -6,8 +6,7 @@
 #include "cfr.h"
 #include "cfr_state.h"
 
-enum SUBGAME_BUILT_CODE
-{
+enum SUBGAME_BUILT_CODE {
     UNSUPPORTED_SUBGAME,
     SOLVE_ON_NEW_ROUND_HERO_FIRST,
     SOLVE_ON_NEW_ROUND_OPPO_FIRST,
