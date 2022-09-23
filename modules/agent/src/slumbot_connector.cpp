@@ -173,12 +173,11 @@ int SlumbotConnector::connect() {
     web::http::http_request loginRequest(web::http::methods::POST);
     loginRequest.headers().add(U("Content-Type"), U("application/json"));
     web::json::value loginRequestJsonBody;
-    loginRequestJsonBody[U("username")] = web::json::value::string(U("lemma"));
-    loginRequestJsonBody[U("password")] = web::json::value::string(
-            U("ckp3t4kkbccHZFmosBZVsGibxz6MnaQ4Heof3uu3nkXtLwn7GVoMDhNrj6qe8ZCU"));
+    loginRequestJsonBody[U("username")] = web::json::value::string(username_);
+    loginRequestJsonBody[U("password")] = web::json::value::string(password_);
     loginRequest.set_body(loginRequestJsonBody);
     // FIXME(kwok): Encapsulate REST talks better.
-    auto loginRequestJson = web::http::client::http_client(U("https://slumbot.com/api/login"), _http_client_config)
+    auto loginRequestJson = web::http::client::http_client(U("https://slumbot.com/api/login"))
             .request(loginRequest)
             .then([](const web::http::http_response &response) {
                 if (response.status_code() != 200) {
