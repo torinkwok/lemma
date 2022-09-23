@@ -177,16 +177,16 @@ int SlumbotConnector::connect() {
     loginRequestJsonBody[U("password")] = web::json::value::string(password_);
     loginRequest.set_body(loginRequestJsonBody);
     // FIXME(kwok): Encapsulate REST talks better.
-    auto loginRequestJson = web::http::client::http_client(U("https://slumbot.com/api/login"))
+    auto loginRequestJson = web::http::client::http_client(U("https://slumbot.com/api/login"), _http_client_config)
             .request(loginRequest)
             .then([](const web::http::http_response &response) {
                 if (response.status_code() != 200) {
-                    logger::error("(kwok) login returned " + std::to_string(response.status_code()));
+                    logger::error("❌login returned " + std::to_string(response.status_code()));
                 }
                 return response.extract_json(true);
             })
             .then([this](const web::json::value &jsonObject) {
-                logger::debug("(kwok) login returned:" + jsonObject.serialize());
+                logger::info("🦥login returned:" + jsonObject.serialize());
                 this->token_ = jsonObject.at(U("token")).as_string();
             });
     try { loginRequestJson.wait(); }
