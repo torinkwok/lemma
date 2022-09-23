@@ -105,7 +105,10 @@ struct SubgameSolver {
 
         // Never resolve back to pre-flop.
         if (round == HOLDEM_ROUND_PREFLOP) {
-            logger::warn("    [SGS %s] : subgame solving at preflop is not yet supported. build subgame fails", name_);
+            // TODO(kwok): If we don't panic here, an `EXC_BAD_ACCESS` exception would be thrown by `Node::GetRound()` anyway.
+            // TODO(kwok): Recover from it elegantly.
+            // TODO(kwok): Is there any necessity to support sub-game solving at pre-flop rounds?
+            logger::critical("    [SGS %s] : subgame solving at preflop is not yet supported. build subgame fails", name_);
             return UNSUPPORTED_SUBGAME;
         }
 
