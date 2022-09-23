@@ -14,7 +14,8 @@
   },
   "daemon": false,
   "subgame_solvers": [
-    "sgs_r0_upoker-p_bigpot.json",
+    // NOTE(kwok): Subgame solving at preflop is not yet supported.
+    // "sgs_r0_upoker-p_bigpot.json",
     "sgs_r1_upoker-p_bigpot.json",
     "sgs_r2_upoker-p_bigpot.json",
     "sgs_r2_upoker-p_midpot.json",

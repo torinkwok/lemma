@@ -213,7 +213,7 @@ int main(int argc, char *argv[]) {
             if (connector->build(game, &action, &match_state.state) == EXIT_FAILURE) {
                 logger::error(" [AGENT] : failed to build action");
                 break;
-            };
+            }
 
             /* Send it! */
             if (connector->send() == EXIT_FAILURE) {

@@ -28,9 +28,21 @@ int main(int argc, char *argv[]) {
             ("l,log_level", "log level", cxxopts::value<std::string>()->default_value("info"),
              "[debug, info, warn, err]")
             ("o,log_output", "console/file?", cxxopts::value<std::string>(), "default logs output to console")
+            ("proxy", "proxy server", cxxopts::value<std::string>(), "proxy server")
             ("h,help", "print usage information");
 
     auto result = options.parse(argc, argv);
+
+    // FIXME(kwok): Redudant code to be factored out.
+    auto connector_params = result["connector_params"].as<std::vector<std::string>>();
+    auto proxy_uri_str = result["proxy"].as<std::string>();
+    web::uri proxy_uri{};
+    if (web::uri::validate(proxy_uri_str)) {
+        proxy_uri = web::uri(proxy_uri_str);
+    } else {
+        std::cout << proxy_uri_str << " is not a valid URI" << std::endl;
+        exit(EXIT_FAILURE);
+    }
 
     // ACPC-flavor game initialization.
     Game *game = nullptr;
@@ -108,6 +120,8 @@ int main(int argc, char *argv[]) {
         auto build_result = connector->build(game, &action, &match_state.state);
         assert(build_result == EXIT_SUCCESS);
         assert("b900" == connector->action_str_);
+
+        delete connector;
     }
 
     { // Raise to 2400
@@ -129,6 +143,8 @@ int main(int argc, char *argv[]) {
         auto build_result = connector->build(game, &action, &match_state.state);
         assert(build_result == EXIT_SUCCESS);
         assert("b2100" == connector->action_str_);
+
+        delete connector;
     }
 
     { // Call
@@ -150,6 +166,8 @@ int main(int argc, char *argv[]) {
         auto build_result = connector->build(game, &action, &match_state.state);
         assert(build_result == EXIT_SUCCESS);
         assert("c" == connector->action_str_);
+
+        delete connector;
     }
 
     // { // Call
@@ -189,6 +207,7 @@ int main(int argc, char *argv[]) {
         Action action{a_raise, 20000};
         auto build_result = connector->build(game, &action, &match_state.state);
         assert(build_result == EXIT_SUCCESS);
+
         assert("b19700" == connector->action_str_);
     }
 
@@ -216,14 +235,14 @@ int main(int argc, char *argv[]) {
     { // All-in
         auto http_config = web::http::client::http_client_config();
         // NOTE(kwok): Fire a POST request through a Charles proxy.
-        http_config.set_proxy(web::web_proxy(web::uri("http://localhost:13579")));
-        auto connector = new SlumbotConnector(
-                result["connector_params"].as<std::vector<std::string>>(),
-                http_config
-        );
+        http_config.set_proxy(web::web_proxy(proxy_uri));
+
+        auto connector = SlumbotConnector(connector_params, http_config);
+        connector.connect();
+        connector.send();
 
         MatchState match_state;
-        connector->parse(game, &match_state);
+        connector.parse(game, &match_state);
 
         char line[MAX_LINE_LEN];
         printMatchState(game, &match_state, MAX_LINE_LEN, line);

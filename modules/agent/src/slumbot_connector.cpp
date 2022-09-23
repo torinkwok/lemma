@@ -173,21 +173,20 @@ int SlumbotConnector::connect() {
     web::http::http_request loginRequest(web::http::methods::POST);
     loginRequest.headers().add(U("Content-Type"), U("application/json"));
     web::json::value loginRequestJsonBody;
-    loginRequestJsonBody[U("username")] = web::json::value::string(U("lemma"));
-    loginRequestJsonBody[U("password")] = web::json::value::string(
-            U("ckp3t4kkbccHZFmosBZVsGibxz6MnaQ4Heof3uu3nkXtLwn7GVoMDhNrj6qe8ZCU"));
+    loginRequestJsonBody[U("username")] = web::json::value::string(username_);
+    loginRequestJsonBody[U("password")] = web::json::value::string(password_);
     loginRequest.set_body(loginRequestJsonBody);
     // FIXME(kwok): Encapsulate REST talks better.
     auto loginRequestJson = web::http::client::http_client(U("https://slumbot.com/api/login"), _http_client_config)
             .request(loginRequest)
             .then([](const web::http::http_response &response) {
                 if (response.status_code() != 200) {
-                    logger::error("(kwok) login returned " + std::to_string(response.status_code()));
+                    logger::error("❌login returned " + std::to_string(response.status_code()));
                 }
                 return response.extract_json(true);
             })
             .then([this](const web::json::value &jsonObject) {
-                logger::debug("(kwok) login returned:" + jsonObject.serialize());
+                logger::info("🦥login returned:" + jsonObject.serialize());
                 this->token_ = jsonObject.at(U("token")).as_string();
             });
     try { loginRequestJson.wait(); }
