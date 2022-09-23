@@ -160,6 +160,11 @@ SlumbotConnector::SlumbotConnector(const std::vector<std::string> &params) {
     slumbot_match_state_ = new sSlumbotMatchState();
 }
 
+SlumbotConnector::SlumbotConnector(const std::vector<std::string> &params,
+                                   web::http::client::http_client_config http_config) : SlumbotConnector(params) {
+    _http_client_config = std::move(http_config);
+}
+
 SlumbotConnector::~SlumbotConnector() {
     delete slumbot_match_state_;
 }
@@ -173,7 +178,7 @@ int SlumbotConnector::connect() {
             U("ckp3t4kkbccHZFmosBZVsGibxz6MnaQ4Heof3uu3nkXtLwn7GVoMDhNrj6qe8ZCU"));
     loginRequest.set_body(loginRequestJsonBody);
     // FIXME(kwok): Encapsulate REST talks better.
-    auto loginRequestJson = web::http::client::http_client(U("https://slumbot.com/api/login"))
+    auto loginRequestJson = web::http::client::http_client(U("https://slumbot.com/api/login"), _http_client_config)
             .request(loginRequest)
             .then([](const web::http::http_response &response) {
                 if (response.status_code() != 200) {
@@ -200,7 +205,7 @@ int SlumbotConnector::send() {
     actRequestJsonBody[U("token")] = web::json::value::string(this->token_);
     actRequestJsonBody[U("incr")] = web::json::value::string(this->action_str_);
     actRequest.set_body(actRequestJsonBody);
-    auto actRequestFuture = web::http::client::http_client(U("https://slumbot.com/api/act"))
+    auto actRequestFuture = web::http::client::http_client(U("https://slumbot.com/api/act"), _http_client_config)
             .request(actRequest)
             .then([](const web::http::http_response &response) {
                 if (response.status_code() != 200) {
@@ -232,7 +237,8 @@ bool SlumbotConnector::get() {
         newHandRequestJsonBody[U("token")] = web::json::value::string(this->token_);
         newHandRequest.set_body(newHandRequestJsonBody);
         // FIXME(kwok): Encapsulate REST talks better.
-        auto newHandRequestFuture = web::http::client::http_client(U("https://slumbot.com/api/new_hand"))
+        auto newHandRequestFuture = web::http::client::http_client(U("https://slumbot.com/api/new_hand"),
+                                                                   _http_client_config)
                 .request(newHandRequest)
                 .then([](const web::http::http_response &response) {
                     if (response.status_code() != 200) {

@@ -52,6 +52,8 @@ class SlumbotConnector : public BaseConnector {
 public:
     SlumbotConnector(const std::vector<std::string> &params);
 
+    SlumbotConnector(const std::vector<std::string> &params, web::http::client::http_client_config http_config);
+
     ~SlumbotConnector() override;
 
     int connect() override;
@@ -81,6 +83,8 @@ private:
 
     bool outcome_flag_ = false;
     std::string token_;
+
+    web::http::client::http_client_config _http_client_config{};
 
     bool has_showed_down() {
         return this->previous_act_result_json_.is_null() || this->previous_act_result_json_.has_field(U("winnings"));

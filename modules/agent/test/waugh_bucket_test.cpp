@@ -46,9 +46,9 @@ int main(int argc, char *argv[]) {
         logger::critical(" [AGENT] : Failed to read content of game file %s", (dir / filename));
     }
 
-    auto connector = new SlumbotConnector(result["connector_params"].as<std::vector<std::string>>());
-
     { // All-in
+        auto connector = new SlumbotConnector(result["connector_params"].as<std::vector<std::string>>());
+
         // auto json_str = R"({"action":"b200c/kb200c/kk/","board":["Ks","Kc","Th","Ts","Td"],"client_pos":0,"hole_cards":["Qh","7h"],"old_action":"b200c/kb200c/"})";
         auto json_str = R"({"action":"cb300c/b300b900c/cb2400b9600/","board":["Jc", "7h", "2c"],"client_pos":1,"hole_cards":["Qc","7c"],"old_action":"b200c/kb200c/"})";
         auto json = web::json::value::parse(json_str);
@@ -69,6 +69,8 @@ int main(int argc, char *argv[]) {
     }
 
     { // Raise to 400
+        auto connector = new SlumbotConnector(result["connector_params"].as<std::vector<std::string>>());
+
         auto json_str = R"({"action":"ck/kk/b100","board":["8d","4d","2s","9h"],"client_pos":1,"hole_cards":["As","8h"],"old_action":"ck/k"})";
         auto json = web::json::value::parse(json_str);
         connector->previous_act_result_json_ = json;
@@ -88,6 +90,8 @@ int main(int argc, char *argv[]) {
     }
 
     { // Raise to 1200
+        auto connector = new SlumbotConnector(result["connector_params"].as<std::vector<std::string>>());
+
         auto json_str = R"({"action":"b300c/kk/b300","board":["Ks","Jc","6s","Jh"],"client_pos":1,"hole_cards":["9d","9c"],"old_action":"b300c/kk"})";
         auto json = web::json::value::parse(json_str);
         connector->previous_act_result_json_ = json;
@@ -107,6 +111,8 @@ int main(int argc, char *argv[]) {
     }
 
     { // Raise to 2400
+        auto connector = new SlumbotConnector(result["connector_params"].as<std::vector<std::string>>());
+
         auto json_str = R"({"action":"b300c/kk/b300b600b1200","board":["Ks","Jc","6s","Jh"],"client_pos":1,"hole_cards":["9d","9c"],"old_action":"b300c/kk"})";
         auto json = web::json::value::parse(json_str);
         connector->previous_act_result_json_ = json;
@@ -126,6 +132,8 @@ int main(int argc, char *argv[]) {
     }
 
     { // Call
+        auto connector = new SlumbotConnector(result["connector_params"].as<std::vector<std::string>>());
+
         auto json_str = R"({"action":"b200c/kk/b264c/kb336","board":["Qc","Jh","Jc","Js","Th"],"client_pos":0,"hole_cards":["Ac","8h"],"old_action":"b200c/kk/b264c/k"})";
         auto json = web::json::value::parse(json_str);
         connector->previous_act_result_json_ = json;
@@ -164,6 +172,8 @@ int main(int argc, char *argv[]) {
     // }
 
     { // All-in
+        auto connector = new SlumbotConnector(result["connector_params"].as<std::vector<std::string>>());
+
         auto json_str = R"({"action": "b300c/k", "client_pos": 1, "hole_cards": ["Qs","3d"], "board": ["Kh","Ts","7s"], "old_action": ""})";
         auto json = web::json::value::parse(json_str);
         connector->previous_act_result_json_ = json;
@@ -183,6 +193,8 @@ int main(int argc, char *argv[]) {
     }
 
     { // All-in
+        auto connector = new SlumbotConnector(result["connector_params"].as<std::vector<std::string>>());
+
         auto json_str = R"({"action": "b300c/kb300c/kk/b600b3600b10200", "client_pos": 1, "hole_cards": ["Ad","2s"], "board": ["Qs","8h","2c", "Qd", "4c"], "old_action": "b300c/kb300c/kk/b600"})";
         auto json = web::json::value::parse(json_str);
         connector->previous_act_result_json_ = json;
@@ -199,6 +211,23 @@ int main(int argc, char *argv[]) {
         auto build_result = connector->build(game, &action, &match_state.state);
         assert(build_result == EXIT_SUCCESS);
         assert("b19400" == connector->action_str_);
+    }
+
+    { // All-in
+        auto http_config = web::http::client::http_client_config();
+        // NOTE(kwok): Fire a POST request through a Charles proxy.
+        http_config.set_proxy(web::web_proxy(web::uri("http://localhost:13579")));
+        auto connector = new SlumbotConnector(
+                result["connector_params"].as<std::vector<std::string>>(),
+                http_config
+        );
+
+        MatchState match_state;
+        connector->parse(game, &match_state);
+
+        char line[MAX_LINE_LEN];
+        printMatchState(game, &match_state, MAX_LINE_LEN, line);
+        logger::info(" [AGENT] : %s", line);
     }
 
     return 0;

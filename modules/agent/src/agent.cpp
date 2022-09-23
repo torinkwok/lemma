@@ -8,8 +8,7 @@
 #include <cstdlib>
 #include <cstdio>
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     // argument parser
     // ./agent engine=acpc params=localhost,51000
     cxxopts::Options options("Game Agent", "Manages connection with Poker Sites and executes Engine actions");
@@ -26,6 +25,7 @@ int main(int argc, char *argv[])
             ("l,log_level", "log level", cxxopts::value<std::string>()->default_value("info"),
              "[debug, info, warn, err]")
             ("o,log_output", "console/file?", cxxopts::value<std::string>(), "default logs output to console")
+            ("proxy", "proxy server", cxxopts::value<std::string>(), "proxy server")
             ("h,help", "print usage information");
 
     auto result = options.parse(argc, argv);
@@ -46,6 +46,17 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
+    // Proxy
+    auto proxy_uri_str = result["proxy"].as<std::string>();
+    web::uri proxy_uri{};
+    if (web::uri::validate(proxy_uri_str)) {
+        proxy_uri = web::uri(proxy_uri_str);
+    } else {
+        std::cout << proxy_uri_str << " is not a valid URI" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    // Log level
     std::string log_level = result["log_level"].as<std::string>();
     if (result.count("log_output")) {
         std::filesystem::path dir(BULLDOG_DIR_LOG);
@@ -100,7 +111,10 @@ int main(int argc, char *argv[])
                 break;
             }
             case slumbot: {
-                connector = new SlumbotConnector(result["connector_params"].as<std::vector<std::string>>());
+                auto http_config = web::http::client::http_client_config();
+                http_config.set_proxy(web::web_proxy(proxy_uri));
+                connector = new SlumbotConnector(result["connector_params"].as<std::vector<std::string>>(),
+                                                 http_config);
                 if (!connector->connect()) {
                     logger::critical(" [AGENT] : failed to login on Slumbot");
                 }
@@ -165,10 +179,10 @@ int main(int argc, char *argv[])
 
             /* Ignore states that we are not acting in */
             // FIXME(kwok): Is this guardian code necessary?
-             if (currentPlayer(game, &match_state.state) != match_state.viewingPlayer) {
-                 logger::debug(" [AGENT] : 🚨ignore state, not acting player");
-                 continue;
-             }
+            if (currentPlayer(game, &match_state.state) != match_state.viewingPlayer) {
+                logger::debug(" [AGENT] : 🚨ignore state, not acting player");
+                continue;
+            }
 
             /* Pick an action to play. */
             char line[MAX_LINE_LEN];
