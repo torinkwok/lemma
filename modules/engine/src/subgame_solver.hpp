@@ -105,7 +105,7 @@ struct SubgameSolver {
 
         // Never resolve back to pre-flop.
         if (round == HOLDEM_ROUND_PREFLOP) {
-            logger::warn("    [SGS %s] : subgame solving at preflop is not yet supported. build subgame fails", name_);
+            logger::warn("    [SGS %s] : 🚨subgame solving at preflop is not yet supported. build subgame fails", name_);
             return UNSUPPORTED_SUBGAME;
         }
 
