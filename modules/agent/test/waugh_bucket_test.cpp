@@ -236,8 +236,8 @@ int main(int argc, char *argv[]) {
         auto http_config = web::http::client::http_client_config();
         // NOTE(kwok): Fire a POST request through a Charles proxy.
         http_config.set_proxy(web::web_proxy(proxy_uri));
-        auto connector = SlumbotConnector(connector_params, http_config);
 
+        auto connector = SlumbotConnector(connector_params, http_config);
         connector.connect();
         connector.send();
 
