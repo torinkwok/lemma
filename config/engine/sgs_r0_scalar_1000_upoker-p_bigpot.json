@@ -1,6 +1,6 @@
 {
   "builder_file": "builder_r0_upoker-p_nlh2_200bb.json",
-  "cfr_file": "cfrs_r0.json",
+  "cfr_file": "cfrs_r0_scalar_1000.json",
   "playing_strategy" : "wavg",
   "trigger": {
     "active_round": 0,

@@ -584,7 +584,7 @@ void Strategy::ConvertWavgToZipAvg(pthread_t *thread_pool, unsigned int num_thre
     for (auto r = 0; r < HOLDEM_MAX_ROUNDS; r++) {
         auto b_max = ag_->kernel_->bmax_by_r_[r];
         if (b_max < num_threads) {
-            // FIXME(kwok): This fatal error will be triggered by the "save_final" option in cfrs_r0.json or cfrv_r3_upoker-p_bigpot.json being on.
+            // FIXME(kwok): This fatal error will be triggered by the "save_final" option in cfrs_r0_scalar_1000.json or cfrv_r3_upoker-p_bigpot.json being on.
             // FIXME(kwok): `CMD_SAVE_REG_WAVG` potentially triggers this method, and, in turn, this fatal error.
             logger::critical("b_max %d must >= num_threads %d", b_max, num_threads);
         }
