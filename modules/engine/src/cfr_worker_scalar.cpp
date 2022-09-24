@@ -229,6 +229,8 @@ double ScalarCfrWorker::EvalRootLeafNode(int trainee_pos, Node *this_node, HandI
     //insert to cache
     if (cfr_param_->depth_limited_cache_)
         this_node->value_cache_->SetValue(b0, b1, cfu_0);
+
+    // FIXME(kwok): The number of players is not supposed to be fixed to 2.
     return trainee_pos == 0 ? cfu_0 : -cfu_0;
 }
 
@@ -254,7 +256,7 @@ double ScalarCfrWorker::LeafRootRollout(int trainee_pos, Node *this_node, HandIn
     blueprint_->ag_->MapStateToNode(this_node->state_, condition);
     auto matched_node = condition.matched_node_;
 
-    //do multiple rollout starting from the matched node till u hit terminal
+    // NOTE(kwok): Do rollouts for `rollout_rep` times starting from the matched node till we hit terminals.
     HandInfo subgamg_hand_info(hand_info.num_players, hand_info.board_, gen);
     subgamg_hand_info.hand_[0] = hand_info.hand_[0];
     subgamg_hand_info.hand_[1] = hand_info.hand_[1];
@@ -269,12 +271,13 @@ double ScalarCfrWorker::LeafRootRollout(int trainee_pos, Node *this_node, HandIn
      */
 
     //allocate regret for each strategy, four strategy. the regret should be global?
+    // FIXME(kwok): The number of players is not supposed to be fixed to 2.
     double c_str_regret[2][MAX_META_STRATEGY];
     for (auto &a: c_str_regret)
         for (auto &b: a)
             b = 0;
 
-    double final_cfu[2];
+    double final_cfu[2]; // NOTE(kwok): Counter Factual Utility
 
     /*
      * reps 3
@@ -303,6 +306,7 @@ double ScalarCfrWorker::LeafRootRollout(int trainee_pos, Node *this_node, HandIn
         //    subgamg_hand_info.board_.Print();
         subgamg_hand_info.SetBucketAndPayoff(blueprint_->ag_);
 
+        // FIXME(kwok): The number of players is not supposed to be fixed to 2.
         for (int p = 0; p < 2; p++) {
             //pick a strategy for opp
             float opp_avg[MAX_META_STRATEGY];
@@ -317,6 +321,7 @@ double ScalarCfrWorker::LeafRootRollout(int trainee_pos, Node *this_node, HandIn
 
             //for each strategy of acting player
             for (int s = 0; s < MAX_META_STRATEGY; s++) {
+                // FIXME(kwok): The number of players is not supposed to be fixed to 2.
                 int c_strategy[2];
                 c_strategy[p] = s;
                 c_strategy[1 - p] = opp_choice;
