@@ -58,6 +58,8 @@ public:
 
     int connect() override;
 
+    int connectWithSession(const std::string& session_key);
+
     int send() override;
 
     int parse(const Game *game, MatchState *match_state) override;

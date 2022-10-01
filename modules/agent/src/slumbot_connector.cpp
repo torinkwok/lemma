@@ -191,10 +191,14 @@ int SlumbotConnector::connect() {
             });
     try { loginRequestJson.wait(); }
     catch (const std::exception &e) {
-        logger::error(e.what());
+        logger::error("error: %s, session: %s", e.what(), this->slumbot_match_state_->token);
         return EXIT_FAILURE;
     }
     return EXIT_FAILURE;
+}
+
+int SlumbotConnector::connectWithSession(const std::string &session_key) {
+    this->token_ = session_key;
 }
 
 int SlumbotConnector::send() {
@@ -220,7 +224,7 @@ int SlumbotConnector::send() {
             });
     try { actRequestFuture.wait(); }
     catch (const std::exception &e) {
-        logger::error(e.what());
+        logger::error("error: %s, session: %s", e.what(), this->slumbot_match_state_->token);
         return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;
@@ -256,7 +260,7 @@ bool SlumbotConnector::get() {
                 });
         try { newHandRequestFuture.wait(); }
         catch (const std::exception &e) {
-            logger::error(e.what());
+            logger::error("error: %s, session: %s", e.what(), this->slumbot_match_state_->token);
             return false;
         }
         return true;

@@ -26,6 +26,7 @@ int main(int argc, char *argv[]) {
              "[debug, info, warn, err]")
             ("o,log_output", "console/file?", cxxopts::value<std::string>(), "default logs output to console")
             ("proxy", "proxy server", cxxopts::value<std::string>(), "proxy server")
+            ("slumbot_session", "Slumbot session key", cxxopts::value<std::string>(), "")
             ("h,help", "print usage information");
 
     auto result = options.parse(argc, argv);
@@ -34,6 +35,8 @@ int main(int argc, char *argv[]) {
         std::cout << options.help() << std::endl;
         exit(0);
     }
+
+    auto slumbot_session_key = result.count("slumbot_session") ? result["slumbot_session"].as<std::string>() : "";
 
     bool check_must_opts = result.count("engine")
                            || result.count("engine_params")
@@ -47,13 +50,18 @@ int main(int argc, char *argv[]) {
     }
 
     // Proxy
-    auto proxy_uri_str = result["proxy"].as<std::string>();
-    web::uri proxy_uri{};
-    if (web::uri::validate(proxy_uri_str)) {
-        proxy_uri = web::uri(proxy_uri_str);
+    bool proxy_provided = result.count("proxy") > 0;
+    auto proxy_uri_str = proxy_provided ? result["proxy"].as<std::string>() : "";
+    web::uri validated_proxy_uri{};
+    bool is_proxy_validated;
+    if (!proxy_uri_str.empty() && web::uri::validate(proxy_uri_str)) {
+        validated_proxy_uri = web::uri(proxy_uri_str);
+        is_proxy_validated = true;
     } else {
-        std::cout << proxy_uri_str << " is not a valid URI" << std::endl;
-        exit(EXIT_FAILURE);
+        is_proxy_validated = false;
+        if (proxy_provided) {
+            logger::warn("🚨%s is not a valid proxy URI. go without one.");
+        }
     }
 
     // Log level
@@ -111,12 +119,21 @@ int main(int argc, char *argv[]) {
                 break;
             }
             case slumbot: {
-                auto http_config = web::http::client::http_client_config();
-                http_config.set_proxy(web::web_proxy(proxy_uri));
-                connector = new SlumbotConnector(result["connector_params"].as<std::vector<std::string>>(),
-                                                 http_config);
-                if (!connector->connect()) {
-                    logger::critical(" [AGENT] : failed to login on Slumbot");
+                // TODO(kwok): Make this logic more elegant.
+                if (is_proxy_validated) {
+                    auto http_config = web::http::client::http_client_config();
+                    http_config.set_proxy(web::web_proxy(validated_proxy_uri));
+                    connector = new SlumbotConnector(result["connector_params"].as<std::vector<std::string>>(),
+                                                     http_config);
+                } else {
+                    connector = new SlumbotConnector(result["connector_params"].as<std::vector<std::string>>());
+                }
+                if (slumbot_session_key.empty()) {
+                    if (!connector->connect()) {
+                        logger::critical(" [AGENT] : failed to login on Slumbot");
+                    }
+                } else {
+                    ((SlumbotConnector*)connector)->connectWithSession(slumbot_session_key);
                 }
                 break;
             }
