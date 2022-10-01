@@ -33,7 +33,7 @@ bool IsAvgUniform(float *avg, int size);
 void NormalizePolicy(float *avg, int size);
 
 template<typename T>
-int GetPolicy(float *avg, int size, T *ptr)
+int GetPolicy(float *norm, int size, T *ptr)
 {
     // bool integral = std::is_integral<T>::value;
     T positive_v[size];
@@ -48,16 +48,17 @@ int GetPolicy(float *avg, int size, T *ptr)
     }
 
     if (sum_pos_v > 0) {
+        // NOTE(kwok): Normalization.
         for (int a = 0; a < size; a++) {
-            avg[a] = (float) positive_v[a] / sum_pos_v;
+            norm[a] = (float) positive_v[a] / sum_pos_v;
             //necessary?
-            if (avg[a] < 0) {
+            if (norm[a] < 0) {
                 return 1;
             }
         }
     } else {
         for (int a = 0; a < size; a++) {
-            avg[a] = (float) 1.0 / (float) size;
+            norm[a] = (float) 1.0 / (float) size;
         }
     }
 
