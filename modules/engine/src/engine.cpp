@@ -243,14 +243,14 @@ Engine::Engine(const char *engine_conf_file, Game *game, BucketPool *bucket_pool
  * - if new sgs succeed, add the new strategy to the new playbook. else, fall back to the last playbook
  * - get action from the playbooks, nested, from back to front
  *
- * @param new_match_state
+ * @param current_acpc_match_state
  * @param timeout_ms
  * @param r_action
  * @return
  */
-int Engine::GetAction(MatchState *new_match_state, Action &r_action, double timeout_ms) {
+int Engine::GetAction(MatchState *current_acpc_match_state, Action &r_action, double timeout_ms) {
     if (random_action_) {
-        return GetRandomAction(new_match_state, r_action);
+        return GetRandomAction(current_acpc_match_state, r_action);
     }
 
     /* STOP prior unfinished solvings. */
@@ -258,29 +258,30 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
     AsynStopCFRSolving();
     logger::debug("===== [ENGINE %s]: handle get action request =====", engine_name_);
 
-    if (!InputSanityCheck(new_match_state)) {
+    if (!InputSanityCheck(current_acpc_match_state)) {
         return GET_ACTION_FAILURE;
     }
 
-    if (!EngineStateStaleCheck(new_match_state)) {
+    if (!EngineStateStaleCheck(current_acpc_match_state)) {
         RefreshEngineState();   //force reset new Hand
     }
 
     /* Pre GetAction. */
     busy_flag_ = true;
     SimpleTimer timer;
-    last_matchstate_ = *new_match_state;
+    last_matchstate_ = *current_acpc_match_state;
 
-    /* BUILD offline strategy. */
+    /* ASSEMBLE offline strategies. */
     if (playbook_stack_.empty()) {
-        auto *blueprint = blueprint_pool_->FindStrategy(new_match_state, normalized_game_);
+        auto *blueprint = blueprint_pool_->FindStrategy(current_acpc_match_state, normalized_game_);
+        // NOTE(kwok): Offline strategies should always been zipped.
         playbook_stack_.emplace_back(blueprint, default_action_chooser_, STRATEGY_ZIPAVG);
     }
 
-    /* BUILD online strategies. */
+    /* ASSEMBLE online strategies. */
     SubgameSolver *selected_sgs = nullptr;
     int cfr_return_code = -1;
-    auto candidate_match_results = playbook_stack_.back().strategy_->FindSortedMatchedNodes(new_match_state->state);
+    auto candidate_match_results = playbook_stack_.back().strategy_->FindSortedMatchedNodes(current_acpc_match_state->state);
     auto best_match_result = candidate_match_results.at(0);
     for (auto sg_i = 0; sg_i < sgs_size_; sg_i++) {
         if (!subgame_solvers_[sg_i].CheckTriggerCondition(best_match_result)) {
@@ -304,7 +305,7 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
         int subgame_built_code = selected_sgs->BuildSubgame(sgs_ag,
                                                             playbook_stack_.back().strategy_,
                                                             best_match_result,
-                                                            new_match_state);
+                                                            current_acpc_match_state);
         // Do nothing if the sub-game gets skipped.
         if (subgame_built_code == SKIP_RESOLVING_SUBGAME) {
             logger::debug("    [ENGINE %sg_i] : build subgame skipped [code %sg_i]",
@@ -316,19 +317,19 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
 
         /* Step 2: Nested range estimation. */
         bool estimate_success;
+
         for (int i = playbook_stack_.size() - 1; i >= 0; i--) {
             auto *cursor_strategy = playbook_stack_.at(i).strategy_;
             STRATEGY_TYPE avg_type = playbook_stack_.at(i).strategy_type;
-            estimate_success = cursor_strategy->EstimateNewAgReach(sgs_ag, new_match_state, avg_type);
+            estimate_success = cursor_strategy->EstimateNewAgReach(sgs_ag, current_acpc_match_state, avg_type);
             if (estimate_success) {
                 break;
             }
             logger::warn("    [ENGINE %sg_i] : range estimate fails. try next strategy", engine_name_);
         }
 
-        // Tear down `sgs_ag` if all endeavors fail.
         if (!estimate_success) {
-            logger::warn("range estimate fails for all history strategy. big problem. skip sgs");
+            logger::warn("🚨range estimate fails for all history strategy. big problem. skip sgs");
             delete sgs_ag;
             break;
         }
@@ -349,12 +350,13 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
         } else {
             logger::debug("🚨malformed ⏳remaining ms = %g", remaining_ms);
         }
+
         logger::debug("⏳remaining ms = %g", remaining_ms);
         cfr_return_code = AsynStartCFRSolving(selected_sgs,
                                               new_strategy,
                                               remaining_ms);
         if (cfr_return_code < 0) {
-            logger::error("    [ENGINE %sg_i] : cfr solving error in subgame", engine_name_);
+            logger::error("    [ENGINE %sg_i] : 💢cfr solving error in subgame", engine_name_);
             return GET_ACTION_FAILURE;
         }
 
@@ -362,7 +364,7 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
         auto pending_playbook = PlayBook{sgs_strategy_stack_.back(),
                                          selected_sgs->action_chooser_,
                                          selected_sgs->strategy_type};
-        if (ValidatePlaybook(pending_playbook, new_match_state, subgame_built_code)) {
+        if (ValidatePlaybook(pending_playbook, current_acpc_match_state, subgame_built_code)) {
             playbook_stack_.push_back(pending_playbook);
         } else {
             logger::warn("skipping this new strategy.");
@@ -383,11 +385,11 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
                       pb_depth,
                       pb.strategy_->name_);
 
-        auto match_results = pb.strategy_->FindSortedMatchedNodes(new_match_state->state);
+        auto match_results = pb.strategy_->FindSortedMatchedNodes(current_acpc_match_state->state);
         for (auto mr: match_results) {
             if (!pb.strategy_->IsStrategyInitializedForMyHand(mr.matched_node_,
                                                               pb.strategy_type,
-                                                              new_match_state)) {
+                                                              current_acpc_match_state)) {
                 mr.matched_node_->PrintState(" skip virgin node in get_action_final: ");
                 continue;
             }
@@ -405,7 +407,7 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
                     new_base_reach[0].CopyValue(&pb.strategy_->ag_->root_hand_belief_[0]);
                     new_base_reach[1].CopyValue(&pb.strategy_->ag_->root_hand_belief_[1]);
                     auto estimate_return_code = pb.strategy_->EstimateReachProbAtNode(
-                            new_match_state,
+                            current_acpc_match_state,
                             mr.matched_node_,
                             new_base_reach,
                             pb.strategy_type,
@@ -420,7 +422,7 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
             }
 
             mr.matched_node_->PrintState("getting action from node : ");
-            pb.strategy_->PickAction(new_match_state,
+            pb.strategy_->PickAction(current_acpc_match_state,
                                      pb.action_chooser_,
                                      r_action,
                                      pb.strategy_type,
@@ -437,7 +439,7 @@ int Engine::GetAction(MatchState *new_match_state, Action &r_action, double time
     }
 
     // If everything's going fine, the execution flow would never reach this point.
-    logger::error("not a single action any history playbook valid. wrong wrong");
+    logger::error("💢not a single action any history playbook valid. extremely wrong");
     AsynStartDaemonSolving(selected_sgs, cfr_return_code);
     // this->RefreshEngineState();
     return GET_ACTION_FAILURE;
@@ -779,7 +781,7 @@ bool Engine::ValidatePlaybook(PlayBook &playbook, MatchState *new_match_state, i
                                                                    STRATEGY_WAVG,
                                                                    new_match_state);
         logger::require_warn(inited,
-                             "virgin node in playbook_pending [sgs %s] [subgame_built_code %s]",
+                             "🚨uninited node in playbook_pending [sgs %s] [subgame_built_code %s]",
                              playbook.strategy_->name_,
                              SubgameBuiltCodeMap[subgame_built_code]);
         bool reached;
@@ -796,13 +798,13 @@ bool Engine::ValidatePlaybook(PlayBook &playbook, MatchState *new_match_state, i
                                                                               DEFAULT_BAYESIAN_TRANSITION_FILTER);
             reached = estimate_return_code == RANGE_ESTIMATE_SUCCESS;
             logger::require_warn(reached,
-                                 "[ new strategy ] node not reachable [%s]",
+                                 "🚧[ new strategy ] node not reachable [%s]",
                                  RangeEstimateCodeMap[estimate_return_code]);
         }
         if (inited && reached) {
             return true;
         } else {
-            logger::warn("    try %d -> sgs generates invalid nodes", cursor++);
+            logger::warn("    🚨try %d -> sgs generates invalid nodes", cursor++);
         }
         //else. try next node
         //todo: maybe break when the l2 distance is too much away.

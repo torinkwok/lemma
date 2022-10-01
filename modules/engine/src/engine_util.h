@@ -1,7 +1,3 @@
-//
-// Created by wolo on 11/7/2020.
-//
-
 #ifndef BULLDOG_CONSTANT_H
 #define BULLDOG_CONSTANT_H
 

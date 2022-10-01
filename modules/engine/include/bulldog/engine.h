@@ -84,7 +84,7 @@ public:
 
     int RefreshEngineState();
 
-    int GetAction(MatchState *new_match_state, Action &r_action, double timeout_ms);
+    int GetAction(MatchState *current_acpc_match_state, Action &r_action, double timeout_ms);
 
     int GetActionBySession(MatchState &normalized_match_state, Action &r_action, int timeout);
 

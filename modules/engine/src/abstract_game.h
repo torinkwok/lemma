@@ -121,7 +121,7 @@ public:
     sRNBAKernel *kernel_ = nullptr;
     // Assume to be a fair estimate of the reach_prob of the root_node.
     sHandBelief *root_hand_belief_ = nullptr;
-    std::map<uint8_t, std::multimap<uint8_t, Node *>> node_map_;
+    std::map<uint8_t /* round number */, std::multimap<uint8_t /* acting player */, Node *>> node_map_;
 
     // FIXME(kwok): The number of players is not supposed to be fixed to 2.
     int player_num_ = 2;

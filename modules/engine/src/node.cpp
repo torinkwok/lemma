@@ -112,6 +112,7 @@ bool Node::IsShowdown()
     if (!IsTerminal()) {
         return false;
     }
+    // FIXME(kwok): The number of players is not supposed to be fixed to 2.
     //finished, not sure it is a call or fold
     if (state_.playerFolded[0] == 1) {
         return false;

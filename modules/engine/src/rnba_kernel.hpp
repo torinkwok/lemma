@@ -10,17 +10,34 @@ using RNBA = uint64_t;
 using RnbaTuple = std::tuple<Round_t, Node_t, Bucket_t, Action_t>;
 using RnbaMaxTuple = std::tuple<Round_t, Node_t, Bucket_t, Action_t>;
 
+/// NOTE(kwok): `sRNBAKernel` is used for flattening a tree of game nodes in order to efficiently
+/// query correct nodes with O(N) time complexity. Essentially, this data structure can be seen as
+/// a domain-specific tensor implementation. And hence can be used for a reference for a GPU
+/// implementation.
 struct sRNBAKernel {
   //meta. param for computing internal indexing
   //can use http://www.almostinfinite.com/memtrack.html for profiling the memory usage.
 
+  /// NOTE(kwok): How many actions in each node at each round?
   Action_t **amax_by_rn_ = new Action_t *[max_rounds_];
+
+  /// NOTE(kwok): Index offsets shared by all nodes at each round.
+  /// All nodes at the same round share the same value.
   RNBA **node_starting_index_by_round_ = new RNBA *[max_rounds_];
 
+  /// NOTE(kwok): How many actions in total at each round?
   RNBA action_total_count_by_round_[4]{0, 0, 0, 0};
+
+  /// NOTE(kwok): Index offsets of the very first nodes at each round.
   RNBA round_index_0_[max_rounds_]{0, 0, 0, 0};
+
+  /// NOTE(kwok): The exclusive ending sentinel index.
   RNBA max_index_ = 0;
+
+  /// NOTE(kwok): How many nodes in total at each round?
   Node_t nmax_by_r_[4]{0, 0, 0, 0};
+
+  /// NOTE(kwok): How many buckets in total at each round?
   Bucket_t bmax_by_r_[max_rounds_]{0, 0, 0, 0};
 
   void CountInteral_r(Node *current_node) {
@@ -73,6 +90,7 @@ struct sRNBAKernel {
       }
     }
 
+    // NOTE(kwok): The exclusive ending sentinel index.
     RNBA max_index_lean =
         round_index_0_[3] +
             bmax_by_r_[3] * action_total_count_by_round_[3];
@@ -158,6 +176,7 @@ struct sRNBAKernel {
         + b * amax_by_rn_[r][n]
         + a;
   }
+
   virtual ~sRNBAKernel() {
     for (int r = 0; r < max_rounds_; r++) {
       if (nmax_by_r_[r] > 0) {
