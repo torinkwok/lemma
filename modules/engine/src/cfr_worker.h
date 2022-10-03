@@ -88,47 +88,49 @@ struct HandInfo
 
     void SetBucketAndPayoff(AbstractGame *ag)
     {
-        //set buckets by round
+        // set buckets by round
         int rank[2];
-        for (int pos = 0; pos < num_players; pos++) {
-            auto high_low = FromVectorIndex(hand_[pos]);
-            rank[pos] = RankHand(high_low.first, high_low.second, &board_);
+        for (int player_pos = 0; player_pos < num_players; player_pos++) {
+            auto high_low_pair = FromVectorIndex(hand_[player_pos]);
+            rank[player_pos] = RankHand(high_low_pair.first, high_low_pair.second, &board_);
 #if DEV > 1
-            if (rank[pos] < 0) {
-              logger::critical("rank < 0 | %d | [high %d] [low %d]", rank[pos], high_low.first, high_low.second);
+            if (rank[player_pos] < 0) {
+              logger::critical("rank < 0 | %d | [high %d] [low %d]", rank[player_pos], high_low_pair.first, high_low_pair.second);
               board_.Print();
             }
 #endif
             for (int r = ag->root_node_->GetRound(); r <= ag->GetMaxRound(); r++) {
-                auto bucket = ag->bucket_reader_.GetBucketWithHighLowBoard(high_low.first, high_low.second, &board_, r);
-                buckets_[pos][r] = bucket;
+                auto bucket = ag->bucket_reader_.GetBucket_HighLowPair_Board_Round(high_low_pair.first,
+                                                                                   high_low_pair.second,
+                                                                                   &board_, r);
+                // NOTE(kwok): Differentiate buckets at different rounds
+                buckets_[player_pos][r] = bucket;
             }
         }
-
-        //set winning flag
-        payoff_[0] = rank[0] > rank[1] ? 1 :
-                     rank[0] == rank[1] ? 0 : -1;
+        // set winning flag
+        payoff_[0] = rank[0] > rank[1]
+                     ? 1
+                     : rank[0] == rank[1] ? 0 : -1;
         payoff_[1] = payoff_[0] * -1;
     }
 
-//assuming the root belief are already safe
+    // assuming the root belief are already safe
     void Sample(AbstractGame *ag, std::array<sHandBelief *, 2> &root_hand_belief)
     {
-        //sample a hand for player 0
+        // sample a private hand pair for player 0
         hand_[0] = root_hand_belief[0]->SampleHand(x, y, z);
 
-        //sample for player 1
+        // sample a private hand pair for player 1
         while (true) {
             VectorIndex vidx_1 = root_hand_belief[1]->SampleHand(x, y, z);
             //and it should not crash with hand 0
             if (!VectorIdxClash(hand_[0], vidx_1)) {
-                //we have a legal hand
+                // we have gotten a legal hand
                 hand_[1] = vidx_1;
                 break;
             }
         }
-//    logger::debug("sampled hands | %s | %s", VectorIdxToString(vidx[0]), VectorIdxToString(vidx[1]));
-
+        // logger::debug("sampled hands | %s | %s", VectorIdxToString(vidx[0]), VectorIdxToString(vidx[1]));
 #if DEV > 1
         //none crash with board
         for (unsigned short i : hand_) {
@@ -137,7 +139,6 @@ struct HandInfo
             logger::critical("error in hand sampling");
         }
 #endif
-
         SetBucketAndPayoff(ag);
     }
 

@@ -44,7 +44,8 @@ struct sHandKernel {
                     bucket_by_round_vector_idx[round][i] = INVALID_BUCKET;
                     continue;
                 }
-                auto bucket = bucket_reader->GetBucketWithHighLowBoard(high_low.first, high_low.second, &board_, round);
+                auto bucket = bucket_reader->GetBucket_HighLowPair_Board_Round(high_low.first, high_low.second, &board_,
+                                                                               round);
 //                if (bucket > 70000){
 //                  logger::debug("b =  %d", bucket);
 //                }

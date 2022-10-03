@@ -508,7 +508,7 @@ void Engine::EvalShowdown(MatchState &match_state) {
         BoardFromState(normalized_game_, &pb_strategy->ag_->root_state_, &board);
 
         // Right now we only care about the grouped value of the real hand.
-        Bucket_t real_bucket = pb_strategy->ag_->bucket_reader_.GetBucketWithHighLowBoard(
+        Bucket_t real_bucket = pb_strategy->ag_->bucket_reader_.GetBucket_HighLowPair_Board_Round(
                 opp_c1,
                 opp_c2,
                 &board,
@@ -523,7 +523,7 @@ void Engine::EvalShowdown(MatchState &match_state) {
                 continue;
             }
             auto high_low_pair = FromVectorIndex(i);
-            auto b = pb_strategy->ag_->bucket_reader_.GetBucketWithHighLowBoard(
+            auto b = pb_strategy->ag_->bucket_reader_.GetBucket_HighLowPair_Board_Round(
                     high_low_pair.first,
                     high_low_pair.second,
                     &board,

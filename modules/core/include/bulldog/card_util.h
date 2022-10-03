@@ -239,7 +239,7 @@ int RndXorShift(const T *choices,
         }
     }
 
-    logger::error("failed to pick. [size %d] [chosen %d]", size, chosen);
+    logger::error("💢failed to pick. [size %d] [chosen %d]", size, chosen);
     for (int i = 0; i < size; i++) {
         auto v = choices[i];
         logger::debug("%f", v);

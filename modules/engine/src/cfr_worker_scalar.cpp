@@ -75,9 +75,9 @@ double ScalarCfrWorker::EvalChoiceNode(int trainee_pos, Node *this_node, HandInf
         double child_cfu[a_max];
         bool prune_flag[a_max];
         for (auto a = 0; a < a_max; a++) {
-            //do pruning if on. skip river nodes and skip nodes leading to terminal
             prune_flag[a] = false;
             auto next_node = this_node->children[a];
+            // NOTE(kwok): Do pruning if the flag is set. Skip river nodes and nodes leading to terminal.
             if (iter_prune_flag && !next_node->IsTerminal() && next_node->GetRound() != HOLDEM_ROUND_RIVER) {
                 //      if (iter_prune_flag && !next_node->IsTerminal()) {
                 if (strategy_->int_regret_[rnb0 + a] <= cfr_param_->rollout_prune_thres) {
@@ -89,15 +89,15 @@ double ScalarCfrWorker::EvalChoiceNode(int trainee_pos, Node *this_node, HandInf
             logger::warn("🍃child counter-factual utility: %s", std::to_string(child_cfu[a]));
         }
 
-        //only supported weighted response. check outside
+        // only supported weighted response. check outside
         if (cfr_param_->cfu_compute_acting_playing != WEIGHTED_RESPONSE) {
             logger::critical("scalar does not support best response eval");
         }
 
         double my_cfu = 0.0;
         float norm[a_max];
+        // NOTE(kwok): Query RNBA indexed strategy data to compute my_cfu
         strategy_->ComputeStrategy(this_node, b, norm, cfr_param_->strategy_cal_mode_);
-        // compute my_cfu
         for (auto a = 0; a < a_max; a++) {
             if (prune_flag[a])
                 // NOTE(kwok): Pruned nodes won't be taken into account when calculating the final CFU of the current node

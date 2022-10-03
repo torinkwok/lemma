@@ -34,7 +34,7 @@ public:
         }
     };
 
-    Bucket_t GetBucketWithHighLowBoard(Card_t c1, Card_t c2, Board_t *board, int round)
+    Bucket_t GetBucket_HighLowPair_Board_Round(Card_t c1, Card_t c2, Board_t *board, int round)
     {
         auto all_cards = emptyCardset();
         EnrichCardSetToRound(&all_cards, c1, c2, board, round);
@@ -48,9 +48,9 @@ public:
         }
         auto b = GetBucket(&all_cards, &board_cards, round);
         if (b == INVALID_BUCKET) {
-            logger::warn("all cards %s | board cards %s", CardsToString(all_cards.cards),
+            logger::warn("🚨all cards %s | board cards %s", CardsToString(all_cards.cards),
                          CardsToString(board_cards.cards));
-            logger::error("no bucket for [high %d] [low %d] [round %d] [board ending round %d] [bucket type %d]",
+            logger::error("💢no bucket for [high %d] [low %d] [round %d] [board ending round %d] [bucket type %d]",
                           c1,
                           c2,
                           round,

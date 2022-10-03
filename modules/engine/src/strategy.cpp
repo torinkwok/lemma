@@ -331,7 +331,7 @@ void Strategy::InspectStrategyByMatchState(MatchState *match_state, STRATEGY_TYP
     }
     Board_t board{};
     BoardFromState(&ag_->game_, &match_state->state, &board);
-    auto b = ag_->bucket_reader_.GetBucketWithHighLowBoard(high, low, &board, round);
+    auto b = ag_->bucket_reader_.GetBucket_HighLowPair_Board_Round(high, low, &board, round);
     PrintNodeStrategy(matched_node, b, calc_mode);
 }
 
@@ -388,8 +388,8 @@ int Strategy::EstimateReachProbAtNode(MatchState *last_match_state,
 
             auto high_low = FromVectorIndex(i);
             auto b =
-                    ag_->bucket_reader_.GetBucketWithHighLowBoard(high_low.first, high_low.second, &reach_board,
-                                                                  step_node_round);
+                    ag_->bucket_reader_.GetBucket_HighLowPair_Board_Round(high_low.first, high_low.second, &reach_board,
+                                                                          step_node_round);
             auto a_max = stepping_node->children.size();
 
             //use only zipavg/wavg in transition.
@@ -469,7 +469,7 @@ Bucket_t Strategy::GetBucketFromMatchState(MatchState *match_state) const
     auto c_2 = match_state->state.holeCards[viewing_player][1];
     Board_t board{};
     BoardFromState(&ag_->game_, &match_state->state, &board);
-    return ag_->bucket_reader_.GetBucketWithHighLowBoard(c_1, c_2, &board, match_state->state.round);
+    return ag_->bucket_reader_.GetBucket_HighLowPair_Board_Round(c_1, c_2, &board, match_state->state.round);
 }
 
 void Strategy::AllocateMemory(STRATEGY_TYPE type, CFR_MODE cfr_mode)
