@@ -53,7 +53,7 @@ double ScalarCfrWorker::WalkTree(int trainee_pos, Node *this_node, HandInfo &han
     if (this_node->IsTerminal()) {
         return EvalTermNode(trainee_pos, this_node, hand_info);
     }
-    //depth limited solving, till the inital root of next round (not initial root of this round)
+    // depth limited solving, till the inital root of next round (not initial root of this round)
     if (this_node->IsLeafNode()) {
         return EvalRootLeafNode(trainee_pos, this_node, hand_info);
     }
@@ -72,6 +72,7 @@ double ScalarCfrWorker::EvalChoiceNode(int trainee_pos, Node *this_node, HandInf
     auto rnb0 = strategy_->ag_->kernel_->hash_rnba(r, n, b, 0);
 
     if (is_my_turn) {
+        // NOTE(kwok): The agent's turn.
         double child_cfu[a_max];
         bool prune_flag[a_max];
         for (auto a = 0; a < a_max; a++) {
@@ -95,14 +96,14 @@ double ScalarCfrWorker::EvalChoiceNode(int trainee_pos, Node *this_node, HandInf
         }
 
         double my_cfu = 0.0;
-        float norm[a_max];
+        float distr_rnb[a_max];
         // NOTE(kwok): Query RNBA indexed strategy data to compute my_cfu
-        strategy_->ComputeStrategy(this_node, b, norm, cfr_param_->strategy_cal_mode_);
+        strategy_->ComputeStrategy(this_node, b, distr_rnb, cfr_param_->strategy_cal_mode_);
         for (auto a = 0; a < a_max; a++) {
             if (prune_flag[a])
                 // NOTE(kwok): Pruned nodes won't be taken into account when calculating the final CFU of the current node
                 continue;
-            my_cfu += norm[a] * child_cfu[a];
+            my_cfu += distr_rnb[a] * child_cfu[a];
         }
 
         // only do it in weighted response
@@ -127,47 +128,50 @@ double ScalarCfrWorker::EvalChoiceNode(int trainee_pos, Node *this_node, HandInf
         }
 
         return my_cfu;
-    }
+    } else {
+        // NOTE(kwok): The opponent's turn. Do external sampling.
+        float distr_rnb[a_max];
+        strategy_->ComputeStrategy(this_node, b, distr_rnb, cfr_param_->strategy_cal_mode_);
+        int sampled_a = RndXorShift<float>(distr_rnb, a_max, x, y, z, (1 << 16));
+        if (sampled_a == -1) {
+            strategy_->PrintNodeStrategy(this_node, b, cfr_param_->strategy_cal_mode_);
+            logger::critical("new strategy regret problem in main walk, opp side");
+        }
 
-    // opp turn, do external sampling.
-    float rnb_norm[a_max];
-    strategy_->ComputeStrategy(this_node, b, rnb_norm, cfr_param_->strategy_cal_mode_);
-    int sampled_a = RndXorShift<float>(rnb_norm, a_max, x, y, z, (1 << 16));
-    if (sampled_a == -1) {
-        strategy_->PrintNodeStrategy(this_node, b, cfr_param_->strategy_cal_mode_);
-        logger::critical("new strategy regret problem in main walk, opp side");
-    }
+        if (!cfr_param_->avg_side_update_ /* set by "side_walk" */ && cfr_param_->rm_avg_update == AVG_CLASSIC) {
+            // update wavg. don't use it for blueprint training as it explodes quickly
+            //    for (auto a = 0; a < a_max; a++) {
+            //      strategy_->uint_wavg_[rnb0 + a] += distr_rnb[a] * 1000;
+            //    }
+            strategy_->uint_wavg_[rnb0 + sampled_a] += 1;
+        }
 
-    if (!cfr_param_->avg_side_update_ && cfr_param_->rm_avg_update == AVG_CLASSIC) {
-        //update wavg. don't use it for blueprint training as it explodes quickly
-        //    for (auto a = 0; a < a_max; a++) {
-        //      strategy_->uint_wavg_[rnb0 + a] += rnb_norm[a] * 1000;
-        //    }
-        strategy_->uint_wavg_[rnb0 + sampled_a] += 1;
+        return WalkTree(trainee_pos, this_node->children[sampled_a], hand_info);
     }
-
-    return WalkTree(trainee_pos, this_node->children[sampled_a], hand_info);
 }
 
-// pluribus'way to update wavg.
+/// Pluribus' way to update WAVG.
 void ScalarCfrWorker::WavgUpdateSideWalk(int trainee_pos, Node *this_node, HandInfo &hand_info)
 {
-    if (this_node->IsTerminal())
+    if (this_node->IsTerminal()) {
         return;
+    }
 
-    if (this_node->IsLeafNode())
+    if (this_node->IsLeafNode()) {
         return;
+    }
 
     bool is_my_turn = this_node->GetActingPlayer() == trainee_pos;
     auto a_max = this_node->GetAmax();
 
     if (is_my_turn) {
+        // NOTE(kwok): The agent's turn.
         int r = this_node->GetRound();
         auto n = this_node->GetN();
         Bucket_t b = hand_info.buckets_[trainee_pos][r];
-        float rnb_norm[a_max];
-        strategy_->ComputeStrategy(this_node, b, rnb_norm, cfr_param_->strategy_cal_mode_);
-        int sampled_a = RndXorShift<float>(rnb_norm, a_max, x, y, z, (1 << 16));
+        float distr_rnb[a_max];
+        strategy_->ComputeStrategy(this_node, b, distr_rnb, cfr_param_->strategy_cal_mode_);
+        int sampled_a = RndXorShift<float>(distr_rnb, a_max, x, y, z, (1 << 16));
         if (sampled_a == -1) {
             logger::debug("🚨new strategy regret problem");
             strategy_->PrintNodeStrategy(this_node, b, cfr_param_->strategy_cal_mode_);
@@ -176,7 +180,7 @@ void ScalarCfrWorker::WavgUpdateSideWalk(int trainee_pos, Node *this_node, HandI
         strategy_->uint_wavg_[rnba] += 1;
         WavgUpdateSideWalk(trainee_pos, this_node->children[sampled_a], hand_info);
     } else {
-        //opp turn
+        // NOTE(kwok): The opponent's turn.
         for (auto a = 0; a < a_max; a++) {
             WavgUpdateSideWalk(trainee_pos, this_node->children[a], hand_info);
         }

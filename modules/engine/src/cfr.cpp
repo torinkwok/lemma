@@ -566,25 +566,28 @@ void CFR::Config(web::json::value data)
                 conv_config.has_field("max_iter") ? conv_config.at("max_iter").as_integer() : cfr_param_.iteration;
     }
 
-    //depth limited searching
+    // depth limited searching
     if (data.has_field("depth_limited")) {
         auto dls_conf = data.at("depth_limited");
         cfr_param_.depth_limited = dls_conf.at("on").as_bool();
-        //only cfrs and side walk
+        //only cfrs and sidewalk
         if (cfr_param_.depth_limited) {
-            if (cfr_param_.cfr_mode_ != CFR_SCALAR_SOLVE)
+            if (cfr_param_.cfr_mode_ != CFR_SCALAR_SOLVE) {
                 logger::critical("depth limit solving only supports scalar mode");
-            cfr_param_.avg_side_update_ = false;//depth limit does not support side walk avg update mode. too slow
-
-            if (dls_conf.has_field("reps"))
+            }
+            // depth limit does not support sidewalk avg update mode. it would be too slow
+            cfr_param_.avg_side_update_ = false;
+            if (dls_conf.has_field("reps")) {
                 cfr_param_.depth_limited_rollout_reps_ = dls_conf.at("reps").as_integer();
-            if (dls_conf.has_field("cache"))
+            }
+            if (dls_conf.has_field("cache")) {
                 cfr_param_.depth_limited_cache_ = dls_conf.at("cache").as_bool();
-
-            if (cfr_param_.depth_limited)
+            }
+            if (cfr_param_.depth_limited) {
                 logger::debug("depth limit cfr [%d][reps %d]",
                               cfr_param_.depth_limited,
                               cfr_param_.depth_limited_rollout_reps_);
+            }
         }
     }
 }
@@ -601,13 +604,14 @@ void CFR::BuildCMDPipeline()
         auto rm_discounting = regret_matching.at("discounting");
         auto first_iter = rm_discounting.at("first_iter").as_integer();
         auto steps = rm_discounting.at("iterations").as_integer();
-        //do discounting with interval in [first_iter, last_iter)
+        //do discount with interval in [first_iter, last_iter)
         for (int i = 0; i < steps; i++) {
             if (first_iter + i * cfr_param_.rm_disc_interval < cfr_param_.iteration) {
                 initial_commands.emplace_back(first_iter + i * cfr_param_.rm_disc_interval, CMD_DISCOUNTING);
             }
         }
     }
+
     //set avg
     if (regret_matching.has_field("avg_update_on")) {
         auto start_iter = regret_matching.at("avg_update_on").as_integer();
@@ -630,6 +634,7 @@ void CFR::BuildCMDPipeline()
                 if (cfr_param_.profiling_strategy_ == UNKNOWN)
                     logger::critical("cfr config error || unknown profiling strategy");
             }
+
             CFR_COMMAND exec_cmd = CMD_VECTOR_PROFILING;
 
             //starting from where we trun on wavg, if the profiler strategy is wavg
@@ -640,7 +645,6 @@ void CFR::BuildCMDPipeline()
 
             for (int i = offset + interval; i <= cfr_param_.iteration; i += interval)
                 initial_commands.emplace_back(i, exec_cmd, profiler_step);
-
         }
 
         if (cp_config.has_field("strategy_checkpoint")) {
@@ -675,7 +679,7 @@ void CFR::BuildCMDPipeline()
 
     std::sort(initial_commands.begin(), initial_commands.end());
 
-    //insert cfr solve
+    // insert cfr solve
     CFR_COMMAND cfr_command;
     switch (cfr_param_.cfr_mode_) {
         case CFR_VECTOR_PAIRWISE_SOLVE:
@@ -714,11 +718,11 @@ void CFR::BuildCMDPipeline()
     }
 
     auto last_cmd = commands_.end() - 1;
-    //todo: hard coded condition, assuming only cfr and profiling has step!=0
+    // todo: hard coded condition, assuming only cfr and profiling has step!=0
     auto end_steps = last_cmd->type_ == CMD_VECTOR_PROFILING ? 0 : last_cmd->steps_;
     auto ending_iter = last_cmd->trigger_iter_ + end_steps;
     if (ending_iter != cfr_param_.iteration) {
-        //last cfr param
+        // last cfr param
         commands_.emplace_back(ending_iter, cfr_command, cfr_param_.iteration - ending_iter);
     }
 
