@@ -24,7 +24,7 @@ const double RANGE_ROLLOUT_PRUNE_THRESHOLD = 0.01;
 const double DOUBLE_EPSILON = 0.00000000001;
 
 /*
- * Strategy Helper class
+ * Strategy helper class
  */
 void CheckAvgSum(float *avg, int size);
 
@@ -47,8 +47,8 @@ int GetPolicy(float *norm, int size, T *ptr)
         sum_pos_v += positive_v[a];
     }
 
+    // NOTE(kwok): Normalization.
     if (sum_pos_v > 0) {
-        // NOTE(kwok): Normalization.
         for (int a = 0; a < size; a++) {
             norm[a] = (float) positive_v[a] / sum_pos_v;
             //necessary?

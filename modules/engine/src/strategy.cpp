@@ -8,18 +8,26 @@ void Strategy::InitMemory(STRATEGY_TYPE type, CFR_MODE mode)
     switch (type) {
         case STRATEGY_REG:
             if (double_regret_ != nullptr) {
+                // cfr_mode == CFR_VECTOR_ALTERNATE_SOLVE || cfr_mode == CFR_VECTOR_PAIRWISE_SOLVE
+                // For CFR vector.
                 for (RNBA i = 0; i < size; i++)
                     double_regret_[i] = 0.0;
             } else {
+                // cfr_mode == CFR_SCALAR_SOLVE
+                // For Monte Carlo CFR.
                 for (RNBA i = 0; i < size; i++)
                     int_regret_[i] = 0;
             }
             break;
         case STRATEGY_WAVG:
             if (ulong_wavg_ != nullptr) {
+                // cfr_mode == CFR_VECTOR_ALTERNATE_SOLVE || cfr_mode == CFR_VECTOR_PAIRWISE_SOLVE
+                // For CFR vector.
                 for (RNBA i = 0; i < size; i++)
                     ulong_wavg_[i] = 0;
             } else {
+                // cfr_mode == CFR_SCALAR_SOLVE
+                // For Monte Carlo CFR.
                 for (RNBA i = 0; i < size; i++)
                     uint_wavg_[i] = 0;
             }
@@ -471,10 +479,11 @@ void Strategy::AllocateMemory(STRATEGY_TYPE type, CFR_MODE cfr_mode)
     switch (type) {
         case STRATEGY_REG:
             if (cfr_mode == CFR_VECTOR_ALTERNATE_SOLVE || cfr_mode == CFR_VECTOR_PAIRWISE_SOLVE) {
+                // NOTE(kwok): for vetor CFR.
                 double_regret_ = new double[size];
                 bytesize = 8;
             } else if (cfr_mode == CFR_SCALAR_SOLVE) {
-                // scalar
+                // scalar. NOTE(kwok): for Monte Carlo CFR.
                 int_regret_ = new int[size];
                 bytesize = 4;
             } else {
@@ -483,10 +492,11 @@ void Strategy::AllocateMemory(STRATEGY_TYPE type, CFR_MODE cfr_mode)
             break;
         case STRATEGY_WAVG:
             if (cfr_mode == CFR_VECTOR_ALTERNATE_SOLVE || cfr_mode == CFR_VECTOR_PAIRWISE_SOLVE) {
+                // NOTE(kwok): for vector CFR.
                 ulong_wavg_ = new uint64_t[size];
                 bytesize = 8;
             } else if (cfr_mode == CFR_SCALAR_SOLVE) {
-                // scalar
+                // scalar. NOTE(kwok): for Monte Carlo CFR.
                 uint_wavg_ = new uint32_t[size];
                 bytesize = 4;
             } else {

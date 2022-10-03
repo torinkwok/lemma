@@ -3,11 +3,11 @@
 double ScalarCfrWorker::Solve(Board_t board)
 {
     auto ag = strategy_->ag_;
-    //sampling board
+    // sampling board
 
     auto active_players = AbstractGame::GetActivePlayerNum();
     auto hand_info = HandInfo(active_players, board, gen);
-    //generate root belief based on the board
+    // generate root belief based on the board
     std::array<sHandBelief *, 2> local_root_belief{};
     for (int p = 0; p < active_players; p++) {
         //prepare
@@ -19,29 +19,35 @@ double ScalarCfrWorker::Solve(Board_t board)
     double util = 0.0;
     for (int loc_iter = 0; loc_iter < REPS; loc_iter++) {
         hand_info.Sample(ag, local_root_belief);
-        if (cfr_param_->pruning_on && cfr_param_->rm_floor < 0)
+        if (cfr_param_->pruning_on && cfr_param_->rm_floor < 0) {
             iter_prune_flag = GenRndNumber(1, 100) <= cfr_param_->rollout_prune_prob * 100;
-
-        for (int trainee_pos = 0; trainee_pos < active_players; trainee_pos++)
+        }
+        for (int trainee_pos = 0; trainee_pos < active_players; trainee_pos++) {
             util += WalkTree(trainee_pos, ag->root_node_, hand_info);
+        }
     }
 
-    //do a side walk for updating wavg
+    // do a sidewalk for updating wavg
     if (cfr_param_->avg_side_update_ && cfr_param_->rm_avg_update == AVG_CLASSIC) {
         int SIDE_REPS = 50;
         for (int loc_iter = 0; loc_iter < SIDE_REPS; loc_iter++) {
             hand_info.Sample(ag, local_root_belief);
-            for (int trainee_pos = 0; trainee_pos < active_players; trainee_pos++)
+            for (int trainee_pos = 0; trainee_pos < active_players; trainee_pos++) {
                 WavgUpdateSideWalk(trainee_pos, ag->root_node_, hand_info);
+            }
         }
     }
+
     util /= (REPS * 2 * ag->GetBigBlind());
 
-    for (auto hb: local_root_belief)
+    for (auto hb: local_root_belief) {
         delete hb;
+    }
+
     return util;
 }
 
+/// NOTE(kwok): Where CFR iterations taking place.
 double ScalarCfrWorker::WalkTree(int trainee_pos, Node *this_node, HandInfo &hand_info)
 {
     if (this_node->IsTerminal()) {
@@ -54,6 +60,7 @@ double ScalarCfrWorker::WalkTree(int trainee_pos, Node *this_node, HandInfo &han
     return EvalChoiceNode(trainee_pos, this_node, hand_info);
 }
 
+/// NOTE(kwok): Where CFR iterations take place.
 double ScalarCfrWorker::EvalChoiceNode(int trainee_pos, Node *this_node, HandInfo &hand_info)
 {
     int acting_player = this_node->GetActingPlayer();
@@ -79,71 +86,75 @@ double ScalarCfrWorker::EvalChoiceNode(int trainee_pos, Node *this_node, HandInf
                 }
             }
             child_cfu[a] = WalkTree(trainee_pos, next_node, hand_info);
-            logger::warn(std::to_string(child_cfu[a]));
+            logger::warn("🍃child counter-factual utility: %s", std::to_string(child_cfu[a]));
         }
 
         //only supported weighted response. check outside
-        if (cfr_param_->cfu_compute_acting_playing != WEIGHTED_RESPONSE)
+        if (cfr_param_->cfu_compute_acting_playing != WEIGHTED_RESPONSE) {
             logger::critical("scalar does not support best response eval");
-
-        double cfu = 0.0;
-        float avg[a_max];
-        strategy_->ComputeStrategy(this_node, b, avg, cfr_param_->strategy_cal_mode_);
-        //compute cfu
-        for (auto a = 0; a < a_max; a++) {
-            if (prune_flag[a])
-                continue;
-            cfu += avg[a] * child_cfu[a];
         }
 
-        //only do it in weighted response.
+        double my_cfu = 0.0;
+        float norm[a_max];
+        strategy_->ComputeStrategy(this_node, b, norm, cfr_param_->strategy_cal_mode_);
+        // compute my_cfu
+        for (auto a = 0; a < a_max; a++) {
+            if (prune_flag[a])
+                // NOTE(kwok): Pruned nodes won't be taken into account when calculating the final CFU of the current node
+                continue;
+            my_cfu += norm[a] * child_cfu[a];
+        }
+
+        // only do it in weighted response
         for (auto a = 0; a < a_max; a++) {
             if (prune_flag[a])
                 continue;
-            int diff = (int) round(child_cfu[a] - cfu);
-            double temp_reg = strategy_->int_regret_[rnb0 + a] + diff;
-            //clamp it
+            int diff = (int) round(child_cfu[a] - my_cfu); // NOTE(kwok): The regret value
+            double temp_reg = strategy_->int_regret_[rnb0 + a] + diff; // NOTE(kwok): Accumulate regret values
+            // clamp it
             int new_reg = (int) std::fmax(temp_reg, cfr_param_->rm_floor);
-            //total regret should have a ceiling
-            if (new_reg > 2107483647) {
+            // total regret should have a ceiling
+            if (new_reg > 2107483647) { // 2147483647 - 4 * 10^7
                 logger::critical(
-                        "regret if overflowing. think the regret %d is not converging. [temp_reg %f][diff %f][cfu_a %f][cfu %f]",
+                        "if the regret overflowed, think about the possibility of the regret %d not being converging. [temp_reg %f][diff %f][cfu_a %f][my_cfu %f]",
                         new_reg,
                         temp_reg,
                         diff,
                         child_cfu[a],
-                        cfu);
-            }//2147483647 - 4 * 10 ^ 7{
+                        my_cfu);
+            }
             strategy_->int_regret_[rnb0 + a] = new_reg;
         }
 
-        return cfu;
+        return my_cfu;
     }
 
     // opp turn, do external sampling.
-    float rnb_avg[a_max];
-    strategy_->ComputeStrategy(this_node, b, rnb_avg, cfr_param_->strategy_cal_mode_);
-    int sampled_a = RndXorShift<float>(rnb_avg, a_max, x, y, z, (1 << 16));
+    float rnb_norm[a_max];
+    strategy_->ComputeStrategy(this_node, b, rnb_norm, cfr_param_->strategy_cal_mode_);
+    int sampled_a = RndXorShift<float>(rnb_norm, a_max, x, y, z, (1 << 16));
     if (sampled_a == -1) {
         strategy_->PrintNodeStrategy(this_node, b, cfr_param_->strategy_cal_mode_);
         logger::critical("new strategy regret problem in main walk, opp side");
     }
 
     if (!cfr_param_->avg_side_update_ && cfr_param_->rm_avg_update == AVG_CLASSIC) {
-        //update wavg. dont use it for blueprint training as it explodes quickly
+        //update wavg. don't use it for blueprint training as it explodes quickly
         //    for (auto a = 0; a < a_max; a++) {
-        //      strategy_->uint_wavg_[rnb0 + a] += rnb_avg[a] * 1000;
+        //      strategy_->uint_wavg_[rnb0 + a] += rnb_norm[a] * 1000;
         //    }
         strategy_->uint_wavg_[rnb0 + sampled_a] += 1;
     }
+
     return WalkTree(trainee_pos, this_node->children[sampled_a], hand_info);
 }
 
-//pluribus'way to update wavg.
+// pluribus'way to update wavg.
 void ScalarCfrWorker::WavgUpdateSideWalk(int trainee_pos, Node *this_node, HandInfo &hand_info)
 {
     if (this_node->IsTerminal())
         return;
+
     if (this_node->IsLeafNode())
         return;
 
@@ -154,11 +165,11 @@ void ScalarCfrWorker::WavgUpdateSideWalk(int trainee_pos, Node *this_node, HandI
         int r = this_node->GetRound();
         auto n = this_node->GetN();
         Bucket_t b = hand_info.buckets_[trainee_pos][r];
-        float rnb_avg[a_max];
-        strategy_->ComputeStrategy(this_node, b, rnb_avg, cfr_param_->strategy_cal_mode_);
-        int sampled_a = RndXorShift<float>(rnb_avg, a_max, x, y, z, (1 << 16));
+        float rnb_norm[a_max];
+        strategy_->ComputeStrategy(this_node, b, rnb_norm, cfr_param_->strategy_cal_mode_);
+        int sampled_a = RndXorShift<float>(rnb_norm, a_max, x, y, z, (1 << 16));
         if (sampled_a == -1) {
-            logger::debug("new strategy regret problem");
+            logger::debug("🚨new strategy regret problem");
             strategy_->PrintNodeStrategy(this_node, b, cfr_param_->strategy_cal_mode_);
         }
         auto rnba = strategy_->ag_->kernel_->hash_rnba(r, n, b, sampled_a);

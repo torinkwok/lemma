@@ -247,6 +247,7 @@ int RndXorShift(const T *choices,
             logger::error("negative value in prob vector [%d] %f", i, v);
         }
     }
+
     return -1;
 }
 

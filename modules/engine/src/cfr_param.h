@@ -113,6 +113,7 @@ struct sCfrParam
     /*
      * regret matching
      */
+    // NOTE(kwok): Specified in CFR configurations.
     double rm_floor = -1.0; // number of big blind. default no flooring
     AVG_UPDATE rm_avg_update = AVG_OFF;
     //discounting

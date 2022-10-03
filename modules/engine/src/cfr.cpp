@@ -50,13 +50,14 @@ int CFR::Solve(Strategy *blueprint,
         strategy->ag_->root_node_->InitAdjustmentFactor_r(strategy->ag_->kernel_->bmax_by_r_);
     }
 
-    //cfr main loop
+    // NOTE(kwok): The Grand CFR loop.
+
     sCFRState current_state;
 
     /*
-     * default it will run  all command,
-     * - unless the cfr_solving termininate it naturally.
-     * - unless it is cancalled from the outside
+     * Run all commands by default,
+     *      - unless the cfr_solving termininate it naturally.
+     *      - unless it is cancalled from the outside
      */
     bool keep_solving = true;
     current_state.iteration = starting_checkpoint;
@@ -217,7 +218,7 @@ int CFR::Solve(Strategy *blueprint,
 }
 
 /**
- * LIfeCycle
+ * Life Cycle:
  *
  * thread_prepare
  *      main_loop
@@ -287,6 +288,7 @@ void *CFR::CfrSolve(void *thread_args)
         double local_util = worker->Solve(board);
         args->output_->AddIterResult(local_util);
     }
+
     args->output_->Process();
 
     //thread clean up.
