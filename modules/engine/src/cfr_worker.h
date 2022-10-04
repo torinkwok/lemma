@@ -95,8 +95,9 @@ struct HandInfo
             rank[player_pos] = RankHand(high_low_pair.first, high_low_pair.second, &board_);
 #if DEV > 1
             if (rank[player_pos] < 0) {
-              logger::critical("rank < 0 | %d | [high %d] [low %d]", rank[player_pos], high_low_pair.first, high_low_pair.second);
-              board_.Print();
+                logger::critical("rank < 0 | %d | [high %d] [low %d]", rank[player_pos], high_low_pair.first,
+                                 high_low_pair.second);
+                board_.Print();
             }
 #endif
             for (int r = ag->root_node_->GetRound(); r <= ag->GetMaxRound(); r++) {
@@ -133,10 +134,11 @@ struct HandInfo
         // logger::debug("sampled hands | %s | %s", VectorIdxToString(vidx[0]), VectorIdxToString(vidx[1]));
 #if DEV > 1
         //none crash with board
-        for (unsigned short i : hand_) {
-          auto high_low = FromVectorIndex(i);
-          if (board_.CardCrash(high_low.first) || board_.CardCrash(high_low.second))
-            logger::critical("error in hand sampling");
+        for (unsigned short i: hand_) {
+            auto high_low = FromVectorIndex(i);
+            if (board_.CardCrash(high_low.first) || board_.CardCrash(high_low.second)) {
+                logger::critical("error in hand sampling");
+            }
         }
 #endif
         SetBucketAndPayoff(ag);
@@ -172,14 +174,14 @@ public:
 
     double WalkTree(int trainee_pos, Node *this_node, HandInfo &hand_info);
 
-    double EvalChoiceNode(int trainee_pos, Node *this_node, HandInfo &hand_info);
-
     static double EvalTermNode(int trainee_pos, Node *this_node, HandInfo &hand_info);
 
-    void WavgUpdateSideWalk(int trainee_pos, Node *this_node, HandInfo &hand_info);
-
-    //depth limit solving
+    // Depth-Limited Solving
     double EvalRootLeafNode(int trainee_pos, Node *this_node, HandInfo &hand_info);
+
+    double EvalIntermediateChoiceNode(int trainee_pos, Node *this_node, HandInfo &hand_info);
+
+    void WavgUpdateSideWalk(int trainee_pos, Node *this_node, HandInfo &hand_info);
 
     double LeafRootRollout(int trainee_pos, Node *this_node, HandInfo &hand_info);
 
