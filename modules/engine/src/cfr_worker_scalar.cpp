@@ -126,9 +126,9 @@ double ScalarCfrWorker::EvalRootLeafNode(int trainee_pos, Node *this_node, HandI
     }
 
     /*
-     * ROLLOUT
+     * ROLLOUT, only for player 0
      */
-    double cfu_0 = LeafRootRollout(trainee_pos, this_node, hand_info);
+    double player0_cfu = LeafRootRollout(trainee_pos, this_node, hand_info);
 
     /*
      * or use NN
@@ -136,11 +136,11 @@ double ScalarCfrWorker::EvalRootLeafNode(int trainee_pos, Node *this_node, HandI
 
     // insert to cache
     if (cfr_param_->depth_limited_cache_) {
-        this_node->value_cache_->SetValue(b0, b1, cfu_0);
+        this_node->value_cache_->SetValue(b0, b1, player0_cfu);
     }
 
     // FIXME(kwok): The number of players is not supposed to be fixed to 2.
-    return trainee_pos == 0 ? cfu_0 : -cfu_0;
+    return trainee_pos == 0 ? player0_cfu : -player0_cfu;
 }
 
 double ScalarCfrWorker::EvalIntermediateChoiceNode(int trainee_pos, Node *this_node, HandInfo &hand_info)
@@ -263,7 +263,7 @@ double ScalarCfrWorker::LeafRootRollout(int trainee_pos, Node *this_node, HandIn
     subgamg_hand_info.hand_[0] = hand_info.hand_[0];
     subgamg_hand_info.hand_[1] = hand_info.hand_[1];
 
-    // Fill the real board according to the round we are currently at.
+    // NOTE(kwok): Fill the real board according to the round we are currently at
     auto r = this_node->GetRound();
     int sum_bc = r == HOLDEM_ROUND_PREFLOP ? 0 : 3;
     for (int c = sum_bc; c < HOLDEM_MAX_BOARD; c++) {
@@ -273,7 +273,7 @@ double ScalarCfrWorker::LeafRootRollout(int trainee_pos, Node *this_node, HandIn
     int rollout_rep = cfr_param_->depth_limited_rollout_reps_;
 
     /*
-     * V1, External sampling
+     * V1: Externally sampling
      */
     // Allocate regrets for each four strategy. Should the regrets be global?
     // FIXME(kwok): The number of players is not supposed to be fixed to 2.
