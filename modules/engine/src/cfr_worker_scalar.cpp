@@ -100,16 +100,18 @@ double ScalarCfrWorker::EvalChoiceNode(int trainee_pos, Node *this_node, HandInf
         // NOTE(kwok): Query RNBA indexed strategy data to compute my_cfu
         strategy_->ComputeStrategy(this_node, b, distr_rnb, cfr_param_->strategy_cal_mode_);
         for (auto a = 0; a < a_max; a++) {
-            if (prune_flag[a])
+            if (prune_flag[a]) {
                 // NOTE(kwok): Pruned nodes won't be taken into account when calculating the final CFU of the current node
                 continue;
+            }
             my_cfu += distr_rnb[a] * child_cfu[a];
         }
 
         // only do it in weighted response
         for (auto a = 0; a < a_max; a++) {
-            if (prune_flag[a])
+            if (prune_flag[a]) {
                 continue;
+            }
             int diff = (int) round(child_cfu[a] - my_cfu); // NOTE(kwok): The regret value
             double temp_reg = strategy_->int_regret_[rnb0 + a] + diff; // NOTE(kwok): Accumulate regret values
             // clamp it
