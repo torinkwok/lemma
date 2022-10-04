@@ -25,6 +25,7 @@ sHandBelief *VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trai
 {
     auto a_max = this_node->GetAmax();
     bool is_my_turn = trainee == this_node->GetActingPlayer();
+
     /*
      * ROLLOUT
      */
@@ -56,7 +57,7 @@ sHandBelief *VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trai
     /*
      * COMPUTE CFU
      */
-    //precompute strategy if my turn only. range rollout is fine, it is compute on the fly
+    // Precompute strategy only if it's my turn. Range rollout is fine, it is computed on the fly
     float *avg_all = nullptr;
     if (is_my_turn) {
         //unless you have pruning, or you dont need to skip any. it is a bit waste but makes it more accurate.
@@ -204,11 +205,11 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sHandBelief *range, std::vec
     auto frozen_b = this_node->frozen_b;
 
     for (auto &i: hand_kernel->valid_index_) {
-        //greedily outer skip the 0 belief and board cards
+        // greedily outer skip the 0 belief and board cards
         if (range->IsPruned(i)) {
             continue;
         }
-        //also if 0
+        // also if 0
         if (range->IsZero(i)) {
             continue;
         }
@@ -234,7 +235,7 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sHandBelief *range, std::vec
                     reach_i *= 10;
                     for (int a = 0; a < a_max; a++) {
                         strategy_->ulong_wavg_[rnb0 + a] *= 10;
-//            this_node->ulong_wavg_[this_node->HashBa(b, a)] *= 10;
+                        // this_node->ulong_wavg_[this_node->HashBa(b, a)] *= 10;
                     }
                 }
                 pthread_mutex_unlock(&this_node->mutex_);
@@ -324,23 +325,23 @@ void VectorCfrWorker::ComputeCfu(Node *this_node,
                                  const float *avg_all)
 {
     int a_max = this_node->GetAmax();
-//  auto r = this_node->GetRound();
+    // auto r = this_node->GetRound();
 
     for (auto &i: hand_kernel->valid_index_) {
-        //outer pruning || lossless.
+        // outer pruning || lossless.
         if (cfu->IsPruned(i)) {
             continue;
         }
 
-//    auto b = hand_kernel->GetBucket(r, i);
+        // auto b = hand_kernel->GetBucket(r, i);
         double final_value = 0.0;
         /*
          * compute the final value by mode
          */
         switch (mode) {
             case WEIGHTED_RESPONSE : {
-                //multiply with strategy avg value.
-                //whether the next node is the starting of a street does not matter.
+                // multiply with strategy avg value.
+                // whether the next node is the starting of a street does not matter.
                 int offset = i * a_max;
                 for (int a = 0; a < a_max; a++) {
                     //only do when it is not pruned.
@@ -351,16 +352,16 @@ void VectorCfrWorker::ComputeCfu(Node *this_node,
                         }
                     }
                 }
-                //safe guarding code
+                // safe guarding code
                 if (final_value > pow(10, 15)) {
                     logger::critical("cfr too big %.16f at i = %d > 10^%d", final_value, i, 15);
                 }
-                //todo if for computing the real cfu at each node, we need to weight it with reach
+                // todo: if for computing the real cfu at each node, we need to weight it with reach
                 break;
             }
             case SUM_RESPONSE : {
                 for (int a = 0; a < a_max; a++) {
-                    //only do when it is not pruned. it should be pruned on the outliar,
+                    // only do when it is not pruned. it should be pruned on the outliar,
                     if (!child_reach_ranges[a]->IsPruned(i)) {
                         final_value += child_cfu[a]->belief_[i];
                     }
@@ -372,16 +373,16 @@ void VectorCfrWorker::ComputeCfu(Node *this_node,
                 int offset = i * a_max;
                 for (int a = 0; a < a_max; a++) {
                     if (avg_all[offset + a] > 0) {
-                        //otherwise best response will become -1. pruning is never on in best response mode.
+                        // otherwise best response will become -1. pruning is never on in best response mode.
                         auto util = child_cfu[a]->belief_[i];
                         if (util != BELIEF_MASK_VALUE && util > final_value) {
                             final_value = util;
                         }
                     }
                 }
-                //todo: if computing the expl at this node.
-                //weighted with weights, need to reweight with 1/ 1000, cuz it scales 1000 both on my reach and opp reach
-                //final_value *= reach_ranges->ranges_[my_pos].belief_[i] / 1000.0;
+                // todo: if computing the expl at this node.
+                // weighted with weights, need to reweight with 1/ 1000, cuz it scales 1000 both on my reach and opp reach
+                // final_value *= reach_ranges->ranges_[my_pos].belief_[i] / 1000.0;
                 if (fabs(final_value + 999999999) < 0.001) {
                     //it means they are all pruned. probably the next node is the first node of a street. board crashes.
                     final_value = BELIEF_MASK_VALUE;
@@ -389,6 +390,7 @@ void VectorCfrWorker::ComputeCfu(Node *this_node,
                 break;
             }
         }
+
         cfu->belief_[i] = final_value;
     }
 }
@@ -458,10 +460,10 @@ double VectorCfrWorker::Solve(Board_t board)
         hand_kernel->EnrichHandKernel(&ag->bucket_reader_);
     }
 
-    //pruning with prob
+    // pruning with prob
     ConditionalPrune();
 
-    //todo: cache this for RIVER subgame.
+    // todo: cache this for RIVER subgame.
     sHandBelief local_root_belief[2];
     auto active_players = ag->GetActivePlayerNum();
     for (int p = 0; p < active_players; p++) {
@@ -485,13 +487,14 @@ double VectorCfrWorker::Solve(Board_t board)
             cfu->beliefs_[p].DotMultiply(&local_root_belief[p]);
         }
         cfu_sum = cfu->ValueSum();
-//    logger::debug("%f | %f", local_root_belief[0].BeliefSum(), local_root_belief[1].BeliefSum());
+        // logger::debug("%f | %f", local_root_belief[0].BeliefSum(), local_root_belief[1].BeliefSum());
         delete cfu;
     } else {
         /*
          * ALTERNATE WALKING
          */
         for (int p = 0; p < active_players; p++) {
+            // FIXME(kwok): The number of players is not supposed to be fixed to 2.
             auto opp_belief = local_root_belief[1 - p];
             opp_belief.Scale(REGRET_SCALER);
             sHandBelief *cfu_p = WalkTree_Alternate(ag->root_node_, p, &opp_belief);
