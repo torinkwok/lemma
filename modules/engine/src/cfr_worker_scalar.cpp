@@ -18,13 +18,53 @@ double ScalarCfrWorker::Solve(Board_t board)
     int REPS = 1000;
     double util = 0.0;
     for (int loc_iter = 0; loc_iter < REPS; loc_iter++) {
+        // NOTE(kwok): On each iteration, we start by sampling all of chance’s actions: the public chance
+        // events visible to each player, as well as the private chance events that are visible to only a
+        // subset of the players. In poker, this corresponds to randomly choosing the public cards revealed
+        // to the players, and the private cards that each player is dealt.
         hand_info.Sample(ag, local_root_belief);
         if (cfr_param_->pruning_on && cfr_param_->rm_floor < 0) {
             iter_prune_flag = GenRndNumber(1, 100) <= cfr_param_->rollout_prune_prob * 100;
         }
+        // NOTE(kwok): Next, we recursively traverse the portion of the game tree that is reachable given
+        // the sampled chance events, and explore all the players’ actions.
+        //
+        // * ⬇ On the way from the root to the leaves, we pass forward two scalar values: the probability that
+        // each player would take actions to reach their respective information sets, given their current
+        // strategy and their private information.
+        //
+        // * ⬆ On the way back from the leaves to the root, we return a single scalar value: the sampled
+        // counterfactual value v ̃i (σ, I ) for player i. At each choice node for player i, these values are all
+        // that is needed to calculate the regret for each action and update the strategy.
+        //
+        // Note that at a terminal node z ∈ Z, it takes O(1) work to determine the utility for player i, u_i(z).
         for (int trainee_pos = 0; trainee_pos < active_players; trainee_pos++) {
             util += WalkTree(trainee_pos, ag->root_node_, hand_info);
         }
+        // NOTE(kwok): There are three different methods of sampling chance events that have slower iterations,
+        // but do more work on each iteration:
+        //
+        //   0. Chance-Sampling
+        //      * ⬇ (A SCALAR for us, A SCALAR for the opponent)
+        //      * ⬆ A SCALAR (the sampled counterfactual value v ̃_i(σ, I) for player i)
+        //
+        //   1. Opponent-Public Chance Sampling
+        //      * ⬇ (A VECTOR for us, A SCALAR for the opponent)
+        //      * ⬆ A VECTOR(our counterfactual value for each of our private chance outcomes)
+        //
+        //   2. Self-Public Chance Sampling
+        //      * ⬇ (A SCALAR for us, A VECTOR for the opponent)
+        //      * ⬆ A SCALAR (the counterfactual value for our sampled outcome)
+        //
+        //   3. Public Chance Sampling
+        //      * ⬇ (A VECTOR for us, A VECTOR for the opponent)
+        //      * ⬆ A VECTOR (containing the counterfactual value for each of our n information set)
+        //      * At the terminal nodes, we seemingly have an O(n^2) computation, as for each of our n information
+        //        sets, we must consider all n of the opponent’s possible private outcomes in order to compute our
+        //        utility for that information set. However, if the payoffs at terminal nodes are structured in some
+        //        way, we can often reduce this to an O(n) evaluation that returns exactly the same value as the
+        //        O(n^2) evaluation. Doing so gives PCS the advantage of both SPCS (accurate strategy updates) and
+        //        OPCS (many strategy updates) for the same evaluation cost of either.
     }
 
     // do a sidewalk for updating wavg
@@ -228,8 +268,9 @@ double ScalarCfrWorker::EvalRootLeafNode(int trainee_pos, Node *this_node, HandI
         b1 = hand_info.buckets_[1][r];
         if (this_node->value_cache_->Exists(b0, b1)) {
             auto p0_cfu = this_node->value_cache_->GetValue(b0, b1);
-            if (trainee_pos == 1)
+            if (trainee_pos == 1) {
                 p0_cfu *= -1;
+            }
             return p0_cfu;
         }
     }
@@ -280,8 +321,10 @@ double ScalarCfrWorker::LeafRootRollout(int trainee_pos, Node *this_node, HandIn
     //fill the real board according to the round you are in.
     auto r = this_node->GetRound();
     int sum_bc = r == HOLDEM_ROUND_PREFLOP ? 0 : 3;
-    for (int c = sum_bc; c < HOLDEM_MAX_BOARD; c++)
+    for (int c = sum_bc; c < HOLDEM_MAX_BOARD; c++) {
         subgamg_hand_info.board_.cards[c] = IMPOSSIBLE_CARD;
+    }
+
     int rollout_rep = cfr_param_->depth_limited_rollout_reps_;
     /*
      * V1, External sampling
@@ -290,9 +333,11 @@ double ScalarCfrWorker::LeafRootRollout(int trainee_pos, Node *this_node, HandIn
     //allocate regret for each strategy, four strategy. the regret should be global?
     // FIXME(kwok): The number of players is not supposed to be fixed to 2.
     double c_str_regret[2][MAX_META_STRATEGY];
-    for (auto &a: c_str_regret)
-        for (auto &b: a)
+    for (auto &a: c_str_regret) {
+        for (auto &b: a) {
             b = 0;
+        }
+    }
 
     double final_cfu[2]; // NOTE(kwok): Counter Factual Utility
 

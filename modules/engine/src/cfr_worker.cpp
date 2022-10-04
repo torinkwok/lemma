@@ -76,26 +76,32 @@ sHandBelief *VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trai
      * REGRET LEARNING
      */
     //only learning on the trainee's node
-    if (cfr_param_->regret_learning_on)
-        if (is_my_turn)
+    if (cfr_param_->regret_learning_on) {
+        if (is_my_turn) {
             RegretLearning(this_node, child_cfu, cfu);
+        }
+    }
 
     //delete child pop up cfu
     for (int a = 0; a < a_max; a++) {
         delete child_cfu[a];
-        if (!is_my_turn)
+        if (!is_my_turn) {
             delete child_reach_ranges[a];
+        }
     }
-    if (is_my_turn)
+
+    if (is_my_turn) {
         delete[] avg_all;
+    }
 
     return cfu;
 }
 
 Ranges *VectorCfrWorker::WalkTree_Pairwise(Node *this_node, Ranges *reach_ranges)
 {
-    if (reach_ranges->ReturnReady(iter_prune_flag))
+    if (reach_ranges->ReturnReady(iter_prune_flag)) {
         return new Ranges(reach_ranges, "empty");
+    }
 
     if (this_node->IsTerminal()) {
         //some range are 0. do some early return processing
@@ -107,11 +113,13 @@ Ranges *VectorCfrWorker::WalkTree_Pairwise(Node *this_node, Ranges *reach_ranges
                                                             this_node->IsShowdown());
         }
 #if DEV > 1
-        for (int p = 0; p < 2; p++)
-          if (!this_cfu->beliefs_[p].TopoAligned(&reach_ranges->beliefs_[p]))
-            logger::error("misaligned belief %d topo %d != %d", p,
-                          this_cfu->beliefs_[p].CountPrunedEntries(),
-                          reach_ranges->beliefs_[p].CountPrunedEntries());
+        for (int p = 0; p < 2; p++) {
+            if (!this_cfu->beliefs_[p].TopoAligned(&reach_ranges->beliefs_[p])) {
+                logger::error("misaligned belief %d topo %d != %d", p,
+                              this_cfu->beliefs_[p].CountPrunedEntries(),
+                              reach_ranges->beliefs_[p].CountPrunedEntries());
+            }
+        }
 #endif
         return this_cfu;
     }
@@ -293,8 +301,9 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sHandBelief *range, std::vec
 
             //safeguarding
             auto new_v = child_ranges[a]->belief_[i];
-            if (new_v > 0.0 && new_v < pow(10, -14))
+            if (new_v > 0.0 && new_v < pow(10, -14)) {
                 logger::warn("reach is too small %.16f [r %d]", new_v, this_node->GetRound());
+            }
         }
     }
 }
@@ -319,8 +328,9 @@ void VectorCfrWorker::ComputeCfu(Node *this_node,
 
     for (auto &i: hand_kernel->valid_index_) {
         //outer pruning || lossless.
-        if (cfu->IsPruned(i))
+        if (cfu->IsPruned(i)) {
             continue;
+        }
 
 //    auto b = hand_kernel->GetBucket(r, i);
         double final_value = 0.0;
@@ -330,14 +340,15 @@ void VectorCfrWorker::ComputeCfu(Node *this_node,
         switch (mode) {
             case WEIGHTED_RESPONSE : {
                 //multiply with strategy avg value.
-                //whether or not the next node is the starting of a street does not matter.
+                //whether the next node is the starting of a street does not matter.
                 int offset = i * a_max;
                 for (int a = 0; a < a_max; a++) {
                     //only do when it is not pruned.
                     if (!child_reach_ranges[a]->IsPruned(i)) {
                         float weight = avg_all[offset + a];
-                        if (weight > 0.0)
+                        if (weight > 0.0) {
                             final_value += child_cfu[a]->belief_[i] * weight;
+                        }
                     }
                 }
                 //safe guarding code
@@ -350,8 +361,9 @@ void VectorCfrWorker::ComputeCfu(Node *this_node,
             case SUM_RESPONSE : {
                 for (int a = 0; a < a_max; a++) {
                     //only do when it is not pruned. it should be pruned on the outliar,
-                    if (!child_reach_ranges[a]->IsPruned(i))
+                    if (!child_reach_ranges[a]->IsPruned(i)) {
                         final_value += child_cfu[a]->belief_[i];
+                    }
                 }
                 break;
             }
@@ -362,8 +374,9 @@ void VectorCfrWorker::ComputeCfu(Node *this_node,
                     if (avg_all[offset + a] > 0) {
                         //otherwise best response will become -1. pruning is never on in best response mode.
                         auto util = child_cfu[a]->belief_[i];
-                        if (util != BELIEF_MASK_VALUE && util > final_value)
+                        if (util != BELIEF_MASK_VALUE && util > final_value) {
                             final_value = util;
+                        }
                     }
                 }
                 //todo: if computing the expl at this node.
@@ -395,27 +408,28 @@ void VectorCfrWorker::RegretLearning(Node *this_node, std::vector<sHandBelief *>
 
     for (auto &i: hand_kernel->valid_index_) {
         //no need to update with the pruned hand, outer pruning
-        if (cfu->IsPruned(i))
+        if (cfu->IsPruned(i)) {
             continue;
+        }
         auto b = hand_kernel->GetBucket(r, i);
         //if frozen, no need to update regret
-        if (b == frozen_b)
+        if (b == frozen_b) {
             continue;
-
+        }
         auto rnb0 = strategy_->ag_->kernel_->hash_rnba(r, n, b, 0);
         double cfu_i = cfu->belief_[i];
         //update regret
         for (int a = 0; a < a_max; a++) {
             // pruning inside, no need to update regret for it.
-            if (child_cfu[a]->IsPruned(i))
+            if (child_cfu[a]->IsPruned(i)) {
                 continue;
-
+            }
             double cfu_a = child_cfu[a]->belief_[i];
             double diff = cfu_a - cfu_i; //diff as immediate regret
             //
             double old_reg = strategy_->double_regret_[rnb0 + a];
             double new_reg = ClampRegret(old_reg, diff, cfr_param_->rm_floor);
-            if (old_reg > pow(10, 15) || new_reg > pow(10, 15))
+            if (old_reg > pow(10, 15) || new_reg > pow(10, 15)) {
                 logger::critical(
                         "[old reg %.16f] too big![new reg %.16f] [%.16f] [diff %.16f] [u_action %.16f] [cfu %.16f]",
                         old_reg,
@@ -424,6 +438,7 @@ void VectorCfrWorker::RegretLearning(Node *this_node, std::vector<sHandBelief *>
                         diff,
                         cfu_a,
                         cfu);
+            }
             strategy_->double_regret_[rnb0 + a] = new_reg;
         }
     }
@@ -466,8 +481,9 @@ double VectorCfrWorker::Solve(Board_t board)
             starting_ranges.beliefs_[p].Scale(REGRET_SCALER);
         }
         auto cfu = WalkTree_Pairwise(ag->root_node_, &starting_ranges);
-        for (int p = 0; p < starting_ranges.num_player_; p++)
+        for (int p = 0; p < starting_ranges.num_player_; p++) {
             cfu->beliefs_[p].DotMultiply(&local_root_belief[p]);
+        }
         cfu_sum = cfu->ValueSum();
 //    logger::debug("%f | %f", local_root_belief[0].BeliefSum(), local_root_belief[1].BeliefSum());
         delete cfu;
@@ -494,8 +510,9 @@ std::vector<sHandBelief *> VectorCfrWorker::ExtractBeliefs(std::vector<Ranges *>
     std::vector<sHandBelief *> beliefs;
     int size = ranges.size();
     beliefs.reserve(size);
-    for (int a = 0; a < size; a++)
+    for (int a = 0; a < size; a++) {
         beliefs.emplace_back(&ranges[a]->beliefs_[pos]);
+    }
     return beliefs;
 }
 

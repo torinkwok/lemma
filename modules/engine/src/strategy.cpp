@@ -526,7 +526,7 @@ void Strategy::DiscountStrategy(STRATEGY_TYPE type, double factor) const
                     double_regret_[i] *= factor;
                 }
             } else {
-                //must be int regret then
+                // Must be INT_REGRET
                 for (RNBA i = 0; i < ag_->kernel_->MaxIndex(); i++) {
                     INT_REGRET new_v = (int) (int_regret_[i] * factor);
                     int_regret_[i] = new_v;
@@ -540,7 +540,7 @@ void Strategy::DiscountStrategy(STRATEGY_TYPE type, double factor) const
                     ulong_wavg_[i] = (ULONG_WAVG) new_weighted_avg;
                 }
             } else {
-                //must be int wavg
+                // Must be UINT_WAVG
                 for (RNBA i = 0; i < ag_->kernel_->round_index_0_[1]; i++) {
                     UINT_WAVG new_weighted_avg = uint_wavg_[i] * factor;
                     uint_wavg_[i] = (UINT_WAVG) new_weighted_avg;
@@ -595,9 +595,10 @@ int Strategy::ComputeStrategy(Round_t r,
                 return GetPolicy<ZIPAVG>(rnb_avg, a_max, zip_v);
             }
         }
-        default:
+        default: {
             logger::critical("does not support this cal stratey mode %s", StrategyToNameMap[mode]);
             break;
+        }
     }
 #if DEV > 1
     CheckAvgSum(rnb_avg, a_max);

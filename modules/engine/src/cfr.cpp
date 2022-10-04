@@ -191,7 +191,7 @@ int CFR::Solve(Strategy *blueprint,
             cmd.Log(current_state.iteration, cmd_timer.GetLapseFromBegin(), timer.GetLapseFromBegin());
 #endif
         }
-        //pop outside of the checkpoint_check loop
+        // pop outside the checkpoint_check loop
         local_commands.pop_front();
     }
 
@@ -351,8 +351,7 @@ void CFR::AllocateFlops(std::vector<Board_t> *pub_flop_boards,
     }
 
     //sort in decending order of number of flops in public bucket
-    std::sort(pub_flop_board_sortable.begin(), pub_flop_board_sortable.end(), [](const auto &l, const auto &r) -> bool
-    {
+    std::sort(pub_flop_board_sortable.begin(), pub_flop_board_sortable.end(), [](const auto &l, const auto &r) -> bool {
         return l.second > r.second;
     });
 
@@ -510,8 +509,9 @@ void CFR::Config(web::json::value data)
     cfr_param_.num_threads = threads == -1 ? std::thread::hardware_concurrency() : threads;
 
     cfr_param_.cfr_mode_ = CfrModeMap[data.at("algo").as_string()];
-    if (cfr_param_.cfr_mode_ == CFR_UNKNOWN)
+    if (cfr_param_.cfr_mode_ == CFR_UNKNOWN) {
         logger::critical("unknown cfr algo");
+    }
 
     if (data.has_field("rollout")) {
         auto rollout = data.at("rollout");
@@ -521,12 +521,13 @@ void CFR::Config(web::json::value data)
             if (rollout_prune.has_field("regret_thres")) {
                 cfr_param_.rollout_prune_thres = rollout_prune.at("regret_thres").as_double();
                 //never prune at 0
-                if (cfr_param_.rollout_prune_thres == 0.0)
+                if (cfr_param_.rollout_prune_thres == 0.0) {
                     cfr_param_.rollout_prune_thres = -1.0;
+                }
             }
-
-            if (rollout_prune.has_field("prob"))
+            if (rollout_prune.has_field("prob")) {
                 cfr_param_.rollout_prune_prob = rollout_prune.at("prob").as_double();
+            }
         }
     }
 
@@ -535,28 +536,35 @@ void CFR::Config(web::json::value data)
      */
     if (data.has_field("rollin")) {
         auto rollin_estimator = data.at("rollin").at("estimator");
-        if (rollin_estimator.has_field("my"))
+        if (rollin_estimator.has_field("my")) {
             cfr_param_.cfu_compute_acting_playing = RollinEstimatorMap[rollin_estimator.at("my").as_string()];
-        if (rollin_estimator.has_field("opp"))
+        }
+        if (rollin_estimator.has_field("opp")) {
             cfr_param_.cfu_compute_opponent = RollinEstimatorMap[rollin_estimator.at("opp").as_string()];
+        }
     }
 
     /*
      * regret matching
      */
     auto regret_matching = data.at("regret_matching");
-    if (regret_matching.has_field("floor"))
+    if (regret_matching.has_field("floor")) {
         cfr_param_.rm_floor = regret_matching.at("floor").as_double();
-    if (regret_matching.has_field("side_walk"))
+    }
+    if (regret_matching.has_field("side_walk")) {
         cfr_param_.avg_side_update_ = regret_matching.at("side_walk").as_bool();
+    }
     if (regret_matching.has_field("discounting")) {
         auto rm_discounting = regret_matching.at("discounting");
-        if (!rm_discounting.has_field("interval"))
+        if (!rm_discounting.has_field("interval")) {
             logger::critical("discounting must have interval value specified.");
+        }
         cfr_param_.rm_disc_interval = rm_discounting.at("interval").as_integer();
-        if (rm_discounting.has_field("alpha"))
+        if (rm_discounting.has_field("alpha")) {
             cfr_param_.lcfr_alpha = rm_discounting.at("alpha").as_double();
+        }
     }
+
     cfr_param_.rm_floor *= 100 * REGRET_SCALER; //todo hack
     //  logger::debug("cfr solving with regret matching floor %f", cfr_param_.rm_floor);
 
@@ -631,33 +639,34 @@ void CFR::BuildCMDPipeline()
             auto profiler_step = profiler_config.at("steps").as_integer();
             if (profiler_config.has_field("strategy")) {
                 cfr_param_.profiling_strategy_ = StrategyMap[profiler_config.at("strategy").as_string()];
-                if (cfr_param_.profiling_strategy_ == UNKNOWN)
+                if (cfr_param_.profiling_strategy_ == UNKNOWN) {
                     logger::critical("cfr config error || unknown profiling strategy");
+                }
             }
 
             CFR_COMMAND exec_cmd = CMD_VECTOR_PROFILING;
 
             //starting from where we trun on wavg, if the profiler strategy is wavg
             int offset = 0;
-            if (cfr_param_.profiling_strategy_ == STRATEGY_WAVG)
-                if (regret_matching.has_field("avg_update_on"))
+            if (cfr_param_.profiling_strategy_ == STRATEGY_WAVG) {
+                if (regret_matching.has_field("avg_update_on")) {
                     offset = regret_matching.at("avg_update_on").as_integer();
+                }
+            }
 
-            for (int i = offset + interval; i <= cfr_param_.iteration; i += interval)
+            for (int i = offset + interval; i <= cfr_param_.iteration; i += interval) {
                 initial_commands.emplace_back(i, exec_cmd, profiler_step);
+            }
         }
-
         if (cp_config.has_field("strategy_checkpoint")) {
             auto interval = cp_config.at("strategy_checkpoint").as_integer();
             for (int i = interval; i < cfr_param_.iteration; i += interval) {
                 initial_commands.emplace_back(i, CMD_SAVE_REG_WAVG);
             }
         }
-
         if (cp_config.has_field("save_final")) {
             initial_commands.emplace_back(cfr_param_.iteration, CMD_SAVE_REG_WAVG);
         }
-
         if (cp_config.has_field("save_root_prob")) {
             initial_commands.emplace_back(cfr_param_.iteration, CMD_PRINT_ROOT_STG);
         }
@@ -749,7 +758,8 @@ void CFR::BuildCMDPipeline()
 std::string PrintCfrResultCode(int code)
 {
     std::string msg;
-    if (code >= CFR_SOLVING_TERMINATED_ASYNC_CHECKPOINT)
+    if (code >= CFR_SOLVING_TERMINATED_ASYNC_CHECKPOINT) {
         code = CFR_SOLVING_TERMINATED_ASYNC;
+    }
     return CFR_RESULT_MAP[code];
 }
