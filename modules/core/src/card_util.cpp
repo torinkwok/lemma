@@ -56,13 +56,15 @@ std::string CardsToString(uint64_t cardmask)
     return out;
 }
 
-inline std::string CardsTo64Bitstr(uint64_t cardmask) {
+inline std::string CardsTo64Bitstr(uint64_t cardmask)
+{
     std::bitset<64> x(cardmask);
     std::string bitstr = x.to_string();
     return bitstr;
 }
 
-inline WaughSuit_t SuitToWaughSuit(CardSuit_t suit) {
+inline WaughSuit_t SuitToWaughSuit(CardSuit_t suit)
+{
     /*
      * Bitstr | This | Waugh
      * ---------------------
@@ -74,11 +76,13 @@ inline WaughSuit_t SuitToWaughSuit(CardSuit_t suit) {
     return ~suit & 3;
 }
 
-std::set<WaughCard_t> CardsToWaughCards(uint64_t cardmask) {
+std::set<WaughCard_t> CardsToWaughCards(uint64_t cardmask)
+{
     std::set<WaughCard_t> result;
     Card_t card;
     while (cardmask) {
-        card = __builtin_ctzll(cardmask); // Return the number of trailing 0-bits in x, starting at the least significant bit position. If x is 0, the result is undefined.
+        card = __builtin_ctzll(
+                cardmask); // Return the number of trailing 0-bits in x, starting at the least significant bit position. If x is 0, the result is undefined.
         uint32_t waugh_card = (card & 15) << 2 | SuitToWaughSuit(card >> 4);
         result.insert(waugh_card);
         cardmask &= cardmask - 1;  // clear the least significant bit set
@@ -86,13 +90,14 @@ std::set<WaughCard_t> CardsToWaughCards(uint64_t cardmask) {
     return result;
 }
 
-std::string WaughCardsToString(const std::set<WaughCard_t>& waugh_cards) {
+std::string WaughCardsToString(const std::set<WaughCard_t> &waugh_cards)
+{
     /// char to u8 rank table
     static const char WAUGH_RANK_TO_CHAR[] = {'2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A'};
     /// char to u8 suit table
     static const char WAUGH_SUIT_TO_CHAR[] = {'s', 'h', 'd', 'c'};
     std::string out;
-    for (auto card : waugh_cards) {
+    for (auto card: waugh_cards) {
         auto rank = card / 4;
         auto suit = card % 4;
         out += WAUGH_RANK_TO_CHAR[rank];
@@ -387,7 +392,7 @@ bool VectorIdxClashCard(VectorIndex vid, Card_t c)
 
 std::set<Colex> GetCannoSetByBoard(Board_t *board, int round)
 {
-    std::set < Colex > colex_set;
+    std::set<Colex> colex_set;
     for (Card_t low = 0; low < HOLDEM_MAX_CARDS - 1; low++) {
         for (Card_t high = low + 1; high < HOLDEM_MAX_CARDS; high++) {
             auto hand = Hand_t{high, low};
