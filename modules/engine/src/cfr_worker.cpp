@@ -57,10 +57,10 @@ sHandBelief *VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trai
     /*
      * COMPUTE CFU
      */
-    // Precompute strategy only if it's my turn. Range rollout is fine, it is computed on the fly
+    // Precompute strategy only if it's my turn. Range rollout is fine, it is computed on the fly.
     float *avg_all = nullptr;
     if (is_my_turn) {
-        //unless you have pruning, or you dont need to skip any. it is a bit waste but makes it more accurate.
+        // unless you have pruning, or you don't need to skip any. it is a bit waste but makes it more accurate.
         avg_all = new float[FULL_HAND_BELIEF_SIZE * a_max];
         for (auto &i: hand_kernel->valid_index_) {
             int offset = a_max * i;
@@ -69,6 +69,7 @@ sHandBelief *VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trai
         }
     }
 
+    // NOTE(kwok): A utility of +1 is given for a win and −1 for a loss.
     auto cfu = new sHandBelief(0.0);
     CFU_COMPUTE_MODE mode = is_my_turn ? cfr_param_->cfu_compute_acting_playing : cfr_param_->cfu_compute_opponent;
     ComputeCfu(this_node, child_reach_ranges, child_cfu, cfu, mode, avg_all);
@@ -76,14 +77,14 @@ sHandBelief *VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trai
     /*
      * REGRET LEARNING
      */
-    //only learning on the trainee's node
+    // only learning on the trainee's node
     if (cfr_param_->regret_learning_on) {
         if (is_my_turn) {
             RegretLearning(this_node, child_cfu, cfu);
         }
     }
 
-    //delete child pop up cfu
+    // delete child pop up cfu
     for (int a = 0; a < a_max; a++) {
         delete child_cfu[a];
         if (!is_my_turn) {
@@ -213,6 +214,7 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sHandBelief *range, std::vec
         if (range->IsZero(i)) {
             continue;
         }
+
         auto b = hand_kernel->GetBucket(r, i);
         auto rnb0 = strategy_->ag_->kernel_->hash_rnba(r, n, b, 0);
         float rnb_avg[a_max];
@@ -229,8 +231,9 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sHandBelief *range, std::vec
                 pthread_mutex_lock(&this_node->mutex_);
                 reach_i = range->belief_[i] * pow(10, this_node->reach_adjustment[b]);
                 while (true) {
-                    if (reach_i > 100)
+                    if (reach_i > 100) {
                         break;
+                    }
                     this_node->reach_adjustment[b] += 1;
                     reach_i *= 10;
                     for (int a = 0; a < a_max; a++) {
@@ -284,7 +287,7 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sHandBelief *range, std::vec
             //check pruning if prob = 0, skipping river node and terminal node
             if (iter_prune_flag && prob == 0.0 && !this_node->children[a]->IsTerminal()
                 && this_node->children[a]->GetRound() != HOLDEM_ROUND_RIVER) {
-//      if (iter_prune_flag && prob == 0.0) {
+                // if (iter_prune_flag && prob == 0.0) {
                 auto regret = strategy_->double_regret_[rnb0 + a];
                 if (regret <= cfr_param_->rollout_prune_thres) {
                     //prune and continue;
@@ -335,6 +338,7 @@ void VectorCfrWorker::ComputeCfu(Node *this_node,
 
         // auto b = hand_kernel->GetBucket(r, i);
         double final_value = 0.0;
+
         /*
          * compute the final value by mode
          */
@@ -344,7 +348,7 @@ void VectorCfrWorker::ComputeCfu(Node *this_node,
                 // whether the next node is the starting of a street does not matter.
                 int offset = i * a_max;
                 for (int a = 0; a < a_max; a++) {
-                    //only do when it is not pruned.
+                    // do it only when it is not pruned.
                     if (!child_reach_ranges[a]->IsPruned(i)) {
                         float weight = avg_all[offset + a];
                         if (weight > 0.0) {
@@ -361,7 +365,7 @@ void VectorCfrWorker::ComputeCfu(Node *this_node,
             }
             case SUM_RESPONSE : {
                 for (int a = 0; a < a_max; a++) {
-                    // only do when it is not pruned. it should be pruned on the outliar,
+                    // do it only when it is not pruned. it should be pruned on the outlier,
                     if (!child_reach_ranges[a]->IsPruned(i)) {
                         final_value += child_cfu[a]->belief_[i];
                     }
@@ -397,8 +401,9 @@ void VectorCfrWorker::ComputeCfu(Node *this_node,
 
 void VectorCfrWorker::ConditionalPrune()
 {
-    if (cfr_param_->pruning_on)
+    if (cfr_param_->pruning_on) {
         iter_prune_flag = GenRndNumber(1, 100) <= cfr_param_->rollout_prune_prob * 100;
+    }
 }
 
 void VectorCfrWorker::RegretLearning(Node *this_node, std::vector<sHandBelief *> child_cfu, sHandBelief *cfu)
@@ -427,8 +432,7 @@ void VectorCfrWorker::RegretLearning(Node *this_node, std::vector<sHandBelief *>
                 continue;
             }
             double cfu_a = child_cfu[a]->belief_[i];
-            double diff = cfu_a - cfu_i; //diff as immediate regret
-            //
+            double diff = cfu_a - cfu_i; // diff as immediate regret
             double old_reg = strategy_->double_regret_[rnb0 + a];
             double new_reg = ClampRegret(old_reg, diff, cfr_param_->rm_floor);
             if (old_reg > pow(10, 15) || new_reg > pow(10, 15)) {
