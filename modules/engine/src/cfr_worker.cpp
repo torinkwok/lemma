@@ -217,8 +217,8 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sHandBelief *range, std::vec
 
         auto b = hand_kernel->GetBucket(r, i);
         auto rnb0 = strategy_->ag_->kernel_->hash_rnba(r, n, b, 0);
-        float rnb_avg[a_max];
-        strategy_->ComputeStrategy(this_node, b, rnb_avg, cfr_param_->strategy_cal_mode_);
+        float distr_rnb[a_max];
+        strategy_->ComputeStrategy(this_node, b, distr_rnb, cfr_param_->strategy_cal_mode_);
 
         /*
          * update WAVG, if not frozen.
@@ -226,7 +226,7 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sHandBelief *range, std::vec
         if (cfr_param_->rm_avg_update == AVG_CLASSIC && b != frozen_b) {
             double reach_i = range->belief_[i] * pow(10, this_node->reach_adjustment[b]);
 
-            //adjustment adaptively goes up
+            // adjustment adaptively goes up
             if (reach_i > 0.0 && reach_i < 100) {
                 pthread_mutex_lock(&this_node->mutex_);
                 reach_i = range->belief_[i] * pow(10, this_node->reach_adjustment[b]);
@@ -244,14 +244,15 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sHandBelief *range, std::vec
                 pthread_mutex_unlock(&this_node->mutex_);
             }
 
-            //adjustment adaptively goes down
+            // adjustment adaptively goes down
             if (reach_i > pow(10, 15)) {
                 pthread_mutex_lock(&this_node->mutex_);
-                //get the latest value
+                // get the latest value
                 reach_i = range->belief_[i] * pow(10, this_node->reach_adjustment[b]);
                 while (true) {
-                    if (reach_i < pow(10, 13)) //goes down two steps
+                    if (reach_i < pow(10, 13)) { // goes down two steps
                         break;
+                    }
                     this_node->reach_adjustment[b] -= 2;
                     reach_i *= 0.01;
                     for (int a = 0; a < a_max; a++) {
@@ -260,7 +261,8 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sHandBelief *range, std::vec
                 }
                 pthread_mutex_unlock(&this_node->mutex_);
             }
-            //final update
+
+            // final update
             reach_i = range->belief_[i] * pow(10, this_node->reach_adjustment[b]);
             if (reach_i > pow(10, 13 + r)) {
                 logger::critical(
@@ -273,7 +275,7 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sHandBelief *range, std::vec
             }
 
             for (int a = 0; a < a_max; a++) {
-                double new_wavg = strategy_->ulong_wavg_[rnb0 + a] + (reach_i * rnb_avg[a]);
+                double new_wavg = strategy_->ulong_wavg_[rnb0 + a] + (reach_i * distr_rnb[a]);
                 strategy_->ulong_wavg_[rnb0 + a] = (ULONG_WAVG) new_wavg;
             }
         }
@@ -282,7 +284,7 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sHandBelief *range, std::vec
          * range update + pruning
          */
         for (int a = 0; a < a_max; a++) {
-            double prob = rnb_avg[a];
+            double prob = distr_rnb[a];
 
             //check pruning if prob = 0, skipping river node and terminal node
             if (iter_prune_flag && prob == 0.0 && !this_node->children[a]->IsTerminal()
@@ -475,6 +477,31 @@ double VectorCfrWorker::Solve(Board_t board)
         local_root_belief[p].CopyValue(&ag->root_hand_belief_[p]);
         local_root_belief[p].NormalizeExcludeBoard(board);
     }
+
+    // NOTE(kwok): There are three different methods of sampling chance events that have slower iterations,
+    // but do more work on each iteration:
+    //
+    //   0. Chance-Sampling
+    //      * ⬇ (A SCALAR for us, A SCALAR for the opponent)
+    //      * ⬆ A SCALAR (the sampled counterfactual value v ̃_i(σ, I) for player i)
+    //
+    //   1. Opponent-Public Chance Sampling
+    //      * ⬇ (A VECTOR for us, A SCALAR for the opponent)
+    //      * ⬆ A VECTOR(our counterfactual value for each of our private chance outcomes)
+    //
+    //   2. Self-Public Chance Sampling
+    //      * ⬇ (A SCALAR for us, A VECTOR for the opponent)
+    //      * ⬆ A SCALAR (the counterfactual value for our sampled outcome)
+    //
+    //   3. Public Chance Sampling
+    //      * ⬇ (A VECTOR for us, A VECTOR for the opponent)
+    //      * ⬆ A VECTOR (containing the counterfactual value for each of our n information set)
+    //      * At the terminal nodes, we seemingly have an O(n^2) computation, as for each of our n information
+    //        sets, we must consider all n of the opponent’s possible private outcomes in order to compute our
+    //        utility for that information set. However, if the payoffs at terminal nodes are structured in some
+    //        way, we can often reduce this to an O(n) evaluation that returns exactly the same value as the
+    //        O(n^2) evaluation. Doing so gives PCS the advantage of both SPCS (accurate strategy updates) and
+    //        OPCS (many strategy updates) for the same evaluation cost of either.
 
     double cfu_sum = 0.0;
     if (mode_ == CFR_VECTOR_PAIRWISE_SOLVE) {

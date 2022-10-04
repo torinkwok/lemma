@@ -29,42 +29,18 @@ double ScalarCfrWorker::Solve(Board_t board)
         // NOTE(kwok): Next, we recursively traverse the portion of the game tree that is reachable given
         // the sampled chance events, and explore all the players’ actions.
         //
-        // * ⬇ On the way from the root to the leaves, we pass forward two scalar values: the probability that
+        // * ⬇ On the way from the root to the leaves, we pass forward two SCALAR values: the probability that
         // each player would take actions to reach their respective information sets, given their current
         // strategy and their private information.
         //
-        // * ⬆ On the way back from the leaves to the root, we return a single scalar value: the sampled
-        // counterfactual value v ̃i (σ, I ) for player i. At each choice node for player i, these values are all
+        // * ⬆ On the way back from the leaves to the root, we return a single SCALAR value: the sampled
+        // counterfactual value v ̃i (σ, I) for player i. At each choice node for player i, these values are all
         // that is needed to calculate the regret for each action and update the strategy.
         //
         // Note that at a terminal node z ∈ Z, it takes O(1) work to determine the utility for player i, u_i(z).
         for (int trainee_pos = 0; trainee_pos < active_players; trainee_pos++) {
             util += WalkTree(trainee_pos, ag->root_node_, hand_info);
         }
-        // NOTE(kwok): There are three different methods of sampling chance events that have slower iterations,
-        // but do more work on each iteration:
-        //
-        //   0. Chance-Sampling
-        //      * ⬇ (A SCALAR for us, A SCALAR for the opponent)
-        //      * ⬆ A SCALAR (the sampled counterfactual value v ̃_i(σ, I) for player i)
-        //
-        //   1. Opponent-Public Chance Sampling
-        //      * ⬇ (A VECTOR for us, A SCALAR for the opponent)
-        //      * ⬆ A VECTOR(our counterfactual value for each of our private chance outcomes)
-        //
-        //   2. Self-Public Chance Sampling
-        //      * ⬇ (A SCALAR for us, A VECTOR for the opponent)
-        //      * ⬆ A SCALAR (the counterfactual value for our sampled outcome)
-        //
-        //   3. Public Chance Sampling
-        //      * ⬇ (A VECTOR for us, A VECTOR for the opponent)
-        //      * ⬆ A VECTOR (containing the counterfactual value for each of our n information set)
-        //      * At the terminal nodes, we seemingly have an O(n^2) computation, as for each of our n information
-        //        sets, we must consider all n of the opponent’s possible private outcomes in order to compute our
-        //        utility for that information set. However, if the payoffs at terminal nodes are structured in some
-        //        way, we can often reduce this to an O(n) evaluation that returns exactly the same value as the
-        //        O(n^2) evaluation. Doing so gives PCS the advantage of both SPCS (accurate strategy updates) and
-        //        OPCS (many strategy updates) for the same evaluation cost of either.
     }
 
     // do a sidewalk for updating wavg
