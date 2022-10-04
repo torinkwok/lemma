@@ -251,7 +251,7 @@ struct Ranges
         Copy(that);
     }
 
-    //only empty now
+    // empty only for now
     Ranges(Ranges *that, const std::string &directive)
     {
         if (directive == "empty") {
@@ -293,13 +293,14 @@ struct Ranges
     [[nodiscard]] bool ReturnReady(bool check_pruning) const
     {
         if (check_pruning) {
-            //return if any side is all pruned. cuz it does not want to go down while it will be all zero even pruning is not on
+            // return if any side is all pruned. cuz it does not want to go down while it will be all
+            // zero even pruning is not on
             bool ready = beliefs_[0].AllPruned() || beliefs_[1].AllPruned();
             if (ready) {
                 return true;
             }
         }
-        //then check the all zero condition.
+        // then check the all zero condition.
         return beliefs_[0].AllZero() && beliefs_[1].AllZero();
     }
 };

@@ -3,7 +3,7 @@
 
 //todo: add back the pruning is necessary
 /*
- * we ignore those prune hands anyway, so no need to set -1. the program wont crash
+ * We ignore those pruned hands anyway, hence no need to set -1. The program won't crash.
  */
 sHandBelief *VectorCfrWorker::WalkTree_Alternate(Node *this_node, int actor, sHandBelief *opp_belief)
 {
@@ -99,6 +99,8 @@ sHandBelief *VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trai
     return cfu;
 }
 
+// ⬇ (A VECTOR for us, A VECTOR for the opponent)
+// ⬆ A VECTOR (containing the counterfactual value for each of our n information set)
 Ranges *VectorCfrWorker::WalkTree_Pairwise(Node *this_node, Ranges *reach_ranges)
 {
     if (reach_ranges->ReturnReady(iter_prune_flag)) {
@@ -106,15 +108,20 @@ Ranges *VectorCfrWorker::WalkTree_Pairwise(Node *this_node, Ranges *reach_ranges
     }
 
     if (this_node->IsTerminal()) {
-        //some range are 0. do some early return processing
-        auto this_cfu = new Ranges(reach_ranges); //copy the maskes as well.
+        // some range are 0. do some early return processing
+        auto this_cfu = new Ranges(reach_ranges); // copy the masks as well.
         for (auto my_pos = 0; my_pos < reach_ranges->num_player_; my_pos++) {
-            hand_kernel->hand_eval_kernel_.FastTerminalEval(reach_ranges->beliefs_[1 - my_pos].belief_,
-                                                            this_cfu->beliefs_[my_pos].belief_,
-                                                            this_node->GetStake(my_pos),
-                                                            this_node->IsShowdown());
+            hand_kernel->hand_eval_kernel_.FastTerminalEval(
+                    reach_ranges->beliefs_[
+                            // FIXME(kwok): The number of players is not supposed to be fixed to 2.
+                            1 - my_pos
+                    ].belief_,
+                    this_cfu->beliefs_[my_pos].belief_,
+                    this_node->GetStake(my_pos),
+                    this_node->IsShowdown());
         }
 #if DEV > 1
+        // FIXME(kwok): The number of players is not supposed to be fixed to 2.
         for (int p = 0; p < 2; p++) {
             if (!this_cfu->beliefs_[p].TopoAligned(&reach_ranges->beliefs_[p])) {
                 logger::error("misaligned belief %d topo %d != %d", p,
@@ -141,6 +148,7 @@ Ranges *VectorCfrWorker::EvalChoiceNode_Pairwise(Node *this_node, Ranges *reach_
     for (int a = 0; a < a_max; a++) {
         child_reach_ranges.emplace_back(new Ranges(reach_ranges));
     }
+
     //only need to roll out the acting_player
     int actor = this_node->GetActingPlayer();
     auto actor_child_beliefs = ExtractBeliefs(child_reach_ranges, actor);

@@ -2,7 +2,7 @@
 #include "node.h"
 #include "cfr_param.h"
 
-//include both showdown and folding
+// include both showdown and folding
 int Node::GetStake(int my_pos)
 {
     if (!IsTerminal()) {
@@ -12,11 +12,11 @@ int Node::GetStake(int my_pos)
     if (IsShowdown()) {
         return pot;
     }
-    //folding
+    // folding
     if (state_.playerFolded[my_pos] == 1) {
-        return -pot;     //I lost
+        return -pot; // we lost
     }
-    return pot;  //I win
+    return pot; // we won
 }
 
 std::stack<int> Node::GetPathFromRoot() const
@@ -37,8 +37,7 @@ std::stack<int> Node::GetPathFromRoot() const
 void Node::SortChildNodes()
 {
     //sort the actions so they are in order in the strategy index
-    std::sort(children.begin(), children.end(), [](Node *a, Node *b)
-    {
+    std::sort(children.begin(), children.end(), [](Node *a, Node *b) {
         return a->GetLastActionCode() < b->GetLastActionCode();
     });
 

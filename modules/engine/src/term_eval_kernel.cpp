@@ -85,11 +85,12 @@ void TermEvalKernel::PreStack()
  * @param A
  * @param spent
  */
+// FIXME(kwok): The number of players is not supposed to be fixed to 2.
 void TermEvalKernel::FastShowdownEval(double *opp_full_belief,
                                       double *my_full_belief,
                                       int spent)
 {
-    // transform opp belief from 1326 into 1081 accordingly
+    // Transform the opponent's belief from 1326 into 1081 accordingly
     double opp_belief[HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD];
     for (auto i = 0; i < HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD; i++) {
         opp_belief[i] = opp_full_belief[showdown_sorted_hand_ranks_[i]->v_idx];
@@ -110,7 +111,7 @@ void TermEvalKernel::FastShowdownEval(double *opp_full_belief,
         i = 0;
     }
 
-    // for computing the drift
+    // Compute the drift
     double card_last_net[HOLDEM_MAX_CARDS];
     for (auto c = 0; c < HOLDEM_MAX_CARDS; c++) {
         card_last_net[c] = card_net[ComboIdx(0, c)];
@@ -131,7 +132,7 @@ void TermEvalKernel::FastShowdownEval(double *opp_full_belief,
                     card_last_skip_idx[c]++;
                     card_last_net[c] = card_net[ComboIdx(card_last_skip_idx[c], c)];
                 }
-                total_drift += card_last_net[c]; // no need to delete double count [high, low] as it must be the same value
+                total_drift += card_last_net[c]; // No need to delete double count [high, low] as it must be the same value
             }
             double net = base - total_drift;
             my_full_belief[v_idx] = net * spent;
@@ -365,6 +366,7 @@ inline int TermEvalKernel::ComboIdx(int rank, int card)
     return rank * HOLDEM_MAX_CARDS + card;
 }
 
+// FIXME(kwok): The number of players is not supposed to be fixed to 2.
 void TermEvalKernel::FastTerminalEval(double *opp_belief, double *my_full_belief, int spent, bool showdown)
 {
     if (showdown) {
