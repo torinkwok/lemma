@@ -188,14 +188,17 @@ void TermEvalKernel::FastFoldEval(double *opp_full_belief,
                                   int spent)
 {
     double folding_drift[HOLDEM_MAX_CARDS];
-    for (auto &i: folding_drift) i = 0;
+    for (auto &i: folding_drift) {
+        i = 0;
+    }
     double base = 0.0;
     StackFoldingProb(opp_full_belief, folding_drift, base);
     for (auto my_pos = 0; my_pos < HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD; my_pos++) {
         auto v_idx = showdown_sorted_hand_ranks_[my_pos]->v_idx;
         //pruning
-        if (my_full_belief[v_idx] == BELIEF_MASK_VALUE)
+        if (my_full_belief[v_idx] == BELIEF_MASK_VALUE) {
             continue;
+        }
         auto high_low = FromVectorIndex(v_idx);
         auto total_drift =
                 folding_drift[high_low.first]
@@ -212,16 +215,18 @@ void TermEvalKernel::NaiveFoldEval(double *opp_belief,
     auto begin = std::chrono::steady_clock::now();
     for (auto my_pos = 0; my_pos < FULL_HAND_BELIEF_SIZE; my_pos++) {
         //pruning
-        if (my_belief[my_pos] == BELIEF_MASK_VALUE)
+        if (my_belief[my_pos] == BELIEF_MASK_VALUE) {
             continue;
+        }
         auto weighted_sum = 0.0;
-
         for (auto opp_pos = 0; opp_pos < FULL_HAND_BELIEF_SIZE; opp_pos++) {
-            if (my_pos == opp_pos)
+            if (my_pos == opp_pos) {
                 continue;
+            }
             //check if i and j clashes
-            if (VectorIdxClash(my_pos, opp_pos))
+            if (VectorIdxClash(my_pos, opp_pos)) {
                 continue;
+            }
             auto weight = opp_belief[opp_pos];
             //no hand belief or just too low
             if (weight > 0.0) {
@@ -265,33 +270,40 @@ void TermEvalKernel::StackShowdownProb(double *opp_belief,
                                        int *card_skipping_rank_list)
 {
     double rank_sum[unique_rank_count];
-    for (auto &i: rank_sum) i = 0;
+    for (auto &i: rank_sum) {
+        i = 0;
+    }
 
     //temporary object for constructing card_skipping_rank_list
     //e.g. 0->4, 1->67, 2->89, 3->126... skip_list_idx -> rank
     int card_last_skipping_list_dx[HOLDEM_MAX_CARDS];
-    for (auto &i: card_last_skipping_list_dx)
+    for (auto &i: card_last_skipping_list_dx) {
         i = -1;
+    }
 
     //skipping linked list no more than 52 - 5 - 1 = 46 unique rank.  rank * card
     // in practise it is a lot less
     double card_rank_sum[46][HOLDEM_MAX_CARDS];
-    for (auto &i: card_rank_sum)
-        for (double &j: i)
+    for (auto &i: card_rank_sum) {
+        for (double &j: i) {
             j = 0;
+        }
+    }
 
     double card_sum[HOLDEM_MAX_CARDS];
-    for (auto &i: card_sum)
+    for (auto &i: card_sum) {
         i = 0;
+    }
 
     //first list iteration, tally the sum of belief, by rank, by card
     double opp_belief_sum = 0.0;
     for (int rank_i = 0; rank_i < unique_rank_count; rank_i++) {
         for (int j = rank_first_equal_index_[rank_i]; j < rank_first_losing_index_[rank_i]; j++) {
             double w = opp_belief[j];
-            //WARNING: the below code snippet makes showdown not able to handle 0 items in opp belief! maybe because it makes the skipping rank_list part not accurate, i.e. missing some steps
-//      if (w == 0)
-//        continue;
+            // WARNING: FIXME(kwok): the below code snippet makes showdown not able to handle 0 items in opp belief!
+            // Maybe because it makes the skipping rank_list part not accurate, i.e. missing some steps.
+            // if (w == 0)
+            //     continue;
             rank_sum[rank_i] += w;
 
             //card
@@ -324,9 +336,9 @@ void TermEvalKernel::StackShowdownProb(double *opp_belief,
     //compute the card drift, skipping linked list.
     for (auto c = 0; c < HOLDEM_MAX_CARDS; c++) {
         //skipping non-legit card
-        if (board_.CardCrash(c))
+        if (board_.CardCrash(c)) {
             continue;
-
+        }
         int skip_idx = 0;
         while (true) {
             if (skip_idx == 0) {
@@ -337,8 +349,9 @@ void TermEvalKernel::StackShowdownProb(double *opp_belief,
             }
             int combo_idx = ComboIdx(skip_idx, c);
             //cut off if -1
-            if (card_skipping_rank_list[combo_idx] == -1)
+            if (card_skipping_rank_list[combo_idx] == -1) {
                 break;
+            }
             card_rank_net[combo_idx] =
                     card_rank_net[combo_idx - HOLDEM_MAX_CARDS] + card_rank_sum[skip_idx][c]
                     + card_rank_sum[skip_idx -
