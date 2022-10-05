@@ -1,11 +1,15 @@
 #define CATCH_CONFIG_MAIN
+// FIXME(kwok): If this directive is put below any other one, "expected body of lambda expression" error pops up.
+#include "../src/builder.hpp"
+
 #include <catch2/catch.hpp>
 #include <bulldog/core_util.hpp>
 extern "C" {
 #include <bulldog/game.h>
+#include <hand_indexer/src/hand_index.h>
 };
 #include "../src/strategy_io.h"
-#include "../src/builder.hpp"
+
 #include "../src/action_abs.h"
 #include <filesystem>
 
@@ -131,6 +135,12 @@ TEST_CASE("validate bucket files", "[abstraction]") {
       }
     }
   }
+}
+
+TEST_CASE("validate flexbuffers files", "[abstraction]") {
+    Bucket bucket;
+    bucket.LoadClassicFromFlexbuffers();
+    bucket.Get(6225, 0);
 }
 
 //TEST_CASE("construct pubcolex") {

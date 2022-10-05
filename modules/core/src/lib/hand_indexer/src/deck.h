@@ -18,8 +18,8 @@
 
 typedef uint_fast32_t card_t;
 
-extern const char RANK_TO_CHAR[];
-extern const char SUIT_TO_CHAR[];
+extern const char WAUGH_RANK_TO_CHAR[];
+extern const char WAUGH_SUIT_TO_CHAR[];
 
 static inline card_t deck_get_suit(card_t card) {
   return card&3;

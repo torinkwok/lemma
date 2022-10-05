@@ -32,6 +32,9 @@ TEST_CASE("canonize") {
 }
 
 TEST_CASE("to_waugh_cards") {
+    Cardset c{32678};
+    std::cout << CardsToString(c.cards) << std::endl;
+
     REQUIRE(std::set<WaughCard_t>{49} == CardsToWaughCards(CardsetFromString("Ah").cards));
     REQUIRE(std::set<WaughCard_t>{50, 49} == CardsToWaughCards(CardsetFromString("AdAh").cards));
 

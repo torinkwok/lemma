@@ -1,6 +1,9 @@
 #ifndef BULLDOG_MODULES_ENGINE_SRC_BUILDER_HPP_
 #define BULLDOG_MODULES_ENGINE_SRC_BUILDER_HPP_
 
+#include <flatbuffers/flexbuffers.h>
+#include <NumCpp.hpp>
+
 #include "bucket.h"
 #include "kmeans.h"
 #include <bulldog/logger.hpp>
@@ -50,7 +53,7 @@ struct Equity {
 
 struct Entry {
     unsigned int index_;
-    unsigned short histo_[HISTOGRAM_SIZE];
+    float histo_[HISTOGRAM_SIZE]; // Normalized values
 
     template<class Archive>
     void save(Archive &ar) const {
@@ -64,10 +67,35 @@ struct Entry {
 };
 
 static void read_entries(std::vector<Entry> &entries, const std::string &ofile) {
-    std::ifstream is(ofile, std::ios::binary);
+    std::ifstream is(ofile, std::ios::binary | std::ios::ate);
     if (is.is_open()) {
-        cereal::BinaryInputArchive load(is);
-        load(entries);
+        // TODO(kwok): Replace cereal with flexbuffers more elegantly.
+        // cereal::BinaryInputArchive load(is);
+        // load(entries);
+        std::streamsize size = is.tellg();
+        is.seekg(0, std::ios::beg);
+        auto buffer = std::vector<uint8_t>(size);
+        if (is.read(reinterpret_cast<char *>(buffer.data()), size).bad()) {
+            // TODO:(kwok) More informative exception.
+            throw std::runtime_error("Failed to read from " + ofile);
+        }
+        auto fxb_tmp = flexbuffers::GetRoot(buffer).AsTypedVector();
+        std::vector<float> fxb_vec;
+        size_t fxb_tmp_size = fxb_tmp.size();
+        for (size_t i = 0; i < fxb_tmp_size; i++) {
+            fxb_vec.push_back(fxb_tmp[i].AsFloat());
+        }
+        auto fxb_tensor = nc::asarray(fxb_vec)
+                .reshape(nc::Shape(fxb_tmp_size / HISTOGRAM_SIZE, HISTOGRAM_SIZE));
+        for (nc::int32 i = 0; i < fxb_tensor.shape().rows; i++) {
+            auto slice = fxb_tensor.at(i, fxb_tensor.cSlice());
+            Entry entry{};
+            entry.index_ = i;
+            for (nc::int32 j = 0; j < HISTOGRAM_SIZE; j++) {
+                entry.histo_[j] = slice[j];
+            }
+            entries.push_back(entry);
+        }
     } else {
         logger::error("unable to open " + ofile);
     }
