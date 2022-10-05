@@ -33,10 +33,7 @@ void Bucket::LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r)
         case 3: rounds = 2; cards_per_round = (uint8_t[]){2, 5}; out_indexer = &_river_indexer; break;
         default: throw std::runtime_error("Invalid round number " + std::to_string(r));
     }
-    // assert(hand_indexer_init(1, (uint8_t[]){2}, &_preflop_indexer));
-    // assert(hand_indexer_init(2, (uint8_t[]){2, 3}, &_flop_indexer));
-    // assert(hand_indexer_init(2, (uint8_t[]){2, 4}, &_turn_indexer));
-    // assert(hand_indexer_init(2, (uint8_t[]){2, 5}, &_river_indexer));
+
     assert(hand_indexer_init(rounds, cards_per_round, out_indexer));
 
     auto num_loaded = _LoadClassicFromFlexbuffers(std::filesystem::path(dir), r);
@@ -45,21 +42,6 @@ void Bucket::LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r)
            (r == 1 && num_loaded == 1286792) ||
            (r == 2 && num_loaded == 13960050) ||
            (r == 3 && num_loaded == 123156254));
-
-    // auto paths = std::vector{
-    //         std::filesystem::path(std::string(BULLDOG_DIR_DATA_ABS) + std::string("/emd-abs-r0-d50-1_chunks")),
-    //         std::filesystem::path(std::string(BULLDOG_DIR_DATA_ABS) + std::string("/emd-abs-r1-d50-1_chunks")),
-    //         // std::filesystem::path(std::string(BULLDOG_DIR_DATA_ABS) + std::string("/emd-abs-r2-d50-1_chunks")),
-    //         // std::filesystem::path(std::string(BULLDOG_DIR_DATA_ABS) + std::string("/ochs-abs-r3-d8-8_chunks")),
-    // };
-    // for (size_t r = 0; r < paths.size(); r++) {
-    //     auto num_loaded = _LoadClassicFromFlexbuffers(paths[r], r);
-    //     std::cout << num_loaded << " Waugh indices loaded for round " << r << std::endl;
-    //     assert((r == 0 && num_loaded == 169) ||
-    //                    (r == 1 && num_loaded == 1286792) ||
-    //                    (r == 2 && num_loaded == 13960050) ||
-    //                    (r == 3 && num_loaded == 123156254));
-    // }
 }
 
 size_t Bucket::_LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r)
