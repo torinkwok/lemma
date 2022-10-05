@@ -74,7 +74,7 @@ struct StrategyPool
         auto it = std::find(pool_.begin(), pool_.end(), blueprint);
         if (it == pool_.end()) {
             pool_.emplace_back(blueprint);
-            sorted = false; // Order has been broken.
+            sorted = false; // NOTE(kwok): Mark the order as broken. FIXME(kwok): Is this necessary?
         } else {
             logger::critical("loading duplicated blueprints");
         }

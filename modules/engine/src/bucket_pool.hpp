@@ -56,9 +56,9 @@ public:
             std::filesystem::path bucket_dir(name);
             std::vector<std::string> parsed_str;
             split_string(name, "_", parsed_str);
-            uint8_t num_buckets = std::stoul(parsed_str[5]);
+            int num_buckets = std::stoi(parsed_str[5]);
             uint8_t r = std::stoul(parsed_str[2]);
-            logger::debug("number of buckets %u; round %u", num_buckets, r);
+            logger::info("number of buckets %d; round %u", num_buckets, r);
             meta->bucket_.LoadClassicFromFlexbuffers(dir / bucket_dir, r);
             meta->bucket_count_ = num_buckets;
         } else {
