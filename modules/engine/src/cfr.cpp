@@ -76,7 +76,9 @@ int CFR::Solve(Strategy *blueprint,
                 case CMD_SCALAR_SOLVE :
                 case CMD_VECTOR_ALTERNATE_SOLVE :
                 case CMD_VECTOR_PAIRWISE_SOLVE : {
-                    //todo: in fact we are not using the convergence state at all.
+                    // todo: in fact we are not using the convergence state at all.
+                    logger::info("🚦current state iteration = %d, convergence iteration = %d",
+                                 current_state.iteration, convergence.iteration);
                     if (current_state < convergence) {
                         sTotalThreadOutput total_result;
                         ThreadedCfrSolve(blueprint,
@@ -230,6 +232,11 @@ int CFR::Solve(Strategy *blueprint,
 */
 void *CFR::CfrSolve(void *thread_args)
 {
+    std::ostringstream thread_id_oss;
+    thread_id_oss << std::this_thread::get_id();
+
+    std::string thread_id = thread_id_oss.str();
+
     auto *args = (sThreadInput *) thread_args;
     auto ag = args->strategy_->ag_;
     //if round is 0, default assume hierarchical bucketing used
@@ -279,7 +286,7 @@ void *CFR::CfrSolve(void *thread_args)
 
     auto cur_flop_idx = 0;
     while (remaining_iter-- && !args->cancelled_token_) {
-        logger::trace("remaining iter = %d", remaining_iter);
+        logger::info("[🧵thread %s] remaining iter = %d", thread_id, remaining_iter);
         //sampling board
         Board_t board{};
         SampleSequentialFullBoard(ag->root_state_, &ag->game_, board, cur_flop_idx, worker->my_flops_);

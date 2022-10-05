@@ -40,7 +40,7 @@ void Bucket::LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r)
     assert(hand_indexer_init(rounds, cards_per_round, out_indexer));
 
     auto num_loaded = _LoadClassicFromFlexbuffers(std::filesystem::path(dir), r);
-    std::cout << num_loaded << " Waugh indices loaded for round " << r << std::endl;
+    logger::info("🪣%lu Waugh-indexed buckets loaded for round %u", num_loaded, r);
     assert((r == 0 && num_loaded == 169) ||
            (r == 1 && num_loaded == 1286792) ||
            (r == 2 && num_loaded == 13960050) ||

@@ -80,10 +80,10 @@ double ScalarCfrWorker::EvalTermNode(int trainee_pos, Node *this_node, HandInfo 
 {
     if (this_node->IsShowdown()) {
         int stake = this_node->GetStake(trainee_pos);
-        stake *= hand_info.payoff_[trainee_pos];//tie 0, win 1, lose -1
+        stake *= hand_info.payoff_[trainee_pos]; // tie 0, win 1, lose -1
         return (double) stake;
     } else {
-        //fold
+        // fold
         int stake = this_node->GetStake(trainee_pos);
         return (double) stake;
     }
@@ -169,7 +169,8 @@ double ScalarCfrWorker::EvalIntermediateChoiceNode(int trainee_pos, Node *this_n
                 }
             }
             child_cfu[a] = WalkTree(trainee_pos, next_node, hand_info);
-            logger::warn("🍃child counter-factual utility: %s", std::to_string(child_cfu[a]));
+            // TODO(kwok): Log CFUs less annoyingly.
+            // logger::warn("🍃child counter-factual utility: %s", std::to_string(child_cfu[a]));
         }
 
         // only supported weighted response. check outside
