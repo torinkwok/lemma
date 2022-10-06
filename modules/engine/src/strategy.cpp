@@ -652,27 +652,39 @@ void Strategy::ConvertWavgToZipAvg(pthread_t *thread_pool, unsigned int num_thre
     }
 }
 
-/*
- * given r, b_range, compute it
- */
 void *Strategy::ThreadedZipAvgConvert(void *thread_args)
 {
     auto *args = (sThreadInputZipavgConvert *) thread_args;
     auto strategy = args->strategy;
     auto r = args->round;
-    const STRATEGY_TYPE k_compute_method = STRATEGY_REG;
+    /* FIXME(kwok): When using STRATEGY_WAVG, the result is suspiciously uniform.
+     *
+     * Something like this in upoker-p_nlh2_200bb_cfrs_r0_100.zipavg
+     *
+     *                              --- 8< ---
+     *  04f0  2a 2a 2a 2a 2a 2a 2a 2a  2a 2a 2a 2a 13 47 2d 06  |************.G-.|
+     *  0500  35 38 2a 2a 2a 2a 2a 2a  2a 2a 2a 2a 2a 2a 2a 2a  |58**************|
+     *  0510  2a 2a 2a 2a 2a 2a 2a 2a  2a 2a 2a 2a 2a 2a 2a 2a  |****************|
+     *  0640  3f 3f 3f 3f 3f 3f 3f 3f  3f 3f 3f 3f 3f 3f 3f 3f  |????????????????|
+     *  06f0  3f 3f 3f 3f 3f 3f 3f 3f  14 91 1a 3b 3f 3f 3f 3f  |????????...;????|
+     *  0700  3f 3f 3f 3f 3f 3f 3f 3f  3f 3f 3f 3f 3f 3f 3f 3f  |????????????????|
+     *  07d0  53 53 53 53 53 53 53 53  53 53 53 53 53 53 53 53  |SSSSSSSSSSSSSSSS|
+     *  0850  53 53 53 53 53 53 53 53  53 53 3d 09 b4 53 53 53  |SSSSSSSSSS=..SSS|
+     *  0860  53 53 53 53 53 53 53 53  53 53 53 53 53 53 53 53  |SSSSSSSSSSSSSSSS|
+     *  0900  7d 7d 7d 7d 7d 7d 7d 7d  7d 7d 7d 7d 7d 7d 7d 7d  |}}}}}}}}}}}}}}}}|
+     *                              --- >8 ---
+     */
+    static const STRATEGY_TYPE k_compute_method = STRATEGY_REG;
     logger::info("🧵computing method applied %d", k_compute_method);
     for (Bucket_t b = args->b_begin; b < args->b_end; b++) {
         for (Node_t n = 0; n < strategy->ag_->kernel_->nmax_by_r_[r]; n++) {
             auto a_max = strategy->ag_->kernel_->amax_by_rn_[r][n];
-            float avg[a_max];
-            // FIXME(kwok): `uint_wavg_` remains empty up to this point.
-            // strategy->ComputeStrategy(r, n, b, a_max, avg, STRATEGY_WAVG);
-            strategy->ComputeStrategy(r, n, b, a_max, avg, k_compute_method);
+            float distr[a_max];
+            strategy->ComputeStrategy(r, n, b, a_max, distr, k_compute_method);
             for (auto a = 0; a < a_max; a++) {
                 auto rnba = strategy->ag_->kernel_->hash_rnba(r, n, b, a);
-                // Map to uint_8 via normalization by 250, where uint8_max = 256.
-                auto v = ZIPAVG(std::round(avg[a] * 250));
+                // Map to uint_8 via normalization by 250, where uint_8::max is 256
+                auto v = ZIPAVG(std::round(distr[a] * 250));
                 strategy->zipavg_[rnba] = v;
             }
         }
