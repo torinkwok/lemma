@@ -43,7 +43,7 @@ double ScalarCfrWorker::Solve(Board_t board)
         }
     }
 
-    // do a sidewalk for updating wavg
+    // Do a sidewalk for updating WAVG
     if (cfr_param_->avg_side_update_ && cfr_param_->rm_avg_update == AVG_CLASSIC) {
         int SIDE_REPS = 50;
         for (int loc_iter = 0; loc_iter < SIDE_REPS; loc_iter++) {
@@ -169,8 +169,6 @@ double ScalarCfrWorker::EvalIntermediateChoiceNode(int trainee_pos, Node *this_n
                 }
             }
             child_cfu[a] = WalkTree(trainee_pos, next_node, hand_info);
-            // TODO(kwok): Log CFUs less annoyingly.
-            // logger::warn("🍃child counter-factual utility: %s", std::to_string(child_cfu[a]));
         }
 
         // only supported weighted response. check outside

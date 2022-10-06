@@ -38,6 +38,7 @@ int GetPolicy(float *norm, int size, T *ptr)
     // bool integral = std::is_integral<T>::value;
     T positive_v[size];
     T sum_pos_v = 0;
+
     for (int a = 0; a < size; a++) {
         positive_v[a] = std::max<T>(0, ptr[a]);
         //    T v = ptr[a];
@@ -47,7 +48,7 @@ int GetPolicy(float *norm, int size, T *ptr)
         sum_pos_v += positive_v[a];
     }
 
-    // NOTE(kwok): Normalization.
+    // NOTE(kwok): Normalization
     if (sum_pos_v > 0) {
         for (int a = 0; a < size; a++) {
             norm[a] = (float) positive_v[a] / sum_pos_v;

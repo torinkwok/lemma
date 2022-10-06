@@ -169,11 +169,10 @@ int CFR::Solve(Strategy *blueprint,
                     strategy->ConvertWavgToZipAvg(thread_pool_, num_thread);
                     SaveStrategy(strategy, STRATEGY_ZIPAVG, name);
                     strategy->ClearZipAvgMemory();
-
-                    //        SaveRegret(strategy, name);
-                    //        if (local_cfr_param.rm_avg_update != AVG_OFF) {
-                    //          SaveWeightedAvg(strategy, name);
-                    //        }
+                    // SaveRegret(strategy, name);
+                    // if (local_cfr_param.rm_avg_update != AVG_OFF) {
+                    //     SaveWeightedAvg(strategy, name);
+                    // }
                     break;
                 }
                 case CMD_PRINT_ROOT_STG: {
@@ -429,18 +428,19 @@ void CFR::ThreadedCfrSolve(Strategy *blueprint,
 
     int num_threads = cfr_param.num_threads;
     int effective_thread = num_threads;
-    //it is normal to profile with just 1 thread
+
+    // It is common to profile with just 1 thread
     if (steps < num_threads) {
         effective_thread = 1;
-        if (cfr_param.cfu_compute_acting_playing == WEIGHTED_RESPONSE)
+        if (cfr_param.cfu_compute_acting_playing == WEIGHTED_RESPONSE) {
             logger::warn("running single thread");
+        }
     }
 
     sThreadOutput thread_output[effective_thread];
     if (effective_thread > 1) {
         int iter_avg = steps / effective_thread;
-
-        //launch threads
+        // Fire threads
         for (auto i = 0; i < effective_thread; i++) {
             int num_iter = iter_avg;
             if (i == effective_thread - 1) {
@@ -463,14 +463,14 @@ void CFR::ThreadedCfrSolve(Strategy *blueprint,
                 logger::critical("failed to launch threads.");
             }
         }
-        // wait for threads to finish
+        // Block here to wait for the threads to finish
         for (int i = 0; i < effective_thread; ++i) {
             if (pthread_join(thread_pool[i], nullptr)) {
                 logger::error("Couldn't join to thread %d", i);
             }
         }
     } else {
-        //single thread
+        // Solo thread
         auto thread_input = new sThreadInput(blueprint,
                                              strategy,
                                              pub_bucket_flop_boards,
@@ -483,7 +483,8 @@ void CFR::ThreadedCfrSolve(Strategy *blueprint,
                                              std::random_device()());
         CFR::CfrSolve(thread_input);
     }
-    //also required for thread = 1, so that same variables can be accessed similarly
+
+    // Also required for thread = 1, so that the same variables can be accessed similarly
     total_result.MergeThreadOutputs(thread_output, effective_thread);
 }
 

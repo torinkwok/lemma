@@ -33,8 +33,9 @@ void Strategy::InitMemory(STRATEGY_TYPE type, CFR_MODE mode)
             }
             break;
         case STRATEGY_ZIPAVG:
-            for (RNBA i = 0; i < size; i++)
+            for (RNBA i = 0; i < size; i++) {
                 zipavg_[i] = 0;
+            }
             break;
         default:
             logger::critical("unsupported strategy type %s", StrategyToNameMap[type]);
@@ -232,21 +233,24 @@ void Strategy::InspectNode(Node *inspect_node, const std::string &prefix, STRATE
     FILE *file = fopen((dir / filename).c_str(), "wb");
     if (file != nullptr) {
         fprintf(file, "colex,suited,paired,card1,card2,hand+board,rank");
-        for (auto a = 0; a < inspect_node->GetAmax(); a++)
+        for (auto a = 0; a < inspect_node->GetAmax(); a++) {
             fprintf(file, ",%d", inspect_node->children[a]->GetLastActionCode());
+        }
         fprintf(file, ",raise_sum");
         fprintf(file, "\n");
         std::set < Colex > seen_colex;
         int counter = 0;
         for (auto i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {
             auto high_low = FromVectorIndex(i);
-            if (board.CardCrash(high_low.first) || board.CardCrash(high_low.second))
+            if (board.CardCrash(high_low.first) || board.CardCrash(high_low.second)) {
                 continue;
+            }
             auto c = emptyCardset();
             EnrichCardSetToRound(&c, high_low.first, high_low.second, &board, r);
             Colex colex = ComputeColex(Canonize(c.cards));
-            if (seen_colex.find(colex) != seen_colex.end())
+            if (seen_colex.find(colex) != seen_colex.end()) {
                 continue;  //continue if founded
+            }
 
             //not found, add to it.
             seen_colex.insert(colex);
@@ -277,10 +281,11 @@ void Strategy::InspectNode(Node *inspect_node, const std::string &prefix, STRATE
                 fprintf(file, ",%f", rnb_avg[a]);
             }
             auto raise_sum = 0.0;
-            //if fold, 2 else 1
+            // if folded, 2 else 1
             int raise_starting_idx = inspect_node->children[0]->GetLastActionCode() == -1 ? 2 : 1;
-            for (auto a = raise_starting_idx; a < a_max; a++)
+            for (auto a = raise_starting_idx; a < a_max; a++) {
                 raise_sum += rnb_avg[a];
+            }
             fprintf(file, ",%f", raise_sum);
             fprintf(file, "\n");
         }
@@ -383,13 +388,13 @@ int Strategy::EstimateReachProbAtNode(MatchState *last_match_state,
 
         //do bayesian estimate on each ligit hand
         for (auto i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {
-            if (new_ag_reach[acting_player].IsZero(i) || new_ag_reach[acting_player].IsPruned(i))
+            if (new_ag_reach[acting_player].IsZero(i) || new_ag_reach[acting_player].IsPruned(i)) {
                 continue;
+            }
 
             auto high_low = FromVectorIndex(i);
-            auto b =
-                    ag_->bucket_reader_.GetBucket_HighLowPair_Board_Round(high_low.first, high_low.second, &reach_board,
-                                                                          step_node_round);
+            auto b = ag_->bucket_reader_.GetBucket_HighLowPair_Board_Round(
+                    high_low.first, high_low.second, &reach_board, step_node_round);
             auto a_max = stepping_node->children.size();
 
             //use only zipavg/wavg in transition.
@@ -416,8 +421,9 @@ int Strategy::EstimateReachProbAtNode(MatchState *last_match_state,
                     PrintNodeStrategy(stepping_node, b, calc_mode);
                     return REAL_HAND_PRUNED_IN_TRANSITION;
                 }
-                if (root_round > HOLDEM_ROUND_PREFLOP) //not likely to have zero wavg at preflop
+                if (root_round > HOLDEM_ROUND_PREFLOP) { //not likely to have zero wavg at preflop
                     prune_count++;
+                }
                 action_prob = 0.0;
             }
 
@@ -586,12 +592,12 @@ int Strategy::ComputeStrategy(Round_t r,
                 return GetPolicy<ZIPAVG>(rnb_avg, a_max, zipavg_ + rnb0);
             } else {
                 char v[a_max];
-                // rnb0: 435
                 file_ptr->seekg(rnb0);
                 file_ptr->read(v, a_max);
                 ZIPAVG zip_v[a_max];
-                for (auto i = 0; i < a_max; i++)
+                for (auto i = 0; i < a_max; i++) {
                     zip_v[i] = v[i];
+                }
                 return GetPolicy<ZIPAVG>(rnb_avg, a_max, zip_v);
             }
         }
@@ -636,6 +642,7 @@ void Strategy::ConvertWavgToZipAvg(pthread_t *thread_pool, unsigned int num_thre
                 logger::critical("failed to launch threads.");
             }
         }
+
         // wait for threads to finish
         for (unsigned int i = 0; i < num_threads; ++i) {
             if (pthread_join(thread_pool[i], nullptr)) {
@@ -653,20 +660,23 @@ void *Strategy::ThreadedZipAvgConvert(void *thread_args)
     auto *args = (sThreadInputZipavgConvert *) thread_args;
     auto strategy = args->strategy;
     auto r = args->round;
-    for (Bucket_t b = args->b_begin; b < args->b_end; b++)
+    const STRATEGY_TYPE k_compute_method = STRATEGY_REG;
+    logger::info("🧵computing method applied %d", k_compute_method);
+    for (Bucket_t b = args->b_begin; b < args->b_end; b++) {
         for (Node_t n = 0; n < strategy->ag_->kernel_->nmax_by_r_[r]; n++) {
             auto a_max = strategy->ag_->kernel_->amax_by_rn_[r][n];
             float avg[a_max];
             // FIXME(kwok): `uint_wavg_` remains empty up to this point.
-            strategy->ComputeStrategy(r, n, b, a_max, avg, STRATEGY_WAVG);
-            // strategy->ComputeStrategy(r, n, b, a_max, avg, STRATEGY_REG);
-            //map to uint, normalized by 250, where uint8_max = 256.
+            // strategy->ComputeStrategy(r, n, b, a_max, avg, STRATEGY_WAVG);
+            strategy->ComputeStrategy(r, n, b, a_max, avg, k_compute_method);
             for (auto a = 0; a < a_max; a++) {
                 auto rnba = strategy->ag_->kernel_->hash_rnba(r, n, b, a);
-                ZIPAVG v = std::round(avg[a] * 250);
+                // Map to uint_8 via normalization by 250, where uint8_max = 256.
+                auto v = ZIPAVG(std::round(avg[a] * 250));
                 strategy->zipavg_[rnba] = v;
             }
         }
+    }
     delete args;
     return nullptr;
 }
@@ -680,8 +690,9 @@ void Strategy::InspectPreflopBets(const std::string &print_name, STRATEGY_TYPE c
     InspectNode(ag_->root_node_, print_name + "_open", calc_mode);
     Node *three_bet_node = nullptr;
     for (auto c: ag_->root_node_->children) {
-        if (c->GetLastActionCode() == 200)
+        if (c->GetLastActionCode() == 200) {
             three_bet_node = c;
+        }
     }
     /*
      * 3bet
@@ -691,8 +702,9 @@ void Strategy::InspectPreflopBets(const std::string &print_name, STRATEGY_TYPE c
         //find raise 600
         Node *four_bet_node = nullptr;
         for (auto c: three_bet_node->children) {
-            if (c->GetLastActionCode() == 600)
+            if (c->GetLastActionCode() == 600) {
                 four_bet_node = c;
+            }
             /*
              * 4bet
              */
@@ -700,8 +712,9 @@ void Strategy::InspectPreflopBets(const std::string &print_name, STRATEGY_TYPE c
                 InspectNode(four_bet_node, print_name + "_4bet", calc_mode);
                 Node *five_bet_node = nullptr;
                 for (auto c4: four_bet_node->children) {
-                    if (c4->GetLastActionCode() == 1800)
+                    if (c4->GetLastActionCode() == 1800) {
                         five_bet_node = c4;
+                    }
                     if (five_bet_node != nullptr) {
                         /*
                          * 5bet
@@ -709,8 +722,9 @@ void Strategy::InspectPreflopBets(const std::string &print_name, STRATEGY_TYPE c
                         InspectNode(five_bet_node, print_name + "_5bet", calc_mode);
                         Node *six_bet_node = nullptr;
                         for (auto c5: five_bet_node->children) {
-                            if (c5->GetLastActionCode() == 5400)
+                            if (c5->GetLastActionCode() == 5400) {
                                 six_bet_node = c5;
+                            }
                             if (six_bet_node != nullptr) {
                                 /*
                                  * 6bet
@@ -718,8 +732,9 @@ void Strategy::InspectPreflopBets(const std::string &print_name, STRATEGY_TYPE c
                                 InspectNode(six_bet_node, print_name + "_6bet", calc_mode);
                                 Node *seven_bet_node = nullptr;
                                 for (auto c6: six_bet_node->children) {
-                                    if (c6->GetLastActionCode() == 10000)
+                                    if (c6->GetLastActionCode() == 10000) {
                                         seven_bet_node = c6;
+                                    }
                                     if (seven_bet_node != nullptr) {
                                         /*
                                          * 6bet
@@ -761,8 +776,9 @@ bool Strategy::FreezePriorAction(Strategy *old_strategy, MatchState *real_match_
     auto viewing_player = real_match_state->viewingPlayer;
     std::vector<int> freeze_action_index;
     for (auto a = 0; a < a_max_state; a++) {
-        if (real_match_state->state.actingPlayer[r][a] == viewing_player)
+        if (real_match_state->state.actingPlayer[r][a] == viewing_player) {
             freeze_action_index.emplace_back(a);
+        }
     }
 
     /*
@@ -843,8 +859,9 @@ void Strategy::CheckFrozenStrategyConsistency(Strategy *old_strategy, MatchState
     auto viewing_player = real_match_state->viewingPlayer;
     std::vector<int> freeze_action_index;
     for (auto a = 0; a < a_max_state; a++) {
-        if (real_match_state->state.actingPlayer[r][a] == viewing_player)
+        if (real_match_state->state.actingPlayer[r][a] == viewing_player) {
             freeze_action_index.emplace_back(a);
+        }
     }
 
     /*
@@ -890,8 +907,9 @@ void Strategy::CheckFrozenStrategyConsistency(Strategy *old_strategy, MatchState
         float new_avg[a_max];
         ComputeStrategy(new_match_node, old_b, new_avg, STRATEGY_WAVG);
         for (auto a = 0; a < a_max; a++) {
-            if (abs(old_avg[a] - new_avg[a]) > 0.00001)
+            if (abs(old_avg[a] - new_avg[a]) > 0.00001) {
                 logger::critical("copying strategy over failed [old %f][new %f][a = %d]", old_avg[a], new_avg[a], a);
+            }
         }
         old_strategy->PrintNodeStrategy(old_match_node, old_b, STRATEGY_WAVG);
     }
@@ -899,8 +917,9 @@ void Strategy::CheckFrozenStrategyConsistency(Strategy *old_strategy, MatchState
 
 ZIPAVG Strategy::GetZipAvg(RNBA idx) const
 {
-    if (zipavg_ != nullptr)
+    if (zipavg_ != nullptr) {
         return zipavg_[idx];
+    }
     //else, disk-based reading
     char ch;
     file_ptr->seekg(idx);
