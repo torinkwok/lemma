@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="pluribus_vs_upoker_1bp" type="CMakeRunConfiguration" factoryName="Application" folderName="battleground" singleton="false" PROGRAM_PARAMS="--engine_params=engine_upoker_1bp.json --game=nlh2_200bb.game --connector=1 --connector_params=lemma,ckp3t4kkbccHZFmosBZVsGibxz6MnaQ4Heof3uu3nkXtLwn7GVoMDhNrj6qe8ZCU,1000 --log_level=trace --proxy=http://localhost:6152" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" WORKING_DIR="file://$CMakeProjectDir$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="bulldog" TARGET_NAME="agent" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="bulldog" RUN_TARGET_NAME="agent">
+    <method v="2">
+      <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+    </method>
+  </configuration>
+</component>

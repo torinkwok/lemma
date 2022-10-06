@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="train_bp_cfrs300k-IR100-100-100-100_upoker-p_bigpot" type="CMakeRunConfiguration" factoryName="Application" folderName="blueprint" PROGRAM_PARAMS="--sgs=sgs_r0_cfrs300k-IR100-100-100-100_upoker-p_bigpot.json" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" WORKING_DIR="file://$CMakeProjectDir$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="bulldog" TARGET_NAME="train" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="bulldog" RUN_TARGET_NAME="train">
+    <method v="2">
+      <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+    </method>
+  </configuration>
+</component>
