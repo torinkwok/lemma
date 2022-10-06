@@ -7,24 +7,35 @@ project(bulldog)
 
 set(HOME_DIR ${CMAKE_SOURCE_DIR})
 
-# specify c++17 standard
+# Specify C++17 standard
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-#set default cmake build type to release
+# Set default cmake build type to release
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif ()
 message("CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
 
-#set c++ flags
+# Set c++ flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -O0")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin/Build")
 
-#set executable installation directory, default /usr/local/bin
+# The outcome of indiscriminating build types is endless confusion. I spend a couple hours on fixing a bug caused
+# by the different build types alternatively put their artifacts into the same build directory.
+if (CMAKE_BUILD_TYPE MATCHES Debug)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin/build/debug")
+elseif (CMAKE_BUILD_TYPE MATCHES Release)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin/build/release")
+elseif (CMAKE_BUILD_TYPE MATCHES RelWithDebInfo)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin/build/release-dbinfo")
+elseif (CMAKE_BUILD_TYPE MATCHES MinSizeRel)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin/build/release-min")
+endif ()
+
+# Set executable installation directory, by default to be /usr/local/bin
 set(INSTALL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE}")
 
-#set file paths
+# Set file paths
 add_definitions(-DBULLDOG_DIR_LOG="${CMAKE_CURRENT_SOURCE_DIR}/logs")
 add_definitions(-DBULLDOG_DIR_DATA_ABS="${CMAKE_CURRENT_SOURCE_DIR}/data/abstraction")
 add_definitions(-DBULLDOG_DIR_DATA_STG="${CMAKE_CURRENT_SOURCE_DIR}/data/strategy")
@@ -35,7 +46,7 @@ if (CMAKE_BUILD_TYPE MATCHES Debug)
     add_definitions(-DDEV=2)
     #    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
     #    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0")
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=[sanitizer_name] [additional_options] [-g] [-OX]")
+    #    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=[sanitizer_name] [additional_options] [-g] [-OX]")
     #    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer -O1")
     #    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined")
     #    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=thread")
@@ -54,9 +65,9 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${HOME_DIR}/3rdparty/Catch2/contrib/")
 
-#Add submodule dependencies
+# Add submodule dependencies
 add_subdirectory(3rdparty/Catch2)
-#submodules that are headeronly
+# Submodules that are headeronly
 include_directories(3rdparty/cxxopts/include)
 include_directories(3rdparty/spdlog/include)
 include_directories(3rdparty/cereal/include)
@@ -67,7 +78,7 @@ message(STATUS "OpenSSL Libraries Found: ${OPENSSL_FOUND}")
 message(STATUS "OpenSSL Include:         ${OPENSSL_INCLUDE_DIR}")
 message(STATUS "OpenSSL Libraries:       ${OPENSSL_LIBRARIES}")
 
-#These packages need to be installed locally, i.e. with brew / apt-get etc
+# These packages are required to be installed locally, i.e. using brew, apt-get, or vspkg.
 if (UNIX AND NOT APPLE)
     set(cpprestsdk_DIR /usr/lib/${CMAKE_LIBRARY_ARCHITECTURE}/cmake/)
     #find_package(UUID REQUIRED uuid)
@@ -81,9 +92,8 @@ elseif (APPLE)
 endif ()
 find_package(cpprestsdk REQUIRED)
 find_package(Threads REQUIRED)
-#
-# set up boost
-#
+
+# Set up boost
 set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_USE_MULTITHREADED ON)
 find_package(Boost REQUIRED system thread date_time regex serialization)
@@ -99,5 +109,5 @@ add_subdirectory(modules/core)
 add_subdirectory(modules/engine)
 add_subdirectory(modules/agent)
 
-#Enable "make test" command
+# Enable "make test" command
 enable_testing()
