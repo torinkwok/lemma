@@ -67,7 +67,7 @@ int CFR::Solve(Strategy *blueprint,
 #endif
         auto cmd = local_commands.front();
         if (cmd.trigger_iter_ >= starting_checkpoint) {
-            //only print in blueprint training for now. not using sgs in preflop
+            // Only print this in blueprint training for now. Not using sgs in preflop.
             if (strategy->ag_->root_node_->GetRound() == HOLDEM_ROUND_PREFLOP) {
                 cmd.Print();
             }
@@ -91,12 +91,12 @@ int CFR::Solve(Strategy *blueprint,
                                          pub_bucket_flop_boards,
                                          thread_pool_,
                                          cancelled);
-                        //only update state if not abruptly cancelled from outside
                         if (!cancelled) {
+                            // Only update the current state if not abruptly cancelled from outside
                             current_state.UpdateState(cmd.steps_, timer.GetLapseFromBegin(), total_result.avg_);
                         }
                     } else {
-                        //break all loops
+                        // Break all loops
                         keep_solving = false;
                     }
                     break;
@@ -122,14 +122,12 @@ int CFR::Solve(Strategy *blueprint,
                         profiling_writer_.WriteToFile(br_tuple);
                     }
                     logger::debug("PROFILER: br[%f] at iter [%d]", br.avg_, current_state.iteration);
-
-                    //for blueprint training, inspect the strategy over time.
+                    // In the case of blueprint training, inspect the strategy over time
                     if (strategy->ag_->root_node_->GetRound() == HOLDEM_ROUND_PREFLOP) {
                         auto name = strategy->ag_->name_ + "_" + local_cfr_param.name.substr(0, 7) + "_"
                                     + std::to_string(current_state.iteration);
                         strategy->InspectPreflopBets(name, profiler_cfr_param.profiling_strategy_);
                     }
-
                     break;
                 }
                 case CMD_VECTOR_PRUNING_ON : {
@@ -155,15 +153,13 @@ int CFR::Solve(Strategy *blueprint,
                     break;
                 }
                 case CMD_SAVE_REG_WAVG : {
-                    //assuming cfr name begins with cfrv...cfrs
+                    // Assuming CFR name beginning with either "cfrv" or "cfrs"
                     auto name = strategy->ag_->name_ + "_" + local_cfr_param.name.substr(0, 7) + "_"
                                 + std::to_string(current_state.iteration);
                     SaveAG(strategy, name);
                     local_cfr_param.SaveCFRConfig(name);
-                    /*
-                     * right now we do not need checkpoint to do continuous training
-                     * no need regret checkpoint to merge strategy. so make it simple
-                     */
+                    // For now, we don't need checkpoints to do continuous training, hence no need for regret
+                    // checkpoints to merge strategy. Just mkake it simple here.
                     strategy->InitMemory(STRATEGY_ZIPAVG, CFR_SCALAR_SOLVE);
                     // FIXME(kwok): This command potentially triggers the "b_max %d must >= num_threads %d" fatal error.
                     strategy->ConvertWavgToZipAvg(thread_pool_, num_thread);
@@ -183,10 +179,12 @@ int CFR::Solve(Strategy *blueprint,
                     strategy->InspectNode(strategy->ag_->root_node_, profiling_writer_.prefix_, calc_mode);
                     break;
                 }
-                default:
-                    logger::critical("no default command! check command pipeline");
-                case CMD_DUMMY:
+                case CMD_DUMMY: {
                     break;
+                }
+                default: {
+                    logger::critical("no default command! check command pipeline");
+                }
             }
 #if DEV > 1
             cmd.Log(current_state.iteration, cmd_timer.GetLapseFromBegin(), timer.GetLapseFromBegin());
@@ -238,6 +236,7 @@ void *CFR::CfrSolve(void *thread_args)
 
     auto *args = (sThreadInput *) thread_args;
     auto ag = args->strategy_->ag_;
+
     //if round is 0, default assume hierarchical bucketing used
     std::vector<Board_t> my_flops;
     if (ag->root_node_->GetRound() == 0
@@ -249,6 +248,7 @@ void *CFR::CfrSolve(void *thread_args)
             auto v = args->pub_bucket_flop_boards_[pub_board_idx];
             my_flops.insert(my_flops.end(), v.begin(), v.end());
         }
+
         logger::trace("thread %d has been assigned %d flops", args->thread_idx_, my_flops.size());
 
         //shuffle flop order, as original order is according to public bucket
@@ -286,18 +286,17 @@ void *CFR::CfrSolve(void *thread_args)
     auto cur_flop_idx = 0;
     while (remaining_iter-- && !args->cancelled_token_) {
         logger::info("[🧵thread %s] remaining iter = %d", thread_id, remaining_iter);
-        //sampling board
+        // sampling board
         Board_t board{};
         SampleSequentialFullBoard(ag->root_state_, &ag->game_, board, cur_flop_idx, worker->my_flops_);
-        //    board.Print();
-
+        // board.Print();
         double local_util = worker->Solve(board);
         args->output_->AddIterResult(local_util);
     }
 
     args->output_->Process();
 
-    //thread clean up.
+    // threads clean-up
     delete args;
     delete worker;
     return nullptr;

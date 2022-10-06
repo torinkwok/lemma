@@ -658,8 +658,9 @@ void *Strategy::ThreadedZipAvgConvert(void *thread_args)
     auto strategy = args->strategy;
     auto r = args->round;
     /* FIXME(kwok): When using STRATEGY_WAVG, the result is suspiciously uniform.
+     * TODO(kwok): When debugging this bug, remember to turn on `cfr_file > cfr > regret_matching > side_walk`.
      *
-     * Something like this in upoker-p_nlh2_200bb_cfrs_r0_100.zipavg
+     * Some patterns like this in upoker-p_nlh2_200bb_cfrs_r0_100.zipavg
      *
      *                              --- 8< ---
      *  04f0  2a 2a 2a 2a 2a 2a 2a 2a  2a 2a 2a 2a 13 47 2d 06  |************.G-.|
