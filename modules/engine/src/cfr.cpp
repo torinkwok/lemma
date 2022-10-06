@@ -237,13 +237,13 @@ void *CFR::CfrSolve(void *thread_args)
     auto *args = (sThreadInput *) thread_args;
     auto ag = args->strategy_->ag_;
 
-    //if round is 0, default assume hierarchical bucketing used
+    // If the current is round pre-flop, assume hierarchically bucketing is used by default
     std::vector<Board_t> my_flops;
     if (ag->root_node_->GetRound() == 0
         && (ag->bucket_reader_.buckets_[1]->type_ == HIERARCHICAL_BUCKET
             || ag->bucket_reader_.buckets_[2]->type_ == HIERARCHICAL_BUCKET
             || ag->bucket_reader_.buckets_[3]->type_ == HIERARCHICAL_BUCKET)) {
-        //get the assigned boards
+        // get the assigned boards
         for (int &pub_board_idx: args->thread_board_) {
             auto v = args->pub_bucket_flop_boards_[pub_board_idx];
             my_flops.insert(my_flops.end(), v.begin(), v.end());
@@ -251,7 +251,7 @@ void *CFR::CfrSolve(void *thread_args)
 
         logger::trace("thread %d has been assigned %d flops", args->thread_idx_, my_flops.size());
 
-        //shuffle flop order, as original order is according to public bucket
+        // Shuffle the flop order, as the original order is according to public bucket
         auto rd = std::random_device{};
         auto rng = std::default_random_engine{rd()};
         std::shuffle(my_flops.begin(), my_flops.end(), rng);
@@ -404,8 +404,9 @@ void CFR::AllocateFlops(std::vector<Board_t> *pub_flop_boards,
             }
         }
     } else {
-        for (int i = 0; i < HIER_PUB_BUCKET; i++)
+        for (int i = 0; i < HIER_PUB_BUCKET; i++) {
             thread_board[0].push_back(i);
+        }
     }
 
     for (int t = 0; t < num_thread; t++) {
