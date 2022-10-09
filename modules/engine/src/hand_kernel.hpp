@@ -14,7 +14,7 @@ struct sHandKernel
     int starting_round_;
 
     // valid_index
-    int valid_index_[1081];
+    int valid_index_[HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD];
 
     sHandKernel(const Board_t &board, int starting_round) : board_(board), starting_round_(starting_round)
     {
