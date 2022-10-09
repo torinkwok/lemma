@@ -224,7 +224,7 @@ public:
                     CFU_COMPUTE_MODE mode,
                     const float *p_double);
 
-    void RangeRollout(Node *this_node, sPrivateHandBelief *range, std::vector<sPrivateHandBelief *> &child_ranges);
+    void RangeRollout(Node *this_node, sPrivateHandBelief *belief_distr, std::vector<sPrivateHandBelief *> &child_ranges);
 
     void ConditionalPrune();
 

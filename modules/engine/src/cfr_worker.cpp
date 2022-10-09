@@ -206,11 +206,11 @@ Ranges *VectorCfrWorker::EvalChoiceNode_Pairwise(Node *this_node, Ranges *reach_
 }
 
 /*
- * - do range update, and do pruning
+ * - do belief_distr update, and do pruning
  * - do wavg update
  * on both side
  */
-void VectorCfrWorker::RangeRollout(Node *this_node, sPrivateHandBelief *range,
+void VectorCfrWorker::RangeRollout(Node *this_node, sPrivateHandBelief *belief_distr,
                                    std::vector<sPrivateHandBelief *> &child_ranges)
 {
     auto r = this_node->GetRound();
@@ -220,12 +220,12 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sPrivateHandBelief *range,
 
     for (auto &combo_index: hand_kernel->combo_indices_) {
         // greedily outer skip the 0 belief and board cards
-        if (range->IsPruned(combo_index)) {
+        if (belief_distr->IsPruned(combo_index)) {
             continue;
         }
 
         // the same if zeroed
-        if (range->IsZero(combo_index)) {
+        if (belief_distr->IsZero(combo_index)) {
             continue;
         }
 
@@ -238,12 +238,12 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sPrivateHandBelief *range,
          * update WAVG, if not frozen.
          */
         if (cfr_param_->rm_avg_update == AVG_CLASSIC && b != frozen_b) {
-            double reach_i = range->belief_[combo_index] * pow(10, this_node->reach_adjustment[b]);
+            double reach_i = belief_distr->belief_[combo_index] * pow(10, this_node->reach_adjustment[b]);
 
             // adjustment adaptively goes up
             if (reach_i > 0.0 && reach_i < 100) {
                 pthread_mutex_lock(&this_node->mutex_);
-                reach_i = range->belief_[combo_index] * pow(10, this_node->reach_adjustment[b]);
+                reach_i = belief_distr->belief_[combo_index] * pow(10, this_node->reach_adjustment[b]);
                 while (true) {
                     if (reach_i > 100) {
                         break;
@@ -262,7 +262,7 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sPrivateHandBelief *range,
             if (reach_i > pow(10, 15)) {
                 pthread_mutex_lock(&this_node->mutex_);
                 // get the latest value
-                reach_i = range->belief_[combo_index] * pow(10, this_node->reach_adjustment[b]);
+                reach_i = belief_distr->belief_[combo_index] * pow(10, this_node->reach_adjustment[b]);
                 while (true) {
                     if (reach_i < pow(10, 13)) { // goes down two steps
                         break;
@@ -277,12 +277,12 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sPrivateHandBelief *range,
             }
 
             // final update
-            reach_i = range->belief_[combo_index] * pow(10, this_node->reach_adjustment[b]);
+            reach_i = belief_distr->belief_[combo_index] * pow(10, this_node->reach_adjustment[b]);
             if (reach_i > pow(10, 13 + r)) {
                 logger::critical(
                         "too large!! round %d is reach = %.16f | adjusted = %.16f | reach_adjustment[%d] = %d",
                         r,
-                        range->belief_[combo_index],
+                        belief_distr->belief_[combo_index],
                         reach_i,
                         b,
                         this_node->reach_adjustment[b]
@@ -296,7 +296,7 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sPrivateHandBelief *range,
         }
 
         /*
-         * range update + pruning
+         * belief_distr update + pruning
          */
         for (int a = 0; a < a_max; a++) {
             double prob = distr_rnb[a];
