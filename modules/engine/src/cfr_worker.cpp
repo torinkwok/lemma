@@ -218,18 +218,18 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sPrivateHandBelief *range,
     auto n = this_node->GetN();
     auto frozen_b = this_node->frozen_b;
 
-    for (auto &i: hand_kernel->combo_indices_) {
+    for (auto &combo_index: hand_kernel->combo_indices_) {
         // greedily outer skip the 0 belief and board cards
-        if (range->IsPruned(i)) {
+        if (range->IsPruned(combo_index)) {
             continue;
         }
 
         // the same if zeroed
-        if (range->IsZero(i)) {
+        if (range->IsZero(combo_index)) {
             continue;
         }
 
-        auto b = hand_kernel->GetBucket(r, i);
+        auto b = hand_kernel->GetBucket(r, combo_index);
         auto rnb0 = strategy_->ag_->kernel_->hash_rnba(r, n, b, 0);
         float distr_rnb[a_max];
         strategy_->ComputeStrategy(this_node, b, distr_rnb, cfr_param_->strategy_cal_mode_);
@@ -238,12 +238,12 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sPrivateHandBelief *range,
          * update WAVG, if not frozen.
          */
         if (cfr_param_->rm_avg_update == AVG_CLASSIC && b != frozen_b) {
-            double reach_i = range->belief_[i] * pow(10, this_node->reach_adjustment[b]);
+            double reach_i = range->belief_[combo_index] * pow(10, this_node->reach_adjustment[b]);
 
             // adjustment adaptively goes up
             if (reach_i > 0.0 && reach_i < 100) {
                 pthread_mutex_lock(&this_node->mutex_);
-                reach_i = range->belief_[i] * pow(10, this_node->reach_adjustment[b]);
+                reach_i = range->belief_[combo_index] * pow(10, this_node->reach_adjustment[b]);
                 while (true) {
                     if (reach_i > 100) {
                         break;
@@ -262,7 +262,7 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sPrivateHandBelief *range,
             if (reach_i > pow(10, 15)) {
                 pthread_mutex_lock(&this_node->mutex_);
                 // get the latest value
-                reach_i = range->belief_[i] * pow(10, this_node->reach_adjustment[b]);
+                reach_i = range->belief_[combo_index] * pow(10, this_node->reach_adjustment[b]);
                 while (true) {
                     if (reach_i < pow(10, 13)) { // goes down two steps
                         break;
@@ -277,12 +277,12 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sPrivateHandBelief *range,
             }
 
             // final update
-            reach_i = range->belief_[i] * pow(10, this_node->reach_adjustment[b]);
+            reach_i = range->belief_[combo_index] * pow(10, this_node->reach_adjustment[b]);
             if (reach_i > pow(10, 13 + r)) {
                 logger::critical(
                         "too large!! round %d is reach = %.16f | adjusted = %.16f | reach_adjustment[%d] = %d",
                         r,
-                        range->belief_[i],
+                        range->belief_[combo_index],
                         reach_i,
                         b,
                         this_node->reach_adjustment[b]
@@ -308,21 +308,21 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sPrivateHandBelief *range,
                 auto regret = strategy_->double_regret_[rnb0 + a];
                 if (regret <= cfr_param_->rollout_prune_thres) {
                     // prune it and continue
-                    child_ranges[a]->Prune(i);
+                    child_ranges[a]->Prune(combo_index);
                     continue;
                 }
             }
 
             // zero all extremelly small values < 0.03
             if (prob < RANGE_ROLLOUT_PRUNE_THRESHOLD) {
-                child_ranges[a]->Zero(i);
+                child_ranges[a]->Zero(combo_index);
             } else {
                 // NOTE(kwok): Update the child ranges according to the Bayes' rule
-                child_ranges[a]->belief_[i] *= prob;
+                child_ranges[a]->belief_[combo_index] *= prob;
             }
 
             // safe-guarding
-            auto new_v = child_ranges[a]->belief_[i];
+            auto new_v = child_ranges[a]->belief_[combo_index];
             if (new_v > 0.0 && new_v < pow(10, -14)) {
                 logger::warn("reach is too small %.16f [r %d]", new_v, this_node->GetRound());
             }
