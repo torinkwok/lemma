@@ -62,14 +62,11 @@ struct sPrivateHandBelief
         belief_[idx] = 0;
     }
 
-    /*
-     * in vectorized worker, rollout may make the belief to become super small.
-     * using epsilon with 10^-10 may not be secure.
-     * comparing to 0 should be safe.
-     */
     bool IsZero(int idx)
     {
-        //    return fabs(belief_[idx] - 0.0) < DOUBLE_EPSILON;
+        // NOTE(kwok): In vectorized worker, rollout might make the belief become extremelly small.
+        // Using epsilon with 10^-10 might not be safe enough. Comparing to 0 should be fine.
+        // return fabs(belief_[idx] - 0.0) < DOUBLE_EPSILON;
         return belief_[idx] == 0;
     }
 
@@ -83,7 +80,7 @@ struct sPrivateHandBelief
         return fabs(belief_[idx] - kBeliefPrunedFlag) < DOUBLE_EPSILON;
     }
 
-    //-1 also consdier 0 in this case. normally used in ranges propogations
+    /// Typically used in ranges propogations. -1 also consdiered as zero in this case.
     bool AllZero()
     {
         for (double &i: belief_) {
@@ -94,7 +91,7 @@ struct sPrivateHandBelief
         return true;
     }
 
-    //normally used in range propogation. assuming all > 0 except -1
+    /// Typically used in range propogation, assuming all > 0 except -1.
     bool AllPruned()
     {
         for (double &i: belief_) {
@@ -105,8 +102,8 @@ struct sPrivateHandBelief
         return true;
     }
 
-    //todo test
-    //normally used in range propogation. assuming all > 0 except -1
+    // TODO: Test it.
+    /// Typically used in range propogation, assuming all > 0 except -1.
     void Normalize()
     {
         double sum = BeliefSum();
@@ -132,7 +129,7 @@ struct sPrivateHandBelief
     void ExcludeBoard(Board_t &board)
     {
         for (auto i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {
-            //if crash with board, set to 0 and continues
+            // if crashed with the board, prune the belief and continue
             auto high_low = FromVectorIndex(i);
             if (board.CardCrash(high_low.first) || board.CardCrash(high_low.second)) {
                 Prune(i);
@@ -151,7 +148,7 @@ struct sPrivateHandBelief
     {
         double sum = 0;
         for (int i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {
-            if (!IsPruned(i)) { //skip masked value -1 only
+            if (!IsPruned(i)) { // skip the explicitly pruned only
                 sum += belief_[i];
             }
         }
@@ -165,7 +162,7 @@ struct sPrivateHandBelief
                 auto a = belief_[i];
                 auto b = that->belief_[i];
                 if (std::fabs(a - b) >= 0.0001) {
-                    logger::debug("!!!!! this = %.15f, while that = %.15f || idx = %d",
+                    logger::debug("🚨🚨🚨 this = %.15f, while that = %.15f || idx = %d",
                                   a,
                                   b,
                                   i
@@ -183,17 +180,17 @@ struct sPrivateHandBelief
         for (double &i: belief_) {
             i = nv;
         }
-    };
+    }
 
     void DotMultiply(sPrivateHandBelief *that)
     {
-        //they must be topo same
+        // NOTE(kwok): They must be topologically same
         for (auto i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {
             if (!IsPruned(i) && !that->IsPruned(i)) {
                 belief_[i] *= that->belief_[i];
             }
         }
-    };
+    }
 
     int CountPrunedEntries()
     {
@@ -206,31 +203,32 @@ struct sPrivateHandBelief
         return count;
     }
 
-    //copy everthing including the mask value.
+    /// Copy everything including the pruned.
     void CopyValue(sPrivateHandBelief *that)
     {
         for (auto i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {
             belief_[i] = that->belief_[i];
         }
-    };
+    }
 
     void Scale(double factor)
     {
         for (auto i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {
-            if (!IsPruned(i)) { //skip 0 and -1
+            if (!IsPruned(i)) { // skip 0 and -1
                 belief_[i] *= factor;
             }
         }
     }
 
-    //delete all entries < 10^-6. an average range is about 1 / 1326 ~= 8 * 10^-4
-    //normally used in range estimation. expect > 0 except -1
+    /// NOTE(kwok): Delete all entries < 10^-6. An average range is about 1 / 1326 ~= 8 * 10^-4.
+    /// Typically used in range estimation. expect > 0 except -1.
     void Purify();
 
-    //used in sgs range estimate. it should be postive only. so skipping both 0 and 1 is fine
+    /// NOTE(kwok): Typically used in SGS range estimations.
+    /// lIt should be postive only. Skipping both 0 and 1 is fine.
     int NonZeroBeliefCount();
 
-    //all pruned should alligned
+    /// NOTE(kwok): All the pruned should be topologically alligned.
     bool TopoAligned(sPrivateHandBelief *that);
 
     void SetAllUnmaskedHands(double v);
