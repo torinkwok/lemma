@@ -56,7 +56,7 @@ void Strategy::InitMemoryAndValue(CFR_MODE cfr_mode)
 bool Strategy::EstimateNewAgReach(AbstractGame *new_ag, MatchState *new_match_state, STRATEGY_TYPE type) const
 {
     // FIXME(kwok): The number of players is not supposed to be fixed to 2.
-    std::array<sHandBelief, 2> new_base_reach;
+    std::array<sPrivateHandBelief, 2> new_base_reach;
     new_base_reach[0].CopyValue(&ag_->root_hand_belief_[0]);
     new_base_reach[1].CopyValue(&ag_->root_hand_belief_[1]);
 
@@ -133,7 +133,7 @@ bool Strategy::EstimateNewAgReach(AbstractGame *new_ag, MatchState *new_match_st
         //start
         match.Print("try matched node in new ag reach estimate: ");
         // FIXME(kwok): The number of players is not supposed to be fixed to 2.
-        std::array<sHandBelief, 2 /* player no. */> local_base_reach;
+        std::array<sPrivateHandBelief, 2 /* player no. */> local_base_reach;
         local_base_reach[0].CopyValue(&new_base_reach[0]);
         local_base_reach[1].CopyValue(&new_base_reach[1]);
         auto estimate_return_code = EstimateReachProbAtNode(new_match_state,
@@ -342,7 +342,7 @@ void Strategy::InspectStrategyByMatchState(MatchState *match_state, STRATEGY_TYP
 
 int Strategy::EstimateReachProbAtNode(MatchState *last_match_state,
                                       Node *target_node,
-                                      std::array<sHandBelief, 2> &new_ag_reach,
+                                      std::array<sPrivateHandBelief, 2> &new_ag_reach,
                                       STRATEGY_TYPE calc_mode,
                                       double min_filter) const
 {

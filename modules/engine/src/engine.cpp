@@ -403,7 +403,7 @@ int Engine::GetAction(MatchState *current_acpc_match_state, Action &r_action, do
                 if (mr.matched_node_ != pb.strategy_->ag_->root_node_) {
                     logger::debug("check reach on blueprint");
                     // FIXME(kwok): The number of players is not supposed to be fixed to 2.
-                    std::array<sHandBelief, 2> new_base_reach;
+                    std::array<sPrivateHandBelief, 2> new_base_reach;
                     new_base_reach[0].CopyValue(&pb.strategy_->ag_->root_hand_belief_[0]);
                     new_base_reach[1].CopyValue(&pb.strategy_->ag_->root_hand_belief_[1]);
                     auto estimate_return_code = pb.strategy_->EstimateReachProbAtNode(
@@ -788,7 +788,7 @@ bool Engine::ValidatePlaybook(PlayBook &playbook, MatchState *new_match_state, i
         if (selected_candidate.matched_node_ == new_strategy->ag_->root_node_) {
             reached = true;
         } else {
-            std::array<sHandBelief, 2> new_base_reach;
+            std::array<sPrivateHandBelief, 2> new_base_reach;
             new_base_reach[0].CopyValue(&new_strategy->ag_->root_hand_belief_[0]);
             new_base_reach[1].CopyValue(&new_strategy->ag_->root_hand_belief_[1]);
             auto estimate_return_code = new_strategy->EstimateReachProbAtNode(new_match_state,

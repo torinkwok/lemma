@@ -9,10 +9,10 @@ double ScalarCfrWorker::Solve(Board_t board)
     auto active_players = AbstractGame::GetActivePlayerNum();
     auto hand_info = HandInfo(active_players, board, gen);
     // generate root belief based on the board
-    std::array<sHandBelief *, 2> local_root_belief{};
+    std::array<sPrivateHandBelief *, 2> local_root_belief{};
     for (int p = 0; p < active_players; p++) {
         // do preparations
-        local_root_belief[p] = new sHandBelief(&ag->root_hand_belief_[p]);
+        local_root_belief[p] = new sPrivateHandBelief(&ag->root_hand_belief_[p]);
         local_root_belief[p]->NormalizeExcludeBoard(board);
     }
 

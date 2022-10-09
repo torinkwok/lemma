@@ -100,7 +100,7 @@ public:
 
     int EstimateReachProbAtNode(MatchState *last_match_state,
                                 Node *target_node,
-                                std::array<sHandBelief, 2> &new_ag_reach,
+                                std::array<sPrivateHandBelief, 2> &new_ag_reach,
                                 STRATEGY_TYPE calc_mode,
                                 double min_filter = DEFAULT_BAYESIAN_TRANSITION_FILTER) const;
 

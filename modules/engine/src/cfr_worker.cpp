@@ -5,13 +5,13 @@
 /*
  * We ignore those pruned hands anyway, hence no need to set -1. The program won't crash.
  */
-sHandBelief *VectorCfrWorker::WalkTree_Alternate(Node *this_node, int actor, sHandBelief *opp_belief)
+sPrivateHandBelief *VectorCfrWorker::WalkTree_Alternate(Node *this_node, int actor, sPrivateHandBelief *opp_belief)
 {
     if (opp_belief->AllZero()) {
-        return new sHandBelief(0.0);
+        return new sPrivateHandBelief(0.0);
     }
     if (this_node->IsTerminal()) {
-        auto cfu = new sHandBelief(0.0);
+        auto cfu = new sPrivateHandBelief(0.0);
         hand_kernel->hand_eval_kernel_.FastTerminalEval(opp_belief->belief_,
                                                         cfu->belief_,
                                                         this_node->GetStake(actor),
@@ -21,7 +21,7 @@ sHandBelief *VectorCfrWorker::WalkTree_Alternate(Node *this_node, int actor, sHa
     return EvalChoiceNode_Alternate(this_node, actor, opp_belief);
 }
 
-sHandBelief *VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trainee, sHandBelief *opp_belief)
+sPrivateHandBelief *VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivateHandBelief *opp_belief)
 {
     auto a_max = this_node->GetAmax();
     bool is_my_turn = trainee == this_node->GetActingPlayer();
@@ -30,7 +30,7 @@ sHandBelief *VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trai
      * ROLLOUT
      */
     //copy the reach_ranges to child ranges
-    std::vector<sHandBelief *> child_reach_ranges;
+    std::vector<sPrivateHandBelief *> child_reach_ranges;
     child_reach_ranges.reserve(a_max);
     if (is_my_turn) {
         //just copy the pointer
@@ -40,7 +40,7 @@ sHandBelief *VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trai
     } else {
         //copy the object and rollout
         for (int a = 0; a < a_max; a++) {
-            child_reach_ranges.emplace_back(new sHandBelief(opp_belief));
+            child_reach_ranges.emplace_back(new sPrivateHandBelief(opp_belief));
         }
         RangeRollout(this_node, opp_belief, child_reach_ranges);
     }
@@ -48,7 +48,7 @@ sHandBelief *VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trai
     /*
      * WALK TREE RECURSE DOWN
      */
-    std::vector<sHandBelief *> child_cfu;
+    std::vector<sPrivateHandBelief *> child_cfu;
     child_cfu.reserve(a_max);
     for (int a = 0; a < a_max; a++) {
         child_cfu.emplace_back(WalkTree_Alternate(this_node->children[a], trainee, child_reach_ranges[a]));
@@ -70,7 +70,7 @@ sHandBelief *VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trai
     }
 
     // NOTE(kwok): A utility of +1 is given for a win and −1 for a loss.
-    auto cfu = new sHandBelief(0.0);
+    auto cfu = new sPrivateHandBelief(0.0);
     CFU_COMPUTE_MODE mode = is_my_turn ? cfr_param_->cfu_compute_acting_playing : cfr_param_->cfu_compute_opponent;
     ComputeCfu(this_node, child_reach_ranges, child_cfu, cfu, mode, avg_all);
 
@@ -206,7 +206,7 @@ Ranges *VectorCfrWorker::EvalChoiceNode_Pairwise(Node *this_node, Ranges *reach_
  * - do wavg update
  * on both side
  */
-void VectorCfrWorker::RangeRollout(Node *this_node, sHandBelief *range, std::vector<sHandBelief *> &child_ranges)
+void VectorCfrWorker::RangeRollout(Node *this_node, sPrivateHandBelief *range, std::vector<sPrivateHandBelief *> &child_ranges)
 {
     auto r = this_node->GetRound();
     auto a_max = this_node->GetAmax();
@@ -331,9 +331,9 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sHandBelief *range, std::vec
  * @param hand_maps
  */
 void VectorCfrWorker::ComputeCfu(Node *this_node,
-                                 std::vector<sHandBelief *> child_reach_ranges,
-                                 std::vector<sHandBelief *> child_cfu,
-                                 sHandBelief *cfu,
+                                 std::vector<sPrivateHandBelief *> child_reach_ranges,
+                                 std::vector<sPrivateHandBelief *> child_cfu,
+                                 sPrivateHandBelief *cfu,
                                  CFU_COMPUTE_MODE mode,
                                  const float *avg_all)
 {
@@ -416,7 +416,7 @@ void VectorCfrWorker::ConditionalPrune()
     }
 }
 
-void VectorCfrWorker::RegretLearning(Node *this_node, std::vector<sHandBelief *> child_cfu, sHandBelief *cfu)
+void VectorCfrWorker::RegretLearning(Node *this_node, std::vector<sPrivateHandBelief *> child_cfu, sPrivateHandBelief *cfu)
 {
     auto a_max = this_node->GetAmax();
     auto r = this_node->GetRound();
@@ -478,7 +478,7 @@ double VectorCfrWorker::Solve(Board_t board)
     ConditionalPrune();
 
     // todo: cache this for RIVER subgame.
-    sHandBelief local_root_belief[2];
+    sPrivateHandBelief local_root_belief[2];
     auto active_players = ag->GetActivePlayerNum();
     for (int p = 0; p < active_players; p++) {
         //prepare
@@ -536,7 +536,7 @@ double VectorCfrWorker::Solve(Board_t board)
             // FIXME(kwok): The number of players is not supposed to be fixed to 2.
             auto opp_belief = local_root_belief[1 - p];
             opp_belief.Scale(REGRET_SCALER);
-            sHandBelief *cfu_p = WalkTree_Alternate(ag->root_node_, p, &opp_belief);
+            sPrivateHandBelief *cfu_p = WalkTree_Alternate(ag->root_node_, p, &opp_belief);
             cfu_p->DotMultiply(&local_root_belief[p]);  //illegal parts are 0, so it is fine.
             cfu_sum += cfu_p->BeliefSum();
             delete cfu_p;
@@ -547,9 +547,9 @@ double VectorCfrWorker::Solve(Board_t board)
     return avg_cfu;
 }
 
-std::vector<sHandBelief *> VectorCfrWorker::ExtractBeliefs(std::vector<Ranges *> &ranges, int pos)
+std::vector<sPrivateHandBelief *> VectorCfrWorker::ExtractBeliefs(std::vector<Ranges *> &ranges, int pos)
 {
-    std::vector<sHandBelief *> beliefs;
+    std::vector<sPrivateHandBelief *> beliefs;
     int size = ranges.size();
     beliefs.reserve(size);
     for (int a = 0; a < size; a++) {

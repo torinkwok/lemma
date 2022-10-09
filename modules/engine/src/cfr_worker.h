@@ -116,7 +116,7 @@ struct HandInfo
     }
 
     // assuming the root belief are already safe
-    void Sample(AbstractGame *ag, std::array<sHandBelief *, 2> &root_hand_belief)
+    void Sample(AbstractGame *ag, std::array<sPrivateHandBelief *, 2> &root_hand_belief)
     {
         // sample a private hand pair for player 0
         hand_[0] = root_hand_belief[0]->SampleHand(x, y, z);
@@ -218,23 +218,23 @@ public:
      * cfr helper methods
      */
     void ComputeCfu(Node *this_node,
-                    std::vector<sHandBelief *> child_reach_ranges,
-                    std::vector<sHandBelief *> child_cfu,
-                    sHandBelief *cfu,
+                    std::vector<sPrivateHandBelief *> child_reach_ranges,
+                    std::vector<sPrivateHandBelief *> child_cfu,
+                    sPrivateHandBelief *cfu,
                     CFU_COMPUTE_MODE mode,
                     const float *p_double);
 
-    void RangeRollout(Node *this_node, sHandBelief *range, std::vector<sHandBelief *> &child_ranges);
+    void RangeRollout(Node *this_node, sPrivateHandBelief *range, std::vector<sPrivateHandBelief *> &child_ranges);
 
     void ConditionalPrune();
 
-    void RegretLearning(Node *this_node, std::vector<sHandBelief *> child_cfu, sHandBelief *cfu);
+    void RegretLearning(Node *this_node, std::vector<sPrivateHandBelief *> child_cfu, sPrivateHandBelief *cfu);
 
-    std::vector<sHandBelief *> ExtractBeliefs(std::vector<Ranges *> &ranges, int pos);
+    std::vector<sPrivateHandBelief *> ExtractBeliefs(std::vector<Ranges *> &ranges, int pos);
 
-    sHandBelief *WalkTree_Alternate(Node *this_node, int actor, sHandBelief *opp_belief);
+    sPrivateHandBelief *WalkTree_Alternate(Node *this_node, int actor, sPrivateHandBelief *opp_belief);
 
-    sHandBelief *EvalChoiceNode_Alternate(Node *this_node, int trainee, sHandBelief *opp_belief);
+    sPrivateHandBelief *EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivateHandBelief *opp_belief);
 };
 
 #endif //BULLDOG_MODULES_ENGINE_SRC_CFR_WORKER_H_

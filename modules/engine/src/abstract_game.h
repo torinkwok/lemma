@@ -92,7 +92,7 @@ class AbstractGame
 public:
     explicit AbstractGame()
     {
-        root_hand_belief_ = new sHandBelief[player_num_];
+        root_hand_belief_ = new sPrivateHandBelief[player_num_];
     };
 
     virtual ~AbstractGame()
@@ -120,7 +120,7 @@ public:
     // NOTE(kwok): Constructed within or set up by `AbstractGame` itself.
     sRNBAKernel *kernel_ = nullptr;
     // Assume to be a fair estimate of the reach_prob of the root_node.
-    sHandBelief *root_hand_belief_ = nullptr;
+    sPrivateHandBelief *root_hand_belief_ = nullptr;
     std::map<uint8_t /* round number */, std::multimap<uint8_t /* acting player */, Node *>> node_map_;
 
     // FIXME(kwok): The number of players is not supposed to be fixed to 2.

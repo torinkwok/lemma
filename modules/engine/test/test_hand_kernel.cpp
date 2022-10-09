@@ -60,7 +60,7 @@ TEST_CASE("terminal eval correctness ", "[engine]") {
   {
     for (auto interval = 1; interval < 51; interval += 10) {
       logger::info("doing showdown eval check with interval %d", interval);
-      auto opp_reach_prob = sHandBelief();
+      auto opp_reach_prob = sPrivateHandBelief();
       for (double &i : opp_reach_prob.belief_)
         i += (double) rand() / (RAND_MAX);
       opp_reach_prob.NormalizeExcludeBoard(board);
@@ -78,7 +78,7 @@ TEST_CASE("terminal eval correctness ", "[engine]") {
       for (auto interval = 1; interval < 51; interval += 10) {
         logger::info("doing all win eval check with interval %d", interval);
         int spent = 1;
-        auto opp_reach_prob = sHandBelief();
+        auto opp_reach_prob = sPrivateHandBelief();
         for (double &i : opp_reach_prob.belief_)
           i += (double) rand() / (RAND_MAX);
         opp_reach_prob.NormalizeExcludeBoard(board);
@@ -87,9 +87,9 @@ TEST_CASE("terminal eval correctness ", "[engine]") {
           opp_reach_prob.belief_[i] = 0;
         }
 
-        auto naive_payoff = sHandBelief();
+        auto naive_payoff = sPrivateHandBelief();
         naive_payoff.NormalizeExcludeBoard(board);
-        auto fast_payoff = sHandBelief();
+        auto fast_payoff = sPrivateHandBelief();
         fast_payoff.NormalizeExcludeBoard(board);
         kernel.FastFoldEval(opp_reach_prob.belief_, fast_payoff.belief_, spent);
         kernel.NaiveFoldEval(opp_reach_prob.belief_, naive_payoff.belief_, spent);
@@ -101,7 +101,7 @@ TEST_CASE("terminal eval correctness ", "[engine]") {
       for (auto interval = 1; interval < 51; interval += 10) {
         logger::info("doing all win eval check with interval %d", interval);
         int spent = -1;
-        auto opp_reach_prob = sHandBelief();
+        auto opp_reach_prob = sPrivateHandBelief();
         for (double &i : opp_reach_prob.belief_)
           i += (double) rand() / (RAND_MAX);
         opp_reach_prob.NormalizeExcludeBoard(board);
@@ -110,9 +110,9 @@ TEST_CASE("terminal eval correctness ", "[engine]") {
           opp_reach_prob.belief_[i] = 0;
         }
 
-        auto naive_payoff = sHandBelief();
+        auto naive_payoff = sPrivateHandBelief();
         naive_payoff.NormalizeExcludeBoard(board);
-        auto fast_payoff = sHandBelief();
+        auto fast_payoff = sPrivateHandBelief();
         fast_payoff.NormalizeExcludeBoard(board);
         kernel.FastFoldEval(opp_reach_prob.belief_, fast_payoff.belief_, spent);
         kernel.NaiveFoldEval(opp_reach_prob.belief_, naive_payoff.belief_, spent);
@@ -131,8 +131,8 @@ TEST_CASE("eval kernel speed bechmarking", "[engine]") {
   {
     auto begin = std::chrono::steady_clock::now();
 
-    auto opp_reach_prob = sHandBelief();
-    auto hsv_cached = sHandBelief();
+    auto opp_reach_prob = sPrivateHandBelief();
+    auto hsv_cached = sPrivateHandBelief();
     for (int i = 0; i < iter; i++) {
       kernel.FastShowdownEval(opp_reach_prob.belief_, hsv_cached.belief_, spent);
     }
@@ -146,8 +146,8 @@ TEST_CASE("eval kernel speed bechmarking", "[engine]") {
   //in complete data
   {
     auto begin = std::chrono::steady_clock::now();
-    auto opp_reach_prob = sHandBelief();
-    auto hsv_cached = sHandBelief();
+    auto opp_reach_prob = sPrivateHandBelief();
+    auto hsv_cached = sPrivateHandBelief();
     //delete 90% data
     for (auto i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {
       if (i % 10 == 1) continue;
@@ -166,8 +166,8 @@ TEST_CASE("eval kernel speed bechmarking", "[engine]") {
 
   {
     auto begin = std::chrono::steady_clock::now();
-    auto opp_reach_prob = sHandBelief();
-    auto hsv_cached = sHandBelief();
+    auto opp_reach_prob = sPrivateHandBelief();
+    auto hsv_cached = sPrivateHandBelief();
     for (int i = 0; i < iter; i++) {
       kernel.FastFoldEval(opp_reach_prob.belief_, hsv_cached.belief_, spent);
     }
@@ -180,8 +180,8 @@ TEST_CASE("eval kernel speed bechmarking", "[engine]") {
 
   {
     auto begin = std::chrono::steady_clock::now();
-    auto opp_reach_prob = sHandBelief();
-    auto hsv_cached = sHandBelief();
+    auto opp_reach_prob = sPrivateHandBelief();
+    auto hsv_cached = sPrivateHandBelief();
     //delete 90% data
     for (auto i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {
       if (i % 10 == 1) continue;
@@ -224,7 +224,7 @@ TEST_CASE("sample hand") {
   printf("x %lu y %lu z %lu \n", x, y, z);
 
   Board_t board = {23, 46, 31, 41, 19};///7sKh9s/Qd/6s"
-  auto hb = sHandBelief();
+  auto hb = sPrivateHandBelief();
   hb.NormalizeExcludeBoard(board);
   int iterations = 10000000;
 
