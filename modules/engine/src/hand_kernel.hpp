@@ -14,7 +14,7 @@ struct sHandKernel
     int starting_round_;
 
     // valid_index
-    int valid_index_[HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD];
+    int combo_indices_[HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD];
 
     sHandKernel(const Board_t &board, int starting_round) : board_(board), starting_round_(starting_round)
     {
@@ -24,7 +24,7 @@ struct sHandKernel
             if (board_.CardCrash(high_low.first) || board_.CardCrash(high_low.second)) {
                 continue;
             }
-            valid_index_[cursor] = i;
+            combo_indices_[cursor] = i;
             cursor++;
         }
     }
