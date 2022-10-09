@@ -16,11 +16,10 @@
 ///
 /// - Whenever the opponents take an action, their the belief distributions are updated via Bayes’s rule.
 
-const double BELIEF_VECTOR_1081_DEFAULT = 1.0 / 1081.0;
-const double BELIEF_VECTOR_1326_DEFAULT = 1.0 / 1326.0;
+const double BELIEF_VECTOR_1326_DEFAULT = 1.0 / 1326.0; // 1326 = (52 * 51) / 2
 const int FULL_HAND_BELIEF_SIZE = HOLDEM_MAX_HANDS_PERMUTATION;
 
-static const double BELIEF_MASK_VALUE = -1;
+static const double kBeliefPrunedFlag = -1;
 
 struct sPrivateHandBelief
 {
@@ -76,12 +75,12 @@ struct sPrivateHandBelief
 
     void Prune(int idx)
     {
-        belief_[idx] = BELIEF_MASK_VALUE;
+        belief_[idx] = kBeliefPrunedFlag;
     }
 
     bool IsPruned(int idx)
     {
-        return fabs(belief_[idx] - BELIEF_MASK_VALUE) < DOUBLE_EPSILON;
+        return fabs(belief_[idx] - kBeliefPrunedFlag) < DOUBLE_EPSILON;
     }
 
     //-1 also consdier 0 in this case. normally used in ranges propogations
@@ -99,7 +98,7 @@ struct sPrivateHandBelief
     bool AllPruned()
     {
         for (double &i: belief_) {
-            if (i > BELIEF_MASK_VALUE) {
+            if (i > kBeliefPrunedFlag) {
                 return false;
             }
         }

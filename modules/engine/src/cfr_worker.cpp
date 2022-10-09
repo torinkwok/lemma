@@ -389,7 +389,7 @@ void VectorCfrWorker::ComputeCfu(Node *this_node,
                     if (avg_all[offset + a] > 0) {
                         // otherwise best response will become -1. pruning is never on in best response mode.
                         auto util = child_cfu[a]->belief_[i];
-                        if (util != BELIEF_MASK_VALUE && util > final_value) {
+                        if (util != kBeliefPrunedFlag && util > final_value) {
                             final_value = util;
                         }
                     }
@@ -399,7 +399,7 @@ void VectorCfrWorker::ComputeCfu(Node *this_node,
                 // final_value *= reach_ranges->ranges_[my_pos].belief_[i] / 1000.0;
                 if (fabs(final_value + 999999999) < 0.001) {
                     //it means they are all pruned. probably the next node is the first node of a street. board crashes.
-                    final_value = BELIEF_MASK_VALUE;
+                    final_value = kBeliefPrunedFlag;
                 }
                 break;
             }

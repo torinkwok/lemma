@@ -122,7 +122,7 @@ void TermEvalKernel::FastShowdownEval(double *opp_full_belief,
         for (int j = rank_first_equal_index_[rank_i]; j < rank_first_losing_index_[rank_i]; j++) {
             auto v_idx = showdown_sorted_hand_ranks_[j]->v_idx;
             // pruning
-            if (my_full_belief[v_idx] == BELIEF_MASK_VALUE) {
+            if (my_full_belief[v_idx] == kBeliefPrunedFlag) {
                 continue;
             }
             double total_drift = 0.0;
@@ -148,7 +148,7 @@ void TermEvalKernel::NaiveShowdownEval(double *opp_belief,
     for (auto my_pos = 0; my_pos < HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD; my_pos++) {
         auto v_idx = showdown_sorted_hand_ranks_[my_pos]->v_idx;
         //pruning
-        if (my_full_belief[v_idx] == BELIEF_MASK_VALUE) {
+        if (my_full_belief[v_idx] == kBeliefPrunedFlag) {
             continue;
         }
         auto weighted_sum = 0.0;
@@ -198,7 +198,7 @@ void TermEvalKernel::FastFoldEval(double *opp_full_belief,
     for (auto my_pos = 0; my_pos < HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD; my_pos++) {
         auto v_idx = showdown_sorted_hand_ranks_[my_pos]->v_idx;
         //pruning
-        if (my_full_belief[v_idx] == BELIEF_MASK_VALUE) {
+        if (my_full_belief[v_idx] == kBeliefPrunedFlag) {
             continue;
         }
         auto high_low = FromVectorIndex(v_idx);
@@ -217,7 +217,7 @@ void TermEvalKernel::NaiveFoldEval(double *opp_belief,
     auto begin = std::chrono::steady_clock::now();
     for (auto my_pos = 0; my_pos < FULL_HAND_BELIEF_SIZE; my_pos++) {
         //pruning
-        if (my_belief[my_pos] == BELIEF_MASK_VALUE) {
+        if (my_belief[my_pos] == kBeliefPrunedFlag) {
             continue;
         }
         auto weighted_sum = 0.0;
