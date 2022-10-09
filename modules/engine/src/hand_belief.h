@@ -16,6 +16,7 @@
 ///
 /// - Whenever the opponents take an action, their the belief distributions are updated via Bayes’s rule.
 
+const double BELIEF_VECTOR_1081_DEFAULT = 1.0 / 1081.0; // 1081 = [(52 - 5)(52 - 5 - 1)] / 2
 const double BELIEF_VECTOR_1326_DEFAULT = 1.0 / 1326.0; // 1326 = (52 * 51) / 2
 const int FULL_HAND_BELIEF_SIZE = HOLDEM_MAX_HANDS_PERMUTATION;
 

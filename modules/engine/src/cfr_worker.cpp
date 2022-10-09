@@ -1,7 +1,7 @@
 #include "cfr_worker.h"
 #include "node.h"
 
-//todo: add back the pruning is necessary
+// todo: add back the pruning is necessary
 /*
  * We ignore those pruned hands anyway, hence no need to set -1. The program won't crash.
  */
@@ -21,7 +21,8 @@ sPrivateHandBelief *VectorCfrWorker::WalkTree_Alternate(Node *this_node, int act
     return EvalChoiceNode_Alternate(this_node, actor, opp_belief);
 }
 
-sPrivateHandBelief *VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivateHandBelief *opp_belief)
+sPrivateHandBelief *
+VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivateHandBelief *opp_belief)
 {
     auto a_max = this_node->GetAmax();
     bool is_my_turn = trainee == this_node->GetActingPlayer();
@@ -29,16 +30,16 @@ sPrivateHandBelief *VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, i
     /*
      * ROLLOUT
      */
-    //copy the reach_ranges to child ranges
+    // copy the reach_ranges to child ranges
     std::vector<sPrivateHandBelief *> child_reach_ranges;
     child_reach_ranges.reserve(a_max);
     if (is_my_turn) {
-        //just copy the pointer
+        // shallow copy
         for (int a = 0; a < a_max; a++) {
             child_reach_ranges.emplace_back(opp_belief);
         }
     } else {
-        //copy the object and rollout
+        // deep copy and rollout
         for (int a = 0; a < a_max; a++) {
             child_reach_ranges.emplace_back(new sPrivateHandBelief(opp_belief));
         }
@@ -46,7 +47,7 @@ sPrivateHandBelief *VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, i
     }
 
     /*
-     * WALK TREE RECURSE DOWN
+     * WALK DOWN THE TREE RECURSIVELY
      */
     std::vector<sPrivateHandBelief *> child_cfu;
     child_cfu.reserve(a_max);
@@ -118,7 +119,8 @@ Ranges *VectorCfrWorker::WalkTree_Pairwise(Node *this_node, Ranges *reach_ranges
                     ].belief_,
                     this_cfu->beliefs_[my_pos].belief_,
                     this_node->GetStake(my_pos),
-                    this_node->IsShowdown());
+                    this_node->IsShowdown()
+            );
         }
 #if DEV > 1
         // FIXME(kwok): The number of players is not supposed to be fixed to 2.
@@ -174,14 +176,16 @@ Ranges *VectorCfrWorker::EvalChoiceNode_Pairwise(Node *this_node, Ranges *reach_
                actor_child_beliefs,
                actor_child_cfu,
                &cfu->beliefs_[actor],
-               cfr_param_->cfu_compute_acting_playing, nullptr);
+               cfr_param_->cfu_compute_acting_playing, nullptr
+    );
     //opponent
     int opp_pos = 1 - actor;
     ComputeCfu(this_node,
                ExtractBeliefs(child_reach_ranges, opp_pos),
                ExtractBeliefs(child_cfu, opp_pos),
                &cfu->beliefs_[opp_pos],
-               cfr_param_->cfu_compute_opponent, nullptr);
+               cfr_param_->cfu_compute_opponent, nullptr
+    );
 
     /*
      * REGRET LEARNING
@@ -206,7 +210,8 @@ Ranges *VectorCfrWorker::EvalChoiceNode_Pairwise(Node *this_node, Ranges *reach_
  * - do wavg update
  * on both side
  */
-void VectorCfrWorker::RangeRollout(Node *this_node, sPrivateHandBelief *range, std::vector<sPrivateHandBelief *> &child_ranges)
+void VectorCfrWorker::RangeRollout(Node *this_node, sPrivateHandBelief *range,
+                                   std::vector<sPrivateHandBelief *> &child_ranges)
 {
     auto r = this_node->GetRound();
     auto a_max = this_node->GetAmax();
@@ -218,7 +223,8 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sPrivateHandBelief *range, s
         if (range->IsPruned(i)) {
             continue;
         }
-        // also if 0
+
+        // the same if zeroed
         if (range->IsZero(i)) {
             continue;
         }
@@ -279,7 +285,8 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sPrivateHandBelief *range, s
                         range->belief_[i],
                         reach_i,
                         b,
-                        this_node->reach_adjustment[b]);
+                        this_node->reach_adjustment[b]
+                );
             }
 
             for (int a = 0; a < a_max; a++) {
@@ -294,26 +301,27 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sPrivateHandBelief *range, s
         for (int a = 0; a < a_max; a++) {
             double prob = distr_rnb[a];
 
-            //check pruning if prob = 0, skipping river node and terminal node
-            if (iter_prune_flag && prob == 0.0 && !this_node->children[a]->IsTerminal()
+            // check pruning if prob = 0, skipping river node and terminal node
+            if (iter_prune_flag && prob == 0.0
+                && !this_node->children[a]->IsTerminal()
                 && this_node->children[a]->GetRound() != HOLDEM_ROUND_RIVER) {
-                // if (iter_prune_flag && prob == 0.0) {
                 auto regret = strategy_->double_regret_[rnb0 + a];
                 if (regret <= cfr_param_->rollout_prune_thres) {
-                    //prune and continue;
+                    // prune it and continue
                     child_ranges[a]->Prune(i);
                     continue;
                 }
             }
 
-            //zero all super small values < 0.03
+            // zero all extremelly small values < 0.03
             if (prob < RANGE_ROLLOUT_PRUNE_THRESHOLD) {
                 child_ranges[a]->Zero(i);
             } else {
+                // NOTE(kwok): Update the child ranges according to the Bayes' rule
                 child_ranges[a]->belief_[i] *= prob;
             }
 
-            //safeguarding
+            // safe-guarding
             auto new_v = child_ranges[a]->belief_[i];
             if (new_v > 0.0 && new_v < pow(10, -14)) {
                 logger::warn("reach is too small %.16f [r %d]", new_v, this_node->GetRound());
@@ -416,7 +424,8 @@ void VectorCfrWorker::ConditionalPrune()
     }
 }
 
-void VectorCfrWorker::RegretLearning(Node *this_node, std::vector<sPrivateHandBelief *> child_cfu, sPrivateHandBelief *cfu)
+void
+VectorCfrWorker::RegretLearning(Node *this_node, std::vector<sPrivateHandBelief *> child_cfu, sPrivateHandBelief *cfu)
 {
     auto a_max = this_node->GetAmax();
     auto r = this_node->GetRound();
@@ -453,7 +462,8 @@ void VectorCfrWorker::RegretLearning(Node *this_node, std::vector<sPrivateHandBe
                         cfr_param_->rm_floor,
                         diff,
                         cfu_a,
-                        cfu);
+                        cfu
+                );
             }
             strategy_->double_regret_[rnb0 + a] = new_reg;
         }
