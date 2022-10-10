@@ -269,7 +269,7 @@ std::pair<Card_t, Card_t> FromVectorIndex(VectorIndex vector_idx);
 
 bool VectorIdxClash(VectorIndex lhs, VectorIndex rhs);
 
-bool VectorIdxClashCard(VectorIndex vid, Card_t c);
+bool VectorIdxCrashesWithCard(VectorIndex vid, Card_t c);
 
 std::string VectorIdxToString(VectorIndex i);
 

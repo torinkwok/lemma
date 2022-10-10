@@ -274,7 +274,7 @@ double ScalarCfrWorker::LeafRootRollout(int trainee_pos, Node *this_node, sPriva
     subgame_priv_hands_info.hand_[0] = hand_info.hand_[0];
     subgame_priv_hands_info.hand_[1] = hand_info.hand_[1];
 
-    // NOTE(kwok): Fill the real board according to the round we are currently at
+    // NOTE(kwok): Fill the board according to the round we are currently at
     auto r = this_node->GetRound();
     int sum_bc = r == HOLDEM_ROUND_PREFLOP ? 0 : 3;
     for (int c = sum_bc; c < HOLDEM_MAX_BOARD; c++) {
@@ -295,7 +295,7 @@ double ScalarCfrWorker::LeafRootRollout(int trainee_pos, Node *this_node, sPriva
         }
     }
 
-    double final_cfu[2];
+    double final_cfus[2]; // FIXME(kwok): The number of players is not supposed to be fixed to 2.
 
     /*
      * reps 3
@@ -303,19 +303,17 @@ double ScalarCfrWorker::LeafRootRollout(int trainee_pos, Node *this_node, sPriva
      *          strategy 4
      * doing 24 probing in total
      */
-    for (int i = 0; i < rollout_rep; i++) {
-        /*
-         * Sample a board, which must not crash with the current hands.
-         * TODO: Make this a testable function
-         */
+    for (int rollout_i = 0; rollout_i < rollout_rep; rollout_i++) {
+        // TODO(kwok): Make this loop body a testable function
+         // NOTE(kwok): Sample a board, which must not crash with the current hands.
         HoldemDeck deck{subgame_priv_hands_info.board_};
         deck.Shuffle();
         int total_bc = sum_bc;
         int deck_cursor = 0;
         while (total_bc <= HOLDEM_MAX_BOARD) {
             auto sample_card = deck.cards_[deck_cursor++];
-            if (VectorIdxClashCard(subgame_priv_hands_info.hand_[0], sample_card)
-                || VectorIdxClashCard(subgame_priv_hands_info.hand_[1], sample_card)) {
+            if (VectorIdxCrashesWithCard(subgame_priv_hands_info.hand_[0], sample_card)
+                || VectorIdxCrashesWithCard(subgame_priv_hands_info.hand_[1], sample_card)) {
                 continue;
             }
             subgame_priv_hands_info.board_.cards[total_bc++] = sample_card;
@@ -357,8 +355,8 @@ double ScalarCfrWorker::LeafRootRollout(int trainee_pos, Node *this_node, sPriva
             }
 
             // If at the final iter
-            if (i == rollout_rep - 1) {
-                final_cfu[p] = cfu;
+            if (rollout_i == rollout_rep - 1) {
+                final_cfus[p] = cfu;
             } else {
                 // update the regrets
                 for (int s = 0; s < MAX_META_STRATEGY; s++) {
@@ -369,7 +367,7 @@ double ScalarCfrWorker::LeafRootRollout(int trainee_pos, Node *this_node, sPriva
         }
     }
 
-    return final_cfu[0]; // only for player 0
+    return final_cfus[0]; // only for player 0
 }
 
 double ScalarCfrWorker::LeafChoiceRollout(int trainee_pos,

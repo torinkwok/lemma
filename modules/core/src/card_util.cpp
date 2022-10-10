@@ -393,7 +393,7 @@ std::string VectorIdxToString(VectorIndex i)
     return CardsToString(c1.cards);
 }
 
-bool VectorIdxClashCard(VectorIndex vid, Card_t c)
+bool VectorIdxCrashesWithCard(VectorIndex vid, Card_t c)
 {
     auto high_low = FromVectorIndex(vid);
     return (high_low.first == c || high_low.second == c);
