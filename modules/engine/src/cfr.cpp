@@ -16,14 +16,16 @@ int CFR::Solve(Strategy *blueprint,
                   num_thread,
                   strategy->ag_->root_node_->GetRound(),
                   starting_checkpoint,
-                  cfr_param_.depth_limited);
+                  cfr_param_.depth_limited
+    );
 
     //more safegaurding codes
     if (strategy->ag_->root_node_->GetRound() != HOLDEM_ROUND_RIVER) {
         if (strategy->ag_->root_hand_belief_[0].NonZeroBeliefCount() <= 30
             || strategy->ag_->root_hand_belief_[1].NonZeroBeliefCount() <= 30) {
             logger::warn(
-                    "the new ag is not at river and the range width is too small. It may all become 0 in cfr solving");
+                    "the new ag is not at river and the range width is too small. It may all become 0 in cfr solving"
+            );
         }
     }
 
@@ -78,7 +80,8 @@ int CFR::Solve(Strategy *blueprint,
                 case CMD_VECTOR_PAIRWISE_SOLVE : {
                     // todo: in fact we are not using the convergence state at all.
                     logger::info("🚦current state iteration = %d, convergence iteration = %d",
-                                 current_state.iteration, convergence.iteration);
+                                 current_state.iteration, convergence.iteration
+                    );
                     if (current_state < convergence) {
                         sTotalThreadOutput total_result;
                         ThreadedCfrSolve(blueprint,
@@ -90,7 +93,8 @@ int CFR::Solve(Strategy *blueprint,
                                          thread_board,
                                          pub_bucket_flop_boards,
                                          thread_pool_,
-                                         cancelled);
+                                         cancelled
+                        );
                         if (!cancelled) {
                             // Only update the current state if not abruptly cancelled from outside
                             current_state.UpdateState(cmd.steps_, timer.GetLapseFromBegin(), total_result.avg_);
@@ -116,7 +120,8 @@ int CFR::Solve(Strategy *blueprint,
                                          thread_board,
                                          pub_bucket_flop_boards,
                                          thread_pool_,
-                                         cancelled);
+                                         cancelled
+                        );
                         auto br_tuple = ExplTuple{cmd.trigger_iter_, 1, br.avg_, br.max_, br.min_,
                                                   br.avg_ + br.std_dev_, br.avg_ - br.std_dev_};
                         profiling_writer_.WriteToFile(br_tuple);
@@ -175,7 +180,8 @@ int CFR::Solve(Strategy *blueprint,
                     STRATEGY_TYPE calc_mode = STRATEGY_WAVG;
                     logger::debug("🔬%s printing the inspection of the root subgame with %s",
                                   profiling_writer_.prefix_,
-                                  StrategyToNameMap[calc_mode]);
+                                  StrategyToNameMap[calc_mode]
+                    );
                     strategy->InspectNode(strategy->ag_->root_node_, profiling_writer_.prefix_, calc_mode);
                     break;
                 }
@@ -260,27 +266,31 @@ void *CFR::CfrSolve(void *thread_args)
     auto remaining_iter = args->iterations_;
     args->output_->Prepare(remaining_iter);
 
-    CfrWorker *worker = nullptr;
+    CfrWorker *worker;
     switch (args->cfr_param_.cfr_mode_) {
         case CFR_VECTOR_PAIRWISE_SOLVE:
-        case CFR_VECTOR_ALTERNATE_SOLVE:
+        case CFR_VECTOR_ALTERNATE_SOLVE: {
             worker = new VectorCfrWorker(args->blueprint_,
                                          args->strategy_,
                                          &args->cfr_param_,
                                          my_flops,
-                                         args->seed_);
+                                         args->seed_
+            );
             worker->SetWalkingMode(args->cfr_param_.cfr_mode_);
             break;
-        case CFR_SCALAR_SOLVE:
+        }
+        case CFR_SCALAR_SOLVE: {
             worker = new ScalarCfrWorker(args->blueprint_,
                                          args->strategy_,
                                          &args->cfr_param_,
                                          my_flops,
-                                         args->seed_);
+                                         args->seed_
+            );
             break;
-        default:
+        }
+        default: {
             logger::critical("unsupported cfr type");
-            break;
+        }
     }
 
     auto cur_flop_idx = 0;
@@ -356,9 +366,11 @@ void CFR::AllocateFlops(std::vector<Board_t> *pub_flop_boards,
     }
 
     //sort in decending order of number of flops in public bucket
-    std::sort(pub_flop_board_sortable.begin(), pub_flop_board_sortable.end(), [](const auto &l, const auto &r) -> bool {
-        return l.second > r.second;
-    });
+    std::sort(pub_flop_board_sortable.begin(), pub_flop_board_sortable.end(), [](const auto &l, const auto &r) -> bool
+              {
+                  return l.second > r.second;
+              }
+    );
 
     if (num_thread >= 60 && num_thread % 30 != 0) {
         logger::critical("if thread >= 60, it has be be multiple of 30");
@@ -387,7 +399,8 @@ void CFR::AllocateFlops(std::vector<Board_t> *pub_flop_boards,
             if (suboptimal_assignment_flag) {
                 logger::debug("all threads have been assigned full amount, adding to thread %d (with least flops %d)",
                               idx,
-                              tally[idx]);
+                              tally[idx]
+                );
                 thread_board[idx].push_back(pub);
                 tally[idx] += size;
                 auto min_idx = std::min_element(tally, tally + cluster);
@@ -500,7 +513,8 @@ int CFR::AsyncCfrSolving(CFR *cfr,
                       new_strategy,
                       *convergence_state,
                       cancelled,
-                      cfr_checkpoint);
+                      cfr_checkpoint
+    );
 }
 
 void CFR::Config(web::json::value data)
@@ -602,7 +616,8 @@ void CFR::Config(web::json::value data)
             if (cfr_param_.depth_limited) {
                 logger::debug("depth limit cfr [%d][reps %d]",
                               cfr_param_.depth_limited,
-                              cfr_param_.depth_limited_rollout_reps_);
+                              cfr_param_.depth_limited_rollout_reps_
+                );
             }
         }
     }

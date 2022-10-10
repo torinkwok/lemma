@@ -44,24 +44,27 @@ struct sThreadOutput
     {
         size_ = size;
         array_ = new double[size_];
-        for (int i = 0; i < size_; i++)
+        for (int i = 0; i < size_; i++) {
             array_[i] = -1;
+        }
     }
 
     void Process()
     {
         double sum = 0;
-        for (auto i = 0; i < size_; i++)
-            if (array_[i] != -1)
+        for (auto i = 0; i < size_; i++) {
+            if (array_[i] != -1) {
                 sum += array_[i];
+            }
+        }
         avg_util_ = sum / size_;
-
         double variance = 0.0;
-        for (auto i = 0; i < size_; i++)
-            if (array_[i] != -1)
+        for (auto i = 0; i < size_; i++) {
+            if (array_[i] != -1) {
                 variance += (array_[i] - avg_util_) * (array_[i] - avg_util_);
+            }
+        }
         std_dev_ = std::sqrt(variance / size_);
-        return;
     }
 
     virtual ~sThreadOutput()

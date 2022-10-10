@@ -239,7 +239,7 @@ public:
 
     std::vector<sPrivateHandBelief *> ExtractBeliefs(std::vector<Ranges *> &ranges, int pos);
 
-    sPrivateHandBelief *WalkTree_Alternate(Node *this_node, int actor, sPrivateHandBelief *opp_belief);
+    sPrivateHandBelief *WalkTree_Alternate(Node *this_node, int trainee, sPrivateHandBelief *opp_belief);
 
     sPrivateHandBelief *EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivateHandBelief *opp_belief);
 };

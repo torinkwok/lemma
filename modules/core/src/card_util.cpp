@@ -82,7 +82,8 @@ std::set<WaughCard_t> CardsToWaughCards(uint64_t cardmask)
     Card_t card;
     while (cardmask) {
         card = __builtin_ctzll(
-                cardmask); // Return the number of trailing 0-bits in x, starting at the least significant bit position. If x is 0, the result is undefined.
+                cardmask
+        ); // Return the number of trailing 0-bits in x, starting at the least significant bit position. If x is 0, the result is undefined.
         uint32_t waugh_card = (card & 15) << 2 | SuitToWaughSuit(card >> 4);
         result.insert(waugh_card);
         cardmask &= cardmask - 1;  // clear the least significant bit set
@@ -186,27 +187,32 @@ Colex ComputeColex(uint64_t cardmask)
     size_t value = 0;
     std::vector<int> cards(instr.size() / 2);
     size_t n = 0;
-    for (size_t i = 0; i < 52; i++)
-        if (ps_cardmask & ((uint64_t) 1 << i))
+    for (size_t i = 0; i < 52; i++) {
+        if (ps_cardmask & ((uint64_t) 1 << i)) {
             cards[n++] = i;
+        }
+    }
 
     for (size_t i = 0; i < cards.size(); i++) {
         size_t code = cards[i];
-        if (code >= i + 1)
+        if (code >= i + 1) {
             value += nCk_card(code, i + 1);
+        }
     }
     return value;
 }
 
 int RankHand(Card_t high, Card_t low, Board_t *board)
 {
-    if (board->HandCrash(Hand_t{high, low}))
+    if (board->HandCrash(Hand_t{high, low})) {
         return -1;
+    }
     Cardset c = emptyCardset();
     addCardToCardset(&c, suitOfCard(high, 4), rankOfCard(high, 4));
     addCardToCardset(&c, suitOfCard(low, 4), rankOfCard(low, 4));
-    for (auto card: board->cards)
+    for (auto card: board->cards) {
         addCardToCardset(&c, suitOfCard(card, 4), rankOfCard(card, 4));
+    }
     return rankCardset(c);
 }
 
@@ -249,7 +255,7 @@ void SampleSequentialFullBoard(State &state,
                                int &cur_flop_idx,
                                const std::vector<Board_t> &my_flop)
 {
-    //add cards that already existed
+    // add cards that already existed
     auto sum_bc = 0;
     if (state.round == 0 && !my_flop.empty()) {
         //sequentially rotate flops
@@ -263,18 +269,20 @@ void SampleSequentialFullBoard(State &state,
         }
         sum_bc = num_cards_flop;
     } else {
-        //no public flop assignment, just copy the existing cards over
-        for (int i = 0; i <= state.round; i++)
+        // no public flop assignment, just copy the existing cards over
+        for (int i = 0; i <= state.round; i++) {
             sum_bc += game->numBoardCards[i];
-        for (int i = 0; i < sum_bc; i++)
+        }
+        for (int i = 0; i < sum_bc; i++) {
             board.cards[i] = state.boardCards[i];
+        }
     }
-
     if (sum_bc < HOLDEM_MAX_CARDS) {
         HoldemDeck deck{board};
         deck.Shuffle();
-        for (int bs = sum_bc; bs < HOLDEM_MAX_BOARD; bs++)
+        for (int bs = sum_bc; bs < HOLDEM_MAX_BOARD; bs++) {
             board.cards[bs] = deck.cards_[bs];
+        }
     }
 }
 
@@ -353,8 +361,9 @@ VectorIndex ToVectorIndex(Card_t high, Card_t low)
 //(51, 50) = 1325, (1,0) = 0, reverse
 std::pair<Card_t, Card_t> FromVectorIndex(VectorIndex vector_idx)
 {
-    if (vector_idx > 1325)
+    if (vector_idx > 1325) {
         logger::critical("from vector index out of bound %d", vector_idx);
+    }
     Card_t high = round(
             sqrt(vector_idx * 2 + 2)); //the plus two is a hack. (51,0)->1275, if not with +2, high will be 50
     Card_t low = vector_idx - ((high * high - high) / 2);

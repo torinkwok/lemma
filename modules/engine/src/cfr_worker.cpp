@@ -5,7 +5,7 @@
 /*
  * We ignore those pruned hands anyway, hence no need to set -1. The program won't crash.
  */
-sPrivateHandBelief *VectorCfrWorker::WalkTree_Alternate(Node *this_node, int actor, sPrivateHandBelief *opp_belief)
+sPrivateHandBelief *VectorCfrWorker::WalkTree_Alternate(Node *this_node, int trainee, sPrivateHandBelief *opp_belief)
 {
     if (opp_belief->AllZero()) {
         return new sPrivateHandBelief(0.0);
@@ -14,11 +14,11 @@ sPrivateHandBelief *VectorCfrWorker::WalkTree_Alternate(Node *this_node, int act
         auto cfu = new sPrivateHandBelief(0.0);
         priv_hand_kernel->hand_eval_kernel_.FastTerminalEval(opp_belief->belief_,
                                                              cfu->belief_,
-                                                             this_node->GetStake(actor),
+                                                             this_node->GetStake(trainee),
                                                              this_node->IsShowdown());
         return cfu;
     }
-    return EvalChoiceNode_Alternate(this_node, actor, opp_belief);
+    return EvalChoiceNode_Alternate(this_node, trainee, opp_belief);
 }
 
 sPrivateHandBelief *
@@ -448,6 +448,7 @@ VectorCfrWorker::CollectRegrets(Node *this_node,
     auto n = this_node->GetN();
     auto frozen_b = this_node->frozen_b;
 
+    // NOTE(kwok): Try all possible private hands for the opponent
     for (auto &combo_index: priv_hand_kernel->valid_combo_indices_) {
         // no need to update with the pruned hands, outer pruning
         if (this_node_cfu->IsPruned(combo_index)) {
@@ -460,9 +461,9 @@ VectorCfrWorker::CollectRegrets(Node *this_node,
         }
         auto rnb0 = strategy_->ag_->kernel_->hash_rnba(r, n, b, 0);
         double cfu_combo_index = this_node_cfu->belief_[combo_index];
-        // update the regrets
+        // NOTE(kwok): Update the regrets, assuming the opponent's holding `combo_index`
         for (int a = 0; a < a_max; a++) {
-            // pruning inside, no need to update regret for it.
+            // already pruned, no need to update regret for this child node
             if (child_cfus[a]->IsPruned(combo_index)) {
                 continue;
             }
@@ -569,6 +570,7 @@ double VectorCfrWorker::Solve(Board_t board)
         }
     }
 
+    // FIXME(kwok): The number of players is not supposed to be fixed to 2.
     double avg_cfu = cfu_sum / (2 * ag->GetBigBlind());
     return avg_cfu;
 }
