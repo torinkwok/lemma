@@ -4,19 +4,17 @@ double ScalarCfrWorker::Solve(Board_t board)
 {
     auto ag = strategy_->ag_;
 
-    // sampling a board
-
     auto active_players = AbstractGame::GetActivePlayerNum();
-    auto hand_info = HandInfo(active_players, board, gen);
+    auto hand_info = sPrivateHandsInfo(active_players, board, gen);
     // generate root belief based on the board
-    std::array<sPrivateHandBelief *, 2> local_root_belief{};
+    std::array<sPrivateHandBelief *, 2> local_root_belief{}; // FIXME(kwok): The number of players is not supposed to be fixed to 2.
     for (int p = 0; p < active_players; p++) {
         // do preparations
         local_root_belief[p] = new sPrivateHandBelief(&ag->root_hand_belief_[p]);
         local_root_belief[p]->NormalizeExcludeBoard(board);
     }
 
-    int REPS = 1000;
+    static const int REPS = 1000;
     double util = 0.0;
     for (int loc_iter = 0; loc_iter < REPS; loc_iter++) {
         // NOTE(kwok): On each iteration, we start by sampling all of chance’s actions: the public chance
@@ -65,7 +63,7 @@ double ScalarCfrWorker::Solve(Board_t board)
 }
 
 /// NOTE(kwok): Where CFR iterations taking place.
-double ScalarCfrWorker::WalkTree(int trainee_pos, Node *this_node, HandInfo &hand_info)
+double ScalarCfrWorker::WalkTree(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info)
 {
     if (this_node->IsTerminal()) {
         return EvalTermNode(trainee_pos, this_node, hand_info);
@@ -77,7 +75,7 @@ double ScalarCfrWorker::WalkTree(int trainee_pos, Node *this_node, HandInfo &han
     return EvalIntermediateChoiceNode(trainee_pos, this_node, hand_info);
 }
 
-double ScalarCfrWorker::EvalTermNode(int trainee_pos, Node *this_node, HandInfo &hand_info)
+double ScalarCfrWorker::EvalTermNode(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info)
 {
     if (this_node->IsShowdown()) {
         int stake = this_node->GetStake(trainee_pos);
@@ -97,7 +95,7 @@ double ScalarCfrWorker::EvalTermNode(int trainee_pos, Node *this_node, HandInfo 
  * v3: cache preflop as file
  * v4: ...
  */
-double ScalarCfrWorker::EvalRootLeafNode(int trainee_pos, Node *this_node, HandInfo &hand_info)
+double ScalarCfrWorker::EvalRootLeafNode(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info)
 {
     // NOTE(kwok): Should be the last round. It's the Pluribus way.
     auto r = this_node->GetRound() - 1;
@@ -144,7 +142,7 @@ double ScalarCfrWorker::EvalRootLeafNode(int trainee_pos, Node *this_node, HandI
     return trainee_pos == 0 ? player0_cfu : -player0_cfu;
 }
 
-double ScalarCfrWorker::EvalIntermediateChoiceNode(int trainee_pos, Node *this_node, HandInfo &hand_info)
+double ScalarCfrWorker::EvalIntermediateChoiceNode(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info)
 {
     int acting_player = this_node->GetActingPlayer();
     bool is_my_turn = acting_player == trainee_pos;
@@ -207,7 +205,8 @@ double ScalarCfrWorker::EvalIntermediateChoiceNode(int trainee_pos, Node *this_n
                         temp_reg,
                         diff,
                         child_cfu[a],
-                        my_cfu);
+                        my_cfu
+                );
             }
             strategy_->int_regret_[rnb0 + a] = new_reg;
         }
@@ -237,7 +236,7 @@ double ScalarCfrWorker::EvalIntermediateChoiceNode(int trainee_pos, Node *this_n
 
 double ScalarCfrWorker::WalkLeafTree(int trainee_pos,
                                      Node *this_node,
-                                     HandInfo &hand_info,
+                                     sPrivateHandsInfo &hand_info,
                                      int *c_strategy)
 {
 #if 0
@@ -249,7 +248,7 @@ double ScalarCfrWorker::WalkLeafTree(int trainee_pos,
     return LeafChoiceRollout(trainee_pos, this_node, hand_info, c_strategy);
 }
 
-double ScalarCfrWorker::LeafRootRollout(int trainee_pos, Node *this_node, HandInfo &hand_info)
+double ScalarCfrWorker::LeafRootRollout(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info)
 {
     // map this_node to a node from the blueprint
     NodeMatchResult condition;
@@ -259,7 +258,7 @@ double ScalarCfrWorker::LeafRootRollout(int trainee_pos, Node *this_node, HandIn
     auto matched_node = condition.matched_node_;
 
     // NOTE(kwok): Do rollouts for `rollout_rep` times starting from the matched node till we hit terminals.
-    HandInfo subgamg_hand_info(hand_info.num_players, hand_info.board_, gen);
+    sPrivateHandsInfo subgamg_hand_info(hand_info.num_players, hand_info.board_, gen);
     subgamg_hand_info.hand_[0] = hand_info.hand_[0];
     subgamg_hand_info.hand_[1] = hand_info.hand_[1];
 
@@ -363,7 +362,7 @@ double ScalarCfrWorker::LeafRootRollout(int trainee_pos, Node *this_node, HandIn
 
 double ScalarCfrWorker::LeafChoiceRollout(int trainee_pos,
                                           Node *this_node,
-                                          HandInfo &hand_info,
+                                          sPrivateHandsInfo &hand_info,
                                           int *p_meta)
 {
     auto r = this_node->GetRound();
@@ -437,7 +436,7 @@ double ScalarCfrWorker::LeafChoiceRollout(int trainee_pos,
 }
 
 /// Pluribus' way to update WAVG.
-void ScalarCfrWorker::WavgUpdateSideWalk(int trainee_pos, Node *this_node, HandInfo &hand_info)
+void ScalarCfrWorker::WavgUpdateSideWalk(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info)
 {
     if (this_node->IsTerminal()) {
         return;

@@ -72,9 +72,9 @@ public:
     }
 };
 
-struct HandInfo
+struct sPrivateHandsInfo
 {
-    HandInfo(int num_players, Board_t board, std::mt19937 &ran_gen)
+    sPrivateHandsInfo(int num_players, Board_t board, std::mt19937 &ran_gen)
             : num_players(num_players), board_(board)
     {
         std::uniform_int_distribution<int> distr(std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
@@ -83,7 +83,7 @@ struct HandInfo
         z = std::abs(distr(ran_gen));
     }
 
-    virtual ~HandInfo()
+    virtual ~sPrivateHandsInfo()
     {
     }
 
@@ -118,7 +118,7 @@ struct HandInfo
         payoff_[1] = payoff_[0] * -1;
     }
 
-    // assuming the root belief are already safe
+    /// Assuming the root belief are already safe.
     void Sample(AbstractGame *ag, std::array<sPrivateHandBelief *, 2> &root_hand_belief)
     {
         // sample a private hand pair for player 0
@@ -127,16 +127,16 @@ struct HandInfo
         // sample a private hand pair for player 1
         while (true) {
             VectorIndex vidx_1 = root_hand_belief[1]->SampleHand(x, y, z);
-            //and it should not crash with hand 0
+            // and the new sampled pair must not crash with hand 0
             if (!VectorIdxClash(hand_[0], vidx_1)) {
-                // we have gotten a legal hand
+                // we have got a legit private hand pair
                 hand_[1] = vidx_1;
                 break;
             }
         }
         // logger::debug("sampled hands | %s | %s", VectorIdxToString(vidx[0]), VectorIdxToString(vidx[1]));
 #if DEV > 1
-        //none crash with board
+        // ensure that nothing crashes with board
         for (unsigned short i: hand_) {
             auto high_low = FromVectorIndex(i);
             if (board_.CardCrash(high_low.first) || board_.CardCrash(high_low.second)) {
@@ -151,10 +151,13 @@ struct HandInfo
     int num_players;
     Board_t board_;
 
-    //by sample
+    // FIXME(kwok): The number of players is not supposed to be fixed to 2.
     VectorIndex hand_[2];
-    //
+
+    // FIXME(kwok): The number of players is not supposed to be fixed to 2.
     int payoff_[2];
+
+    // FIXME(kwok): The number of players is not supposed to be fixed to 2.
     Bucket_t buckets_[2][4];
 };
 
@@ -176,22 +179,22 @@ public:
 
     double Solve(Board_t board) override;
 
-    double WalkTree(int trainee_pos, Node *this_node, HandInfo &hand_info);
+    double WalkTree(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info);
 
-    static double EvalTermNode(int trainee_pos, Node *this_node, HandInfo &hand_info);
+    static double EvalTermNode(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info);
 
     // Depth-Limited Solving
-    double EvalRootLeafNode(int trainee_pos, Node *this_node, HandInfo &hand_info);
+    double EvalRootLeafNode(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info);
 
-    double EvalIntermediateChoiceNode(int trainee_pos, Node *this_node, HandInfo &hand_info);
+    double EvalIntermediateChoiceNode(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info);
 
-    void WavgUpdateSideWalk(int trainee_pos, Node *this_node, HandInfo &hand_info);
+    void WavgUpdateSideWalk(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info);
 
-    double LeafRootRollout(int trainee_pos, Node *this_node, HandInfo &hand_info);
+    double LeafRootRollout(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info);
 
-    double WalkLeafTree(int trainee_pos, Node *this_node, HandInfo &hand_info, int *c_strategy);
+    double WalkLeafTree(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info, int *c_strategy);
 
-    double LeafChoiceRollout(int trainee_pos, Node *this_node, HandInfo &hand_info, int *p_meta);
+    double LeafChoiceRollout(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info, int *p_meta);
 };
 
 class VectorCfrWorker : public CfrWorker
