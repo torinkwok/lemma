@@ -21,10 +21,10 @@ void TermEvalKernel::Prepare(Board_t *board)
     }
 
     if (index != nCk_card(47, 2)) {
-        logger::error("💢total number of hands is not correct = %d", index);
+        logger::error("💢total number of hands is not correct = %d, which should've been nCk_Card(47, 2)", index);
     }
 
-    // Allocate memory on the heap
+    // allocate memory on the heap
     unique_rank_count = rank_set.size();
     rank_first_equal_index_ = new int[unique_rank_count];
     rank_first_losing_index_ = new int[unique_rank_count];

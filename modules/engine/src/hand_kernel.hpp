@@ -13,10 +13,11 @@ struct sPrivateHandKernel
     Board_t board_;
     int starting_round_;
 
-    // valid_index
-    int combo_indices_[HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD];
+    // valid combination indices
+    int valid_combo_indices_[HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD];
 
-    sPrivateHandKernel(const Board_t &board, int starting_round) : board_(board), starting_round_(starting_round)
+    sPrivateHandKernel(const Board_t &board, int starting_round)
+            : board_(board), starting_round_(starting_round)
     {
         int cursor = 0;
         for (int i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {
@@ -24,7 +25,7 @@ struct sPrivateHandKernel
             if (board_.CardCrash(high_low.first) || board_.CardCrash(high_low.second)) {
                 continue;
             }
-            combo_indices_[cursor] = i;
+            valid_combo_indices_[cursor] = i;
             cursor++;
         }
     }
@@ -50,10 +51,8 @@ struct sPrivateHandKernel
                     continue;
                 }
                 auto bucket = bucket_reader->GetBucket_HighLowPair_Board_Round(
-                        high_low.first, high_low.second, &board_, round);
-                // if (bucket > 70000) {
-                //     logger::debug("b =  %d", bucket);
-                // }
+                        high_low.first, high_low.second, &board_, round
+                );
                 bucket_by_round_vector_idx[round][i] = bucket;
             }
         }
@@ -75,7 +74,6 @@ struct sPrivateHandKernel
         }
 #endif
 
-        // hand eval kernel
         hand_eval_kernel_.Prepare(&board_);
     };
 };
