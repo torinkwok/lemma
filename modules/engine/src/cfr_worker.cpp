@@ -12,10 +12,10 @@ sPrivateHandBelief *VectorCfrWorker::WalkTree_Alternate(Node *this_node, int act
     }
     if (this_node->IsTerminal()) {
         auto cfu = new sPrivateHandBelief(0.0);
-        hand_kernel->hand_eval_kernel_.FastTerminalEval(opp_belief->belief_,
-                                                        cfu->belief_,
-                                                        this_node->GetStake(actor),
-                                                        this_node->IsShowdown());
+        priv_hand_kernel->hand_eval_kernel_.FastTerminalEval(opp_belief->belief_,
+                                                             cfu->belief_,
+                                                             this_node->GetStake(actor),
+                                                             this_node->IsShowdown());
         return cfu;
     }
     return EvalChoiceNode_Alternate(this_node, actor, opp_belief);
@@ -63,9 +63,9 @@ VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivate
     if (is_my_turn) {
         // unless you have pruning, or you don't need to skip any. it is a bit waste but makes it more accurate.
         avg_all = new float[FULL_HAND_BELIEF_SIZE * a_max];
-        for (auto &i: hand_kernel->combo_indices_) {
+        for (auto &i: priv_hand_kernel->combo_indices_) {
             int offset = a_max * i;
-            auto b = hand_kernel->GetBucket(this_node->GetRound(), i);
+            auto b = priv_hand_kernel->GetBucket(this_node->GetRound(), i);
             strategy_->ComputeStrategy(this_node, b, avg_all + offset, cfr_param_->strategy_cal_mode_);
         }
     }
@@ -112,7 +112,7 @@ Ranges *VectorCfrWorker::WalkTree_Pairwise(Node *this_node, Ranges *reach_ranges
         // some range are 0. do some early return processing
         auto this_cfu = new Ranges(reach_ranges); // copy the masks as well.
         for (auto my_pos = 0; my_pos < reach_ranges->num_player_; my_pos++) {
-            hand_kernel->hand_eval_kernel_.FastTerminalEval(
+            priv_hand_kernel->hand_eval_kernel_.FastTerminalEval(
                     reach_ranges->beliefs_[
                             // FIXME(kwok): The number of players is not supposed to be fixed to 2.
                             1 - my_pos
@@ -218,7 +218,7 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sPrivateHandBelief *belief_d
     auto n = this_node->GetN();
     auto frozen_b = this_node->frozen_b;
 
-    for (auto &combo_index: hand_kernel->combo_indices_) {
+    for (auto &combo_index: priv_hand_kernel->combo_indices_) {
         // greedily outer skip the 0 belief and board cards
         if (belief_distr->IsPruned(combo_index)) {
             continue;
@@ -229,7 +229,7 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sPrivateHandBelief *belief_d
             continue;
         }
 
-        auto b = hand_kernel->GetBucket(r, combo_index);
+        auto b = priv_hand_kernel->GetBucket(r, combo_index);
         auto rnb0 = strategy_->ag_->kernel_->hash_rnba(r, n, b, 0);
         float distr_rnb[a_max];
         strategy_->ComputeStrategy(this_node, b, distr_rnb, cfr_param_->strategy_cal_mode_);
@@ -348,13 +348,13 @@ void VectorCfrWorker::ComputeCfu(Node *this_node,
     int a_max = this_node->GetAmax();
     // auto r = this_node->GetRound();
 
-    for (auto &i: hand_kernel->combo_indices_) {
+    for (auto &i: priv_hand_kernel->combo_indices_) {
         // outer pruning || lossless.
         if (cfu->IsPruned(i)) {
             continue;
         }
 
-        // auto b = hand_kernel->GetBucket(r, i);
+        // auto b = priv_hand_kernel->GetBucket(r, i);
         double final_value = 0.0;
 
         /*
@@ -432,12 +432,12 @@ VectorCfrWorker::RegretLearning(Node *this_node, std::vector<sPrivateHandBelief 
     auto n = this_node->GetN();
     auto frozen_b = this_node->frozen_b;
 
-    for (auto &i: hand_kernel->combo_indices_) {
+    for (auto &i: priv_hand_kernel->combo_indices_) {
         //no need to update with the pruned hand, outer pruning
         if (cfu->IsPruned(i)) {
             continue;
         }
-        auto b = hand_kernel->GetBucket(r, i);
+        auto b = priv_hand_kernel->GetBucket(r, i);
         //if frozen, no need to update regret
         if (b == frozen_b) {
             continue;
@@ -475,13 +475,13 @@ double VectorCfrWorker::Solve(Board_t board)
     auto ag = strategy_->ag_;
     auto starting_round = ag->root_state_.round;
     if (starting_round < 3) {
-        delete hand_kernel;
-        hand_kernel = new sPrivateHandKernel(board, starting_round);
-        hand_kernel->EnrichHandKernel(&ag->bucket_reader_);
-    } else if (starting_round == 3 && hand_kernel == nullptr) {
+        delete priv_hand_kernel;
+        priv_hand_kernel = new sPrivateHandKernel(board, starting_round);
+        priv_hand_kernel->EnrichHandKernel(&ag->bucket_reader_);
+    } else if (starting_round == 3 && priv_hand_kernel == nullptr) {
         //cache the hand kernel if just solving round RIVER subgame
-        hand_kernel = new sPrivateHandKernel(board, starting_round);
-        hand_kernel->EnrichHandKernel(&ag->bucket_reader_);
+        priv_hand_kernel = new sPrivateHandKernel(board, starting_round);
+        priv_hand_kernel->EnrichHandKernel(&ag->bucket_reader_);
     }
 
     // pruning with prob

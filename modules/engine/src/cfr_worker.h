@@ -193,7 +193,7 @@ public:
 class VectorCfrWorker : public CfrWorker
 {
 public:
-    sPrivateHandKernel *hand_kernel = nullptr;
+    sPrivateHandKernel *priv_hand_kernel = nullptr;
 
     VectorCfrWorker(Strategy *blueprint,
                     Strategy *strategy,
@@ -205,7 +205,7 @@ public:
 
     virtual ~VectorCfrWorker()
     {
-        delete hand_kernel;
+        delete priv_hand_kernel;
     };
 
     double Solve(Board_t board) override;
