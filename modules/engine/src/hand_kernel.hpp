@@ -6,7 +6,7 @@
 #include "term_eval_kernel.h"
 #include <set>
 
-struct sHandKernel
+struct sPrivateHandKernel
 {
     Bucket_t bucket_by_round_vector_idx[HOLDEM_MAX_ROUNDS][FULL_HAND_BELIEF_SIZE];
     TermEvalKernel hand_eval_kernel_;
@@ -16,7 +16,7 @@ struct sHandKernel
     // valid_index
     int combo_indices_[HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD];
 
-    sHandKernel(const Board_t &board, int starting_round) : board_(board), starting_round_(starting_round)
+    sPrivateHandKernel(const Board_t &board, int starting_round) : board_(board), starting_round_(starting_round)
     {
         int cursor = 0;
         for (int i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {

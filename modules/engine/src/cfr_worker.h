@@ -193,7 +193,7 @@ public:
 class VectorCfrWorker : public CfrWorker
 {
 public:
-    sHandKernel *hand_kernel = nullptr;
+    sPrivateHandKernel *hand_kernel = nullptr;
 
     VectorCfrWorker(Strategy *blueprint,
                     Strategy *strategy,

@@ -313,11 +313,11 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sPrivateHandBelief *belief_d
                 }
             }
 
-            // zero all extremelly small values < 0.03
+            // zero all extremelly small values <0.03
             if (prob < RANGE_ROLLOUT_PRUNE_THRESHOLD) {
                 child_ranges[a]->Zero(combo_index);
             } else {
-                // NOTE(kwok): Update the child ranges according to the Bayes' rule
+                // NOTE(kwok): Update the child ranges based on the Bayes' rule
                 child_ranges[a]->belief_[combo_index] *= prob;
             }
 
@@ -476,11 +476,11 @@ double VectorCfrWorker::Solve(Board_t board)
     auto starting_round = ag->root_state_.round;
     if (starting_round < 3) {
         delete hand_kernel;
-        hand_kernel = new sHandKernel(board, starting_round);
+        hand_kernel = new sPrivateHandKernel(board, starting_round);
         hand_kernel->EnrichHandKernel(&ag->bucket_reader_);
     } else if (starting_round == 3 && hand_kernel == nullptr) {
         //cache the hand kernel if just solving round RIVER subgame
-        hand_kernel = new sHandKernel(board, starting_round);
+        hand_kernel = new sPrivateHandKernel(board, starting_round);
         hand_kernel->EnrichHandKernel(&ag->bucket_reader_);
     }
 
