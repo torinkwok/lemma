@@ -87,7 +87,7 @@ VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivate
     // only learning on the trainee's node
     if (cfr_param_->regret_learning_on) {
         if (is_my_turn) {
-            RegretLearning(this_node, child_cfus, this_node_cfu);
+            CollectRegrets(this_node, child_cfus, this_node_cfu);
         }
     }
 
@@ -198,7 +198,7 @@ Ranges *VectorCfrWorker::EvalChoiceNode_Pairwise(Node *this_node, Ranges *reach_
      */
     //only on actor
     if (cfr_param_->regret_learning_on) {
-        RegretLearning(this_node, actor_child_cfu, &cfu->beliefs_[actor]);
+        CollectRegrets(this_node, actor_child_cfu, &cfu->beliefs_[actor]);
     }
 
     //delete the util belief from child nodes
@@ -439,7 +439,7 @@ void VectorCfrWorker::ConditionalPrune()
 }
 
 void
-VectorCfrWorker::RegretLearning(Node *this_node,
+VectorCfrWorker::CollectRegrets(Node *this_node,
                                 std::vector<sPrivateHandBelief *> child_cfus,
                                 sPrivateHandBelief *this_node_cfu)
 {

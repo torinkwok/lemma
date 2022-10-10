@@ -235,7 +235,7 @@ public:
     void ConditionalPrune();
 
     void
-    RegretLearning(Node *this_node, std::vector<sPrivateHandBelief *> child_cfus, sPrivateHandBelief *this_node_cfu);
+    CollectRegrets(Node *this_node, std::vector<sPrivateHandBelief *> child_cfus, sPrivateHandBelief *this_node_cfu);
 
     std::vector<sPrivateHandBelief *> ExtractBeliefs(std::vector<Ranges *> &ranges, int pos);
 
