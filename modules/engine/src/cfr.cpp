@@ -69,7 +69,7 @@ int CFR::Solve(Strategy *blueprint,
 #endif
         auto cmd = local_commands.front();
         if (cmd.trigger_iter_ >= starting_checkpoint) {
-            // Only print this in blueprint training for now. Not using sgs in preflop.
+            // only print this in blueprint training for now. Not using sgs in preflop.
             if (strategy->ag_->root_node_->GetRound() == HOLDEM_ROUND_PREFLOP) {
                 cmd.Print();
             }
@@ -96,11 +96,11 @@ int CFR::Solve(Strategy *blueprint,
                                          cancelled
                         );
                         if (!cancelled) {
-                            // Only update the current state if not abruptly cancelled from outside
+                            // only update the current state if not abruptly cancelled from outside
                             current_state.UpdateState(cmd.steps_, timer.GetLapseFromBegin(), total_result.avg_);
                         }
                     } else {
-                        // Break all loops
+                        // break all loops
                         keep_solving = false;
                     }
                     break;
@@ -407,7 +407,7 @@ void CFR::AllocateFlops(std::vector<Board_t> *pub_flop_boards,
                 idx = std::distance(tally, min_idx);
             }
         }
-        //copy over cluster by cluster
+        // copy over cluster by cluster
         if (num_thread > 60) {
             int rep = num_thread / cluster;
             for (int c = 0; c < cluster; c++) {
@@ -442,7 +442,7 @@ void CFR::ThreadedCfrSolve(Strategy *blueprint,
     int num_threads = cfr_param.num_threads;
     int effective_thread = num_threads;
 
-    // It is common to profile with just 1 thread
+    // NOTE(kwok): it is typical to profile with just 1 thread
     if (steps < num_threads) {
         effective_thread = 1;
         if (cfr_param.cfu_compute_acting_playing == WEIGHTED_RESPONSE) {
@@ -453,7 +453,7 @@ void CFR::ThreadedCfrSolve(Strategy *blueprint,
     sThreadOutput thread_output[effective_thread];
     if (effective_thread > 1) {
         int iter_avg = steps / effective_thread;
-        // Fire threads
+        // NOTE(kwok): fire threads
         for (auto i = 0; i < effective_thread; i++) {
             int num_iter = iter_avg;
             if (i == effective_thread - 1) {
@@ -476,14 +476,14 @@ void CFR::ThreadedCfrSolve(Strategy *blueprint,
                 logger::critical("failed to launch threads.");
             }
         }
-        // Block here to wait for the threads to finish
+        // NOTE(kwok): block the spawning thread while waiting for all the spawned threads to finish
         for (int i = 0; i < effective_thread; ++i) {
             if (pthread_join(thread_pool[i], nullptr)) {
                 logger::error("Couldn't join to thread %d", i);
             }
         }
     } else {
-        // Solo thread
+        // NOTE(kwok): solo thread
         auto thread_input = new sThreadInput(blueprint,
                                              strategy,
                                              pub_bucket_flop_boards,

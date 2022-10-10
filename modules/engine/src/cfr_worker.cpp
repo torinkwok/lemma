@@ -539,34 +539,36 @@ double VectorCfrWorker::Solve(Board_t board)
     //        way, we can often reduce this to an O(n) evaluation that returns exactly the same value as the
     //        O(n^2) evaluation. Doing so gives PCS the advantage of both SPCS (accurate strategy updates) and
     //        OPCS (many strategy updates) for the same evaluation cost of either.
-    if (mode_ == CFR_VECTOR_PAIRWISE_SOLVE) {
-        /*
-         * PAIRWISE WALKING
-         */
-        Ranges starting_ranges{active_players};
-        for (int p = 0; p < starting_ranges.num_player_; p++) {
-            starting_ranges.beliefs_[p].CopyValue(&local_root_belief[p]);
-            starting_ranges.beliefs_[p].Scale(REGRET_SCALER);
+    switch (mode_) {
+        case CFR_VECTOR_PAIRWISE_SOLVE: {
+            Ranges starting_ranges{active_players};
+            for (int p = 0; p < starting_ranges.num_player_; p++) {
+                starting_ranges.beliefs_[p].CopyValue(&local_root_belief[p]);
+                starting_ranges.beliefs_[p].Scale(REGRET_SCALER);
+            }
+            auto cfu = WalkTree_Pairwise(ag->root_node_, &starting_ranges);
+            for (int p = 0; p < starting_ranges.num_player_; p++) {
+                cfu->beliefs_[p].DotMultiply(&local_root_belief[p]);
+            }
+            cfu_sum = cfu->ValueSum();
+            // logger::debug("%f | %f", local_root_belief[0].BeliefSum(), local_root_belief[1].BeliefSum());
+            delete cfu;
+            break;
         }
-        auto cfu = WalkTree_Pairwise(ag->root_node_, &starting_ranges);
-        for (int p = 0; p < starting_ranges.num_player_; p++) {
-            cfu->beliefs_[p].DotMultiply(&local_root_belief[p]);
+        case CFR_VECTOR_ALTERNATE_SOLVE: {
+            for (int p = 0; p < active_players; p++) {
+                // FIXME(kwok): The number of players is not supposed to be fixed to 2.
+                auto opp_local_root_belief = local_root_belief[1 - p];
+                opp_local_root_belief.Scale(REGRET_SCALER);
+                sPrivateHandBelief *cfu_p = WalkTree_Alternate(ag->root_node_, p, &opp_local_root_belief);
+                cfu_p->DotMultiply(&local_root_belief[p]);  // illegal parts are 0, so it is fine.
+                cfu_sum += cfu_p->BeliefSum();
+                delete cfu_p;
+            }
+            break;
         }
-        cfu_sum = cfu->ValueSum();
-        // logger::debug("%f | %f", local_root_belief[0].BeliefSum(), local_root_belief[1].BeliefSum());
-        delete cfu;
-    } else {
-        /*
-         * ALTERNATE WALKING
-         */
-        for (int p = 0; p < active_players; p++) {
-            // FIXME(kwok): The number of players is not supposed to be fixed to 2.
-            auto opp_local_root_belief = local_root_belief[1 - p];
-            opp_local_root_belief.Scale(REGRET_SCALER);
-            sPrivateHandBelief *cfu_p = WalkTree_Alternate(ag->root_node_, p, &opp_local_root_belief);
-            cfu_p->DotMultiply(&local_root_belief[p]);  // illegal parts are 0, so it is fine.
-            cfu_sum += cfu_p->BeliefSum();
-            delete cfu_p;
+        default: {
+            logger::critical("invalid CFR mode %d", mode_);
         }
     }
 
