@@ -5,13 +5,16 @@ double ScalarCfrWorker::Solve(Board_t board)
     auto ag = strategy_->ag_;
 
     auto active_players = AbstractGame::GetActivePlayerNum();
-    auto hand_info = sPrivateHandsInfo(active_players, board, gen);
+    auto private_hands_info = sPrivateHandsInfo(active_players, board, gen);
     // generate root belief based on the board
-    std::array<sPrivateHandBelief *, 2> local_root_belief{}; // FIXME(kwok): The number of players is not supposed to be fixed to 2.
+    std::array<
+            sPrivateHandBelief *,
+            2 // FIXME(kwok): The number of players is not supposed to be fixed to 2.
+    > local_root_beliefs{};
     for (int p = 0; p < active_players; p++) {
         // do preparations
-        local_root_belief[p] = new sPrivateHandBelief(&ag->root_hand_belief_[p]);
-        local_root_belief[p]->NormalizeExcludeBoard(board);
+        local_root_beliefs[p] = new sPrivateHandBelief(&ag->root_hand_belief_[p]);
+        local_root_beliefs[p]->NormalizeExcludeBoard(board);
     }
 
     static const int REPS = 1000;
@@ -21,7 +24,10 @@ double ScalarCfrWorker::Solve(Board_t board)
         // events visible to each player, as well as the private chance events that are visible to only a
         // subset of the players. In poker, this corresponds to randomly choosing the public cards revealed
         // to the players, and the private cards that each player is dealt.
-        hand_info.Sample(ag, local_root_belief);
+        //
+        // NOTE(kwok): Here we're sampling all the private chance events, i.e. the private hands of each player.
+        // The public chance event, i.e. the public cards, has been sampled by the invoker of ScalaraCfrWorker::Solve.
+        private_hands_info.SamplePrivateHandsForAll(ag, local_root_beliefs);
         if (cfr_param_->pruning_on && cfr_param_->rm_floor < 0) {
             iter_prune_flag = GenRndNumber(1, 100) <= cfr_param_->rollout_prune_prob * 100;
         }
@@ -33,12 +39,12 @@ double ScalarCfrWorker::Solve(Board_t board)
         // strategy and their private information.
         //
         // * ⬆ On the way back from the leaves to the root, we return a single SCALAR value: the sampled
-        // counterfactual value v ̃i (σ, I) for player i. At each choice node for player i, these values are all
+        // counterfactual value v ̃i(σ, I) for player i. At each choice node for player i, these values are all
         // that is needed to calculate the regret for each action and update the strategy.
         //
         // Note that at a terminal node z ∈ Z, it takes O(1) work to determine the utility for player i, u_i(z).
         for (int trainee_pos = 0; trainee_pos < active_players; trainee_pos++) {
-            util += WalkTree(trainee_pos, ag->root_node_, hand_info);
+            util += WalkTree(trainee_pos, ag->root_node_, private_hands_info);
         }
     }
 
@@ -46,16 +52,16 @@ double ScalarCfrWorker::Solve(Board_t board)
     if (cfr_param_->avg_side_update_ && cfr_param_->rm_avg_update == AVG_CLASSIC) {
         int SIDE_REPS = 50;
         for (int loc_iter = 0; loc_iter < SIDE_REPS; loc_iter++) {
-            hand_info.Sample(ag, local_root_belief);
+            private_hands_info.SamplePrivateHandsForAll(ag, local_root_beliefs);
             for (int trainee_pos = 0; trainee_pos < active_players; trainee_pos++) {
-                WavgUpdateSideWalk(trainee_pos, ag->root_node_, hand_info);
+                WavgUpdateSideWalk(trainee_pos, ag->root_node_, private_hands_info);
             }
         }
     }
 
     util /= (REPS * 2 * ag->GetBigBlind());
 
-    for (auto hb: local_root_belief) {
+    for (auto hb: local_root_beliefs) {
         delete hb;
     }
 
@@ -68,7 +74,8 @@ double ScalarCfrWorker::WalkTree(int trainee_pos, Node *this_node, sPrivateHands
     if (this_node->IsTerminal()) {
         return EvalTermNode(trainee_pos, this_node, hand_info);
     }
-    // depth limited solving, till the inital root of next round (not initial root of this round)
+    // NOTE(kwok): depth limited solving, till the local root of next round (rather than the local
+    // root of this round)
     if (this_node->IsLeafNode()) {
         return EvalRootLeafNode(trainee_pos, this_node, hand_info);
     }
@@ -257,7 +264,8 @@ double ScalarCfrWorker::LeafRootRollout(int trainee_pos, Node *this_node, sPriva
 
     auto matched_node = condition.matched_node_;
 
-    // NOTE(kwok): Do rollouts for `rollout_rep` times starting from the matched node till we hit terminals.
+    // NOTE(kwok): Rollout for `rollout_rep` times starting from the matched node till we hit terminals.
+    // FIXME(kwok): The number of players is not supposed to be fixed to 2.
     sPrivateHandsInfo subgamg_hand_info(hand_info.num_players, hand_info.board_, gen);
     subgamg_hand_info.hand_[0] = hand_info.hand_[0];
     subgamg_hand_info.hand_[1] = hand_info.hand_[1];

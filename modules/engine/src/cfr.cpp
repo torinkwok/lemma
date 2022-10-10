@@ -296,8 +296,14 @@ void *CFR::CfrSolve(void *thread_args)
     auto cur_flop_idx = 0;
     while (remaining_iter-- && !args->cancelled_token_) {
         logger::info("[🧵thread %s] remaining iter = %d", thread_id, remaining_iter);
-        // sampling board
         Board_t board{};
+        // NOTE(kwok): Here we're sampling the public chance events, i.e. the public cards. Required
+        // private chance events will be sampled within ScalaraCfrWorker::Solve in the case of the
+        // primitive Chance-Sampled variant, or be exhaustedly considered within VectorCfrWorker::Solve
+        // in the case of the Public Chance Sampling variant.
+        //
+        // Note that we are not going to sample the public chance events one by one as the game proceeds.
+        // Rather, we're sampling all required public chance events in one breath.
         SampleSequentialFullBoard(ag->root_state_, &ag->game_, board, cur_flop_idx, worker->my_flops_);
         // board.Print();
         double local_util = worker->Solve(board);

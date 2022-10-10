@@ -119,12 +119,13 @@ struct sPrivateHandsInfo
     }
 
     /// Assuming the root belief are already safe.
-    void Sample(AbstractGame *ag, std::array<sPrivateHandBelief *, 2> &root_hand_belief)
+    void SamplePrivateHandsForAll(AbstractGame *ag, std::array<sPrivateHandBelief *, 2> &root_hand_belief)
     {
         // sample a private hand pair for player 0
         hand_[0] = root_hand_belief[0]->SampleHand(x, y, z);
 
         // sample a private hand pair for player 1
+        // FIXME(kwok): The number of players is not supposed to be fixed to 2.
         while (true) {
             VectorIndex vidx_1 = root_hand_belief[1]->SampleHand(x, y, z);
             // and the new sampled pair must not crash with hand 0
@@ -134,7 +135,9 @@ struct sPrivateHandsInfo
                 break;
             }
         }
+
         // logger::debug("sampled hands | %s | %s", VectorIdxToString(vidx[0]), VectorIdxToString(vidx[1]));
+
 #if DEV > 1
         // ensure that nothing crashes with board
         for (unsigned short i: hand_) {
@@ -144,6 +147,7 @@ struct sPrivateHandsInfo
             }
         }
 #endif
+
         SetBucketAndPayoff(ag);
     }
 

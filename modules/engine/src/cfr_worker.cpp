@@ -74,7 +74,7 @@ VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivate
         }
     }
 
-    // NOTE(kwok): A utility of +1 is given for a win, and of −1 for a loss.
+    // NOTE(kwok): A utility of +1 is given for a win, and −1 for a loss.
     auto this_node_cfu = new sPrivateHandBelief(0.0);
     CFU_COMPUTE_MODE compute_mode = is_my_turn
                                     ? cfr_param_->cfu_compute_acting_playing
@@ -405,11 +405,13 @@ void VectorCfrWorker::ComputeCfu(Node *this_node,
                 break;
             }
             case BEST_RESPONSE : {
+                // NOTE(kwok): The best response is a strategy for a player that is optimal against the opponent
+                // strategy profile.
                 final_value = -999999999;
                 int offset = i * a_max;
                 for (int a = 0; a < a_max; a++) {
                     if (all_belief_distr_1dim[offset + a] > 0) {
-                        // otherwise best response will become -1. pruning is never on in best response cfu_compute_mode.
+                        // Otherwise best response will become -1. Pruning will never be on in the best response cfu_compute_mode.
                         auto util = child_cfus[a]->belief_[i];
                         if (util != kBeliefPrunedFlag && util > final_value) {
                             final_value = util;
