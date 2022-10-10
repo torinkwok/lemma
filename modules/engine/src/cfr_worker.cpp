@@ -50,12 +50,12 @@ VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivate
      * WALK DOWN THE TREE RECURSIVELY and collect the CFUs of all children
      */
 
-    std::vector<sPrivateHandBelief *> child_cfus;
-    child_cfus.reserve(a_max);
+    std::vector<sPrivateHandBelief *> children_cfus;
+    children_cfus.reserve(a_max);
     for (int a = 0; a < a_max; a++) {
         auto *child_node = this_node->children[a];
         auto *child_node_reach_range = child_reach_ranges[a];
-        child_cfus.emplace_back(WalkTree_Alternate(child_node, trainee, child_node_reach_range));
+        children_cfus.emplace_back(WalkTree_Alternate(child_node, trainee, child_node_reach_range));
     }
 
     /*
@@ -79,7 +79,7 @@ VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivate
     CFU_COMPUTE_MODE compute_mode = is_my_turn
                                     ? cfr_param_->cfu_compute_acting_playing
                                     : cfr_param_->cfu_compute_opponent;
-    ComputeCfu(this_node, child_reach_ranges, child_cfus, this_node_cfu, compute_mode, all_belief_distr_1dim);
+    ComputeCfu(this_node, child_reach_ranges, children_cfus, this_node_cfu, compute_mode, all_belief_distr_1dim);
 
     /*
      * REGRET LEARNING
@@ -87,13 +87,13 @@ VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivate
     // only learning on the trainee's node
     if (cfr_param_->regret_learning_on) {
         if (is_my_turn) {
-            CollectRegrets(this_node, child_cfus, this_node_cfu);
+            CollectRegrets(this_node, children_cfus, this_node_cfu);
         }
     }
 
     // delete child pop up this_node_cfu
     for (int a = 0; a < a_max; a++) {
-        delete child_cfus[a];
+        delete children_cfus[a];
         if (!is_my_turn) {
             delete child_reach_ranges[a];
         }
@@ -558,12 +558,13 @@ double VectorCfrWorker::Solve(Board_t board)
             break;
         }
         case CFR_VECTOR_ALTERNATE_SOLVE: {
-            for (int p = 0; p < active_players; p++) {
+            // NOTE(kwok): Walk down the training tree alternatively.
+            for (int trainee = 0; trainee < active_players; trainee++) {
                 // FIXME(kwok): The number of players is not supposed to be fixed to 2.
-                auto opp_local_root_belief = local_root_belief[1 - p];
+                auto opp_local_root_belief = local_root_belief[1 - trainee];
                 opp_local_root_belief.Scale(REGRET_SCALER);
-                sPrivateHandBelief *cfu_p = WalkTree_Alternate(ag->root_node_, p, &opp_local_root_belief);
-                cfu_p->DotMultiply(&local_root_belief[p]);  // illegal parts are 0, so it is fine.
+                sPrivateHandBelief *cfu_p = WalkTree_Alternate(ag->root_node_, trainee, &opp_local_root_belief);
+                cfu_p->DotMultiply(&local_root_belief[trainee]);  // illegal parts are 0, so it is fine.
                 cfu_sum += cfu_p->BeliefSum();
                 delete cfu_p;
             }

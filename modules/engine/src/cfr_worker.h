@@ -153,6 +153,9 @@ struct sPrivateHandsInfo
 
     unsigned long x, y, z;
     int num_players;
+
+    /// NOTE(kwok): The board is specified by invokers. Typically sampled by a external public chance
+    /// events sampler, such as `SampleSequentialFullBoard()`.
     Board_t board_;
 
     // FIXME(kwok): The number of players is not supposed to be fixed to 2.

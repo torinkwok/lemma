@@ -31,6 +31,7 @@ double ScalarCfrWorker::Solve(Board_t board)
         if (cfr_param_->pruning_on && cfr_param_->rm_floor < 0) {
             iter_prune_flag = GenRndNumber(1, 100) <= cfr_param_->rollout_prune_prob * 100;
         }
+
         // NOTE(kwok): Next, we recursively traverse the portion of the game tree that is reachable given
         // the sampled chance events, and explore all the players’ actions.
         //
@@ -43,8 +44,10 @@ double ScalarCfrWorker::Solve(Board_t board)
         // that is needed to calculate the regret for each action and update the strategy.
         //
         // Note that at a terminal node z ∈ Z, it takes O(1) work to determine the utility for player i, u_i(z).
-        for (int trainee_pos = 0; trainee_pos < active_players; trainee_pos++) {
-            util += WalkTree(trainee_pos, ag->root_node_, private_hands_info);
+
+        // NOTE(kwok): Walk down the training tree alternatively.
+        for (int trainee = 0; trainee < active_players; trainee++) {
+            util += WalkTree(trainee, ag->root_node_, private_hands_info);
         }
     }
 
@@ -161,7 +164,7 @@ double ScalarCfrWorker::EvalIntermediateChoiceNode(int trainee_pos, Node *this_n
 
     if (is_my_turn) {
         // NOTE(kwok): The agent's turn.
-        double child_cfu[a_max];
+        double children_cfus[a_max];
         bool prune_flag[a_max];
         for (auto a = 0; a < a_max; a++) {
             prune_flag[a] = false;
@@ -174,7 +177,7 @@ double ScalarCfrWorker::EvalIntermediateChoiceNode(int trainee_pos, Node *this_n
                     continue;
                 }
             }
-            child_cfu[a] = WalkTree(trainee_pos, next_node, hand_info);
+            children_cfus[a] = WalkTree(trainee_pos, next_node, hand_info);
         }
 
         // only supported weighted response. check outside
@@ -182,9 +185,9 @@ double ScalarCfrWorker::EvalIntermediateChoiceNode(int trainee_pos, Node *this_n
             logger::critical("scalar does not support best response eval");
         }
 
-        double my_cfu = 0.0;
+        double this_node_cfu = 0.0;
         float distr_rnb[a_max];
-        // NOTE(kwok): Query RNBA indexed strategy data to compute my_cfu
+        // NOTE(kwok): Query RNBA indexed strategy data to compute this_node_cfu
         strategy_->ComputeStrategy(this_node, b, distr_rnb, cfr_param_->strategy_cal_mode_);
         for (auto a = 0; a < a_max; a++) {
             if (prune_flag[a]) {
@@ -192,7 +195,7 @@ double ScalarCfrWorker::EvalIntermediateChoiceNode(int trainee_pos, Node *this_n
                 // of the current node.
                 continue;
             }
-            my_cfu += distr_rnb[a] * child_cfu[a];
+            this_node_cfu += distr_rnb[a] * children_cfus[a];
         }
 
         // only do it in weighted response
@@ -200,27 +203,27 @@ double ScalarCfrWorker::EvalIntermediateChoiceNode(int trainee_pos, Node *this_n
             if (prune_flag[a]) {
                 continue;
             }
-            int diff = (int) round(child_cfu[a] - my_cfu); // NOTE(kwok): The regret value
+            int diff = (int) round(children_cfus[a] - this_node_cfu); // NOTE(kwok): The regret value
             double temp_reg = strategy_->int_regret_[rnb0 + a] + diff; // NOTE(kwok): Accumulate regret values
             // clamp it
             int new_reg = (int) std::fmax(temp_reg, cfr_param_->rm_floor);
             // total regret should have a ceiling
             if (new_reg > 2107483647) { // 2147483647 - 4 * 10^7
                 logger::critical(
-                        "if the regret overflowed, think about the possibility of the regret %d not being converging. [temp_reg %f][diff %f][cfu_a %f][my_cfu %f]",
+                        "if the regret overflowed, think about the possibility of the regret %d not being converging. [temp_reg %f][diff %f][cfu_a %f][this_node_cfu %f]",
                         new_reg,
                         temp_reg,
                         diff,
-                        child_cfu[a],
-                        my_cfu
+                        children_cfus[a],
+                        this_node_cfu
                 );
             }
             strategy_->int_regret_[rnb0 + a] = new_reg;
         }
 
-        return my_cfu;
+        return this_node_cfu;
     } else {
-        // NOTE(kwok): The opponent's turn. Do external sampling.
+        // NOTE(kwok): Non-trainee's turn. Sample an action using their computed strategy.
         float distr_rnb[a_max];
         strategy_->ComputeStrategy(this_node, b, distr_rnb, cfr_param_->strategy_cal_mode_);
         int sampled_a = RndXorShift<float>(distr_rnb, a_max, x, y, z, (1 << 16));
