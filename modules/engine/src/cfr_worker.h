@@ -28,8 +28,7 @@ public:
               sCfrParam *cfr_param,
               std::vector<Board_t> &my_flops,
               unsigned long long seed)
-            : blueprint_(
-            blueprint), strategy_(strategy), cfr_param_(cfr_param), my_flops_(my_flops)
+            : blueprint_(blueprint), strategy_(strategy), cfr_param_(cfr_param), my_flops_(my_flops)
     {
         gen.seed(seed);
         std::uniform_int_distribution<int> distr(std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
@@ -40,7 +39,7 @@ public:
 
     virtual ~CfrWorker()
     {
-        //no need to delete anything. these pointers are owned by other classes.
+        // no need to delete anything. these pointers are owned by other classes.
     }
 
     Strategy *blueprint_;
@@ -57,12 +56,13 @@ public:
 
     static double ClampRegret(double old_reg, double diff, double floor)
     {
-        if (old_reg < floor)
+        if (old_reg < floor) {
             logger::warn("old regret %.16f < floor %.16f", old_reg, floor);
-
-        double temp_reg = old_reg + diff; //to prevent the +diff makes reg overflow.
-        if (temp_reg < floor)
+        }
+        double temp_reg = old_reg + diff; // to prevent the +diff makes reg overflow.
+        if (temp_reg < floor) {
             temp_reg = floor;
+        }
         return temp_reg;
     }
 
@@ -74,7 +74,8 @@ public:
 
 struct HandInfo
 {
-    HandInfo(int num_players, Board_t board, std::mt19937 &ran_gen) : num_players(num_players), board_(board)
+    HandInfo(int num_players, Board_t board, std::mt19937 &ran_gen)
+            : num_players(num_players), board_(board)
     {
         std::uniform_int_distribution<int> distr(std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
         x = std::abs(distr(ran_gen));
@@ -96,14 +97,16 @@ struct HandInfo
 #if DEV > 1
             if (rank[player_pos] < 0) {
                 logger::critical("rank < 0 | %d | [high %d] [low %d]", rank[player_pos], high_low_pair.first,
-                                 high_low_pair.second);
+                                 high_low_pair.second
+                );
                 board_.Print();
             }
 #endif
             for (int r = ag->root_node_->GetRound(); r <= ag->GetMaxRound(); r++) {
                 auto bucket = ag->bucket_reader_.GetBucket_HighLowPair_Board_Round(high_low_pair.first,
                                                                                    high_low_pair.second,
-                                                                                   &board_, r);
+                                                                                   &board_, r
+                );
                 // NOTE(kwok): Differentiate buckets at different rounds
                 buckets_[player_pos][r] = bucket;
             }
@@ -165,7 +168,8 @@ public:
                     Strategy *strategy,
                     sCfrParam *cfr_param,
                     std::vector<Board_t> &my_flops,
-                    unsigned long long seed) :
+                    unsigned long long seed)
+            :
             CfrWorker(blueprint, strategy, cfr_param, my_flops, seed)
     {
     }
@@ -198,7 +202,8 @@ public:
     VectorCfrWorker(Strategy *blueprint,
                     Strategy *strategy,
                     sCfrParam *cfr_param,
-                    std::vector<Board_t> &my_flops, unsigned long long seed) :
+                    std::vector<Board_t> &my_flops, unsigned long long seed)
+            :
             CfrWorker(blueprint, strategy, cfr_param, my_flops, seed)
     {
     }
@@ -219,16 +224,18 @@ public:
      */
     void ComputeCfu(Node *this_node,
                     std::vector<sPrivateHandBelief *> child_reach_ranges,
-                    std::vector<sPrivateHandBelief *> child_cfu,
-                    sPrivateHandBelief *cfu,
-                    CFU_COMPUTE_MODE mode,
-                    const float *p_double);
+                    std::vector<sPrivateHandBelief *> child_cfus,
+                    sPrivateHandBelief *this_node_cfu,
+                    CFU_COMPUTE_MODE cfu_compute_mode,
+                    const float *all_belief_distr_1dim);
 
-    void RangeRollout(Node *this_node, sPrivateHandBelief *belief_distr, std::vector<sPrivateHandBelief *> &child_ranges);
+    void
+    RangeRollout(Node *this_node, sPrivateHandBelief *belief_distr, std::vector<sPrivateHandBelief *> &child_ranges);
 
     void ConditionalPrune();
 
-    void RegretLearning(Node *this_node, std::vector<sPrivateHandBelief *> child_cfu, sPrivateHandBelief *cfu);
+    void
+    RegretLearning(Node *this_node, std::vector<sPrivateHandBelief *> child_cfus, sPrivateHandBelief *this_node_cfu);
 
     std::vector<sPrivateHandBelief *> ExtractBeliefs(std::vector<Ranges *> &ranges, int pos);
 

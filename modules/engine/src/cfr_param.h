@@ -107,6 +107,7 @@ struct sCfrParam
     /*
      * rollin  util upwards, my and opp
      */
+    // FIXME(kwok): The number of players is not supposed to be fixed to 2.
     CFU_COMPUTE_MODE cfu_compute_acting_playing = WEIGHTED_RESPONSE;
     CFU_COMPUTE_MODE cfu_compute_opponent = SUM_RESPONSE;
 
