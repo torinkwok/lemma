@@ -231,6 +231,8 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sPrivateHandBelief *belief_d
 
         auto b = priv_hand_kernel->GetBucket(r, combo_index);
         auto rnb0 = strategy_->ag_->kernel_->hash_rnba(r, n, b, 0);
+
+        // NOTE(kwok): The strategy probabilities if the opponent's private hand was combo_index.
         float distr_rnb[a_max];
         strategy_->ComputeStrategy(this_node, b, distr_rnb, cfr_param_->strategy_cal_mode_);
 
@@ -299,10 +301,11 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sPrivateHandBelief *belief_d
          * belief_distr update + pruning
          */
         for (int a = 0; a < a_max; a++) {
-            double prob = distr_rnb[a];
+            double action_prob = distr_rnb[a];
 
-            // check pruning if prob = 0, skipping river node and terminal node
-            if (iter_prune_flag && prob == 0.0
+            // check pruning if action_prob = 0, skipping river node and terminal node
+            if (iter_prune_flag
+                && action_prob == 0.0
                 && !this_node->children[a]->IsTerminal()
                 && this_node->children[a]->GetRound() != HOLDEM_ROUND_RIVER) {
                 auto regret = strategy_->double_regret_[rnb0 + a];
@@ -313,18 +316,23 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sPrivateHandBelief *belief_d
                 }
             }
 
-            // zero all extremelly small values <0.03
-            if (prob < RANGE_ROLLOUT_PRUNE_THRESHOLD) {
+            // zero all extremelly small values which <0.03
+            if (action_prob < RANGE_ROLLOUT_PRUNE_THRESHOLD) {
                 child_ranges[a]->Zero(combo_index);
             } else {
-                // NOTE(kwok): Update the child ranges based on the Bayes' rule
-                child_ranges[a]->belief_[combo_index] *= prob;
+                // NOTE(kwok): child_ranges are all the same prior to this calculation
+                // NOTE(kwok): A child node's reach probability equals:
+                //
+                //                        [how much we believe the opponent holding `combo_index`]
+                //                                                   ×
+                //      [how possible we will choose the action `a` in the case of the opponent holding `combo_index`]
+                child_ranges[a]->belief_[combo_index] *= action_prob;
             }
 
             // safe-guarding
             auto new_v = child_ranges[a]->belief_[combo_index];
             if (new_v > 0.0 && new_v < pow(10, -14)) {
-                logger::warn("reach is too small %.16f [r %d]", new_v, this_node->GetRound());
+                logger::warn("🚨reach is too small %.16f [r %d]", new_v, this_node->GetRound());
             }
         }
     }
@@ -491,10 +499,12 @@ double VectorCfrWorker::Solve(Board_t board)
     sPrivateHandBelief local_root_belief[2];
     auto active_players = ag->GetActivePlayerNum();
     for (int p = 0; p < active_players; p++) {
-        //prepare
+        // preparations
         local_root_belief[p].CopyValue(&ag->root_hand_belief_[p]);
         local_root_belief[p].NormalizeExcludeBoard(board);
     }
+
+    double cfu_sum = 0.0;
 
     // NOTE(kwok): There are three different methods of sampling chance events that have slower iterations,
     // but do more work on each iteration:
@@ -520,8 +530,6 @@ double VectorCfrWorker::Solve(Board_t board)
     //        way, we can often reduce this to an O(n) evaluation that returns exactly the same value as the
     //        O(n^2) evaluation. Doing so gives PCS the advantage of both SPCS (accurate strategy updates) and
     //        OPCS (many strategy updates) for the same evaluation cost of either.
-
-    double cfu_sum = 0.0;
     if (mode_ == CFR_VECTOR_PAIRWISE_SOLVE) {
         /*
          * PAIRWISE WALKING
@@ -544,10 +552,10 @@ double VectorCfrWorker::Solve(Board_t board)
          */
         for (int p = 0; p < active_players; p++) {
             // FIXME(kwok): The number of players is not supposed to be fixed to 2.
-            auto opp_belief = local_root_belief[1 - p];
-            opp_belief.Scale(REGRET_SCALER);
-            sPrivateHandBelief *cfu_p = WalkTree_Alternate(ag->root_node_, p, &opp_belief);
-            cfu_p->DotMultiply(&local_root_belief[p]);  //illegal parts are 0, so it is fine.
+            auto opp_local_root_belief = local_root_belief[1 - p];
+            opp_local_root_belief.Scale(REGRET_SCALER);
+            sPrivateHandBelief *cfu_p = WalkTree_Alternate(ag->root_node_, p, &opp_local_root_belief);
+            cfu_p->DotMultiply(&local_root_belief[p]);  // illegal parts are 0, so it is fine.
             cfu_sum += cfu_p->BeliefSum();
             delete cfu_p;
         }
