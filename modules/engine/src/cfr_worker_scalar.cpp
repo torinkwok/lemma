@@ -135,9 +135,9 @@ double ScalarCfrWorker::EvalRootLeafNode(int trainee_pos, Node *this_node, sPriv
     }
 
     /*
-     * ROLLOUT, only for player 0
+     * ROLLOUT for the current trainee rather than pairwise or alternatively
      */
-    double player0_cfu = LeafRootRollout(trainee_pos, this_node, hand_info);
+    double trainee_cfu = LeafRootRollout(trainee_pos, this_node, hand_info);
 
     /*
      * or use NN
@@ -145,11 +145,12 @@ double ScalarCfrWorker::EvalRootLeafNode(int trainee_pos, Node *this_node, sPriv
 
     // insert to cache
     if (cfr_param_->depth_limited_cache_) {
-        this_node->value_cache_->SetValue(b0, b1, player0_cfu);
+        this_node->value_cache_->SetValue(b0, b1, trainee_cfu);
     }
 
     // FIXME(kwok): The number of players is not supposed to be fixed to 2.
-    return trainee_pos == 0 ? player0_cfu : -player0_cfu;
+    // only in terms of player 0
+    return trainee_pos == 0 ? trainee_cfu : -trainee_cfu;
 }
 
 double ScalarCfrWorker::EvalIntermediateChoiceNode(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info)
@@ -269,15 +270,15 @@ double ScalarCfrWorker::LeafRootRollout(int trainee_pos, Node *this_node, sPriva
 
     // NOTE(kwok): Rollout for `rollout_rep` times starting from the matched node till we hit terminals.
     // FIXME(kwok): The number of players is not supposed to be fixed to 2.
-    sPrivateHandsInfo subgamg_hand_info(hand_info.num_players, hand_info.board_, gen);
-    subgamg_hand_info.hand_[0] = hand_info.hand_[0];
-    subgamg_hand_info.hand_[1] = hand_info.hand_[1];
+    sPrivateHandsInfo subgame_priv_hands_info(hand_info.num_players, hand_info.board_, gen);
+    subgame_priv_hands_info.hand_[0] = hand_info.hand_[0];
+    subgame_priv_hands_info.hand_[1] = hand_info.hand_[1];
 
     // NOTE(kwok): Fill the real board according to the round we are currently at
     auto r = this_node->GetRound();
     int sum_bc = r == HOLDEM_ROUND_PREFLOP ? 0 : 3;
     for (int c = sum_bc; c < HOLDEM_MAX_BOARD; c++) {
-        subgamg_hand_info.board_.cards[c] = IMPOSSIBLE_CARD;
+        subgame_priv_hands_info.board_.cards[c] = IMPOSSIBLE_CARD;
     }
 
     int rollout_rep = cfr_param_->depth_limited_rollout_reps_;
@@ -294,7 +295,7 @@ double ScalarCfrWorker::LeafRootRollout(int trainee_pos, Node *this_node, sPriva
         }
     }
 
-    double final_cfu[2]; // NOTE(kwok): Counter Factual Utility
+    double final_cfu[2];
 
     /*
      * reps 3
@@ -307,21 +308,21 @@ double ScalarCfrWorker::LeafRootRollout(int trainee_pos, Node *this_node, sPriva
          * Sample a board, which must not crash with the current hands.
          * TODO: Make this a testable function
          */
-        HoldemDeck deck{subgamg_hand_info.board_};
+        HoldemDeck deck{subgame_priv_hands_info.board_};
         deck.Shuffle();
         int total_bc = sum_bc;
         int deck_cursor = 0;
         while (total_bc <= HOLDEM_MAX_BOARD) {
             auto sample_card = deck.cards_[deck_cursor++];
-            if (VectorIdxClashCard(subgamg_hand_info.hand_[0], sample_card)
-                || VectorIdxClashCard(subgamg_hand_info.hand_[1], sample_card)) {
+            if (VectorIdxClashCard(subgame_priv_hands_info.hand_[0], sample_card)
+                || VectorIdxClashCard(subgame_priv_hands_info.hand_[1], sample_card)) {
                 continue;
             }
-            subgamg_hand_info.board_.cards[total_bc++] = sample_card;
+            subgame_priv_hands_info.board_.cards[total_bc++] = sample_card;
         }
 
-        // subgamg_hand_info.board_.Print();
-        subgamg_hand_info.SetBucketAndPayoff(blueprint_->ag_);
+        // subgame_priv_hands_info.board_.Print();
+        subgame_priv_hands_info.SetBucketAndPayoff(blueprint_->ag_);
 
         // FIXME(kwok): The number of players is not supposed to be fixed to 2.
         for (int p = 0; p < 2; p++) {
@@ -345,7 +346,7 @@ double ScalarCfrWorker::LeafRootRollout(int trainee_pos, Node *this_node, sPriva
                 c_strategy[p] = s;
                 c_strategy[1 - p] = opp_sampled_a;
                 // rollout with the strategy combination
-                cfu_s[s] = WalkLeafTree(p, matched_node, subgamg_hand_info, c_strategy);
+                cfu_s[s] = WalkLeafTree(p, matched_node, subgame_priv_hands_info, c_strategy);
             }
 
             float distr[4]{};
