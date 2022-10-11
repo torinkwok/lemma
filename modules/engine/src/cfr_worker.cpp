@@ -412,9 +412,9 @@ void VectorCfrWorker::ComputeCfu(Node *this_node,
                 for (int a = 0; a < a_max; a++) {
                     if (all_belief_distr_1dim[offset + a] > 0) {
                         // Otherwise best response will become -1. Pruning will never be on in the best response cfu_compute_mode.
-                        auto util = child_cfus[a]->belief_[i];
-                        if (util != kBeliefPrunedFlag && util > final_value) {
-                            final_value = util;
+                        auto utility = child_cfus[a]->belief_[i];
+                        if (utility != kBeliefPrunedFlag && utility > final_value) {
+                            final_value = utility;
                         }
                     }
                 }

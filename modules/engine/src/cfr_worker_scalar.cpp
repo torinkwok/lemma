@@ -18,7 +18,7 @@ double ScalarCfrWorker::Solve(Board_t board)
     }
 
     static const int REPS = 1000;
-    double util = 0.0;
+    double utility = 0.0;
     for (int loc_iter = 0; loc_iter < REPS; loc_iter++) {
         // NOTE(kwok): On each iteration, we start by sampling all of chance’s actions: the public chance
         // events visible to each player, as well as the private chance events that are visible to only a
@@ -47,7 +47,7 @@ double ScalarCfrWorker::Solve(Board_t board)
 
         // NOTE(kwok): Walk down the training tree alternatively.
         for (int trainee = 0; trainee < active_players; trainee++) {
-            util += WalkTree(trainee, ag->root_node_, private_hands_info);
+            utility += WalkTree(trainee, ag->root_node_, private_hands_info);
         }
     }
 
@@ -62,13 +62,13 @@ double ScalarCfrWorker::Solve(Board_t board)
         }
     }
 
-    util /= (REPS * 2 * ag->GetBigBlind());
+    utility /= (REPS * 2 * ag->GetBigBlind());
 
     for (auto hb: local_root_beliefs) {
         delete hb;
     }
 
-    return util;
+    return utility;
 }
 
 /// NOTE(kwok): Where CFR iterations taking place.
@@ -153,18 +153,17 @@ double ScalarCfrWorker::EvalRootLeafNode(int trainee_pos, Node *this_node, sPriv
     return trainee_pos == 0 ? trainee_cfu : -trainee_cfu;
 }
 
-double ScalarCfrWorker::EvalIntermediateChoiceNode(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info)
+double ScalarCfrWorker::EvalIntermediateChoiceNode(int trainee, Node *this_node, sPrivateHandsInfo &hand_info)
 {
     int acting_player = this_node->GetActingPlayer();
-    bool is_my_turn = acting_player == trainee_pos;
+    bool is_trainee_turn = acting_player == trainee;
     auto a_max = this_node->GetAmax();
     auto r = this_node->GetRound();
     auto n = this_node->GetN();
     auto b = hand_info.buckets_[acting_player][r];
     auto rnb0 = strategy_->ag_->kernel_->hash_rnba(r, n, b, 0);
 
-    if (is_my_turn) {
-        // NOTE(kwok): The agent's turn.
+    if (is_trainee_turn) {
         double children_cfus[a_max];
         bool prune_flag[a_max];
         for (auto a = 0; a < a_max; a++) {
@@ -178,17 +177,18 @@ double ScalarCfrWorker::EvalIntermediateChoiceNode(int trainee_pos, Node *this_n
                     continue;
                 }
             }
-            children_cfus[a] = WalkTree(trainee_pos, next_node, hand_info);
+            children_cfus[a] = WalkTree(trainee, next_node, hand_info);
         }
 
-        // only supported weighted response. check outside
+        // NOTE(kwok): only WEIGHTED_RESPONSE is supported
         if (cfr_param_->cfu_compute_acting_playing != WEIGHTED_RESPONSE) {
             logger::critical("scalar does not support best response eval");
         }
 
         double this_node_cfu = 0.0;
+
         float distr_rnb[a_max];
-        // NOTE(kwok): Query RNBA indexed strategy data to compute this_node_cfu
+        // NOTE(kwok): query RNBA indexed strategy data to compute this_node_cfu
         strategy_->ComputeStrategy(this_node, b, distr_rnb, cfr_param_->strategy_cal_mode_);
         for (auto a = 0; a < a_max; a++) {
             if (prune_flag[a]) {
@@ -199,7 +199,6 @@ double ScalarCfrWorker::EvalIntermediateChoiceNode(int trainee_pos, Node *this_n
             this_node_cfu += distr_rnb[a] * children_cfus[a];
         }
 
-        // only do it in weighted response
         for (auto a = 0; a < a_max; a++) {
             if (prune_flag[a]) {
                 continue;
@@ -224,7 +223,7 @@ double ScalarCfrWorker::EvalIntermediateChoiceNode(int trainee_pos, Node *this_n
 
         return this_node_cfu;
     } else {
-        // NOTE(kwok): Non-trainee's turn. Sample an action using their computed strategy.
+        // NOTE(kwok): Non-trainee's turn. Sample an action using their own computed strategy.
         float distr_rnb[a_max];
         strategy_->ComputeStrategy(this_node, b, distr_rnb, cfr_param_->strategy_cal_mode_);
         int sampled_a = RndXorShift<float>(distr_rnb, a_max, x, y, z, (1 << 16));
@@ -241,7 +240,7 @@ double ScalarCfrWorker::EvalIntermediateChoiceNode(int trainee_pos, Node *this_n
             strategy_->uint_wavg_[rnb0 + sampled_a] += 1;
         }
 
-        return WalkTree(trainee_pos, this_node->children[sampled_a], hand_info);
+        return WalkTree(trainee, this_node->children[sampled_a], hand_info);
     }
 }
 
@@ -259,14 +258,15 @@ double ScalarCfrWorker::WalkLeafTree(int trainee_pos,
     return LeafChoiceRollout(trainee_pos, this_node, hand_info, c_strategy);
 }
 
-double ScalarCfrWorker::LeafRootRollout(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info)
+double ScalarCfrWorker::LeafRootRollout(int trainee, Node *this_node, sPrivateHandsInfo &hand_info)
 {
-    // map this_node to a node from the blueprint
+    // NOTE(kwok): Map this_node to a node from the blueprint. We only consider the blueprint
+    // during the rollout.
     NodeMatchResult condition;
     // todo: change the strategy match node
     blueprint_->ag_->MapStateToNode(this_node->state_, condition);
 
-    auto matched_node = condition.matched_node_;
+    auto *matched_node = condition.matched_node_;
 
     // NOTE(kwok): Rollout for `rollout_rep` times starting from the matched node till we hit terminals.
     sPrivateHandsInfo subgame_priv_hands_info(hand_info.num_players, hand_info.board_, gen);
@@ -289,10 +289,10 @@ double ScalarCfrWorker::LeafRootRollout(int trainee_pos, Node *this_node, sPriva
      */
     // Allocate regrets for each four strategy. Should the regrets be global?
     // FIXME(kwok): The number of players is not supposed to be fixed to 2.
-    double c_str_regret[2][MAX_META_STRATEGY];
-    for (auto &a: c_str_regret) {
-        for (auto &b: a) {
-            b = 0;
+    double all_players_regrets[2][MAX_META_STRATEGY];
+    for (auto &player_regrets: all_players_regrets) {
+        for (auto &regret: player_regrets) {
+            regret = 0;
         }
     }
 
@@ -325,14 +325,14 @@ double ScalarCfrWorker::LeafRootRollout(int trainee_pos, Node *this_node, sPriva
 
         // FIXME(kwok): The number of players is not supposed to be fixed to 2.
         for (int p = 0; p < 2; p++) {
-            // pick an action for the opponent based on its
+            // NOTE(kwok): pick an action for the opponent based on its strategy profile
             float opp_distr[MAX_META_STRATEGY];
-            GetPolicy<double>(opp_distr, MAX_META_STRATEGY, c_str_regret[1 - p]);
+            GetPolicy<double>(opp_distr, MAX_META_STRATEGY, all_players_regrets[1 - p]);
             auto opp_sampled_a = RndXorShift<float>(opp_distr, MAX_META_STRATEGY, x, y, z, (1 << 16));
             if (opp_sampled_a == -1) {
-                logger::debug("🚨depth limit meta strategy regret problem");
+                logger::warn("🚨depth limit meta strategy regret problem");
                 for (int g = 0; g < MAX_META_STRATEGY; g++) {
-                    logger::debug("%f", c_str_regret[1 - p][g]);
+                    logger::warn("action %d with the regret of %f", g, all_players_regrets[1 - p][g]);
                 }
             }
 
@@ -348,21 +348,22 @@ double ScalarCfrWorker::LeafRootRollout(int trainee_pos, Node *this_node, sPriva
                 action_cfus[s] = WalkLeafTree(p, matched_node, subgame_priv_hands_info, c_strategy);
             }
 
-            float distr[4]{};
-            GetPolicy<double>(distr, MAX_META_STRATEGY, c_str_regret[p]);
+            // NOTE(kwok): pick an action for the trainee p
+            float trainee_distr[MAX_META_STRATEGY];
+            GetPolicy<double>(trainee_distr, MAX_META_STRATEGY, all_players_regrets[p]);
             double cfu = 0.0;
             for (int s = 0; s < MAX_META_STRATEGY; s++) {
-                cfu += distr[s] * action_cfus[s];
+                cfu += trainee_distr[s] * action_cfus[s];
             }
 
             // If at the final iter
             if (rollout_i == rollout_rep - 1) {
                 final_cfus[p] = cfu;
             } else {
-                // update the regrets
+                // update the regrets for the current player
                 for (int s = 0; s < MAX_META_STRATEGY; s++) {
                     double diff = action_cfus[s] - cfu;
-                    c_str_regret[p][s] += diff;
+                    all_players_regrets[p][s] += diff;
                 }
             }
         }
@@ -382,53 +383,52 @@ double ScalarCfrWorker::LeafChoiceRollout(int trainee_pos,
     int a_max = this_node->GetAmax();
 
     float distr_rnb[a_max];
-    // did not implement the get zipavg from node.
-    blueprint_->ComputeStrategy(this_node, b, distr_rnb, STRATEGY_ZIPAVG); // by default blueprint only use zipavg
+    blueprint_->ComputeStrategy(this_node, b, distr_rnb, STRATEGY_ZIPAVG);
 
     // adjust according to the biased strategy
     auto continuation_strategy = p_meta[acting_player];
-    // find out the children that called
-    int calling_idx = -1;
-    for (auto c: this_node->children) {
+    // find out the children that call
+    int call_sibling_idx = -1;
+    for (auto *c: this_node->children) {
         if (c->GetLastAction().type == a_call) {
-            calling_idx = c->sibling_idx_;
+            call_sibling_idx = c->sibling_idx_;
             break;
         }
     }
 
-    if (calling_idx == -1) {
+    if (call_sibling_idx == -1) {
         this_node->PrintAllChildState();
         logger::critical("calling should always be an available action");
     }
 
     switch (continuation_strategy) {
-        case BIASED_CALLING:
-            distr_rnb[calling_idx] *= BIASED_SCALER;
+        case BIASED_CALLING: {
+            distr_rnb[call_sibling_idx] *= BIASED_SCALER;
             break;
-        case BIASED_RAISING:
-            for (int i = calling_idx + 1; i < a_max; i++) {
+        }
+        case BIASED_RAISING: {
+            for (int i = call_sibling_idx + 1; i < a_max; i++) {
                 distr_rnb[i] *= BIASED_SCALER;
             }
             break;
-        case BIASED_FOLDING:
-            if (calling_idx == 1) {
+        }
+        case BIASED_FOLDING: {
+            if (call_sibling_idx == 1) {
                 distr_rnb[0] *= BIASED_SCALER;
             }
             break;
-        case BIASED_NONE:
+        }
+        case BIASED_NONE: {
             // do nothing
             break;
+        }
     }
 
     // renomalize the distribution
-    float sum_local_avg = 0.0;
-    for (auto a = 0; a < a_max; a++) {
-        sum_local_avg += distr_rnb[a];
-    }
-    auto scaler = 1.0 / sum_local_avg;
-    for (auto a = 0; a < a_max; a++) {
-        distr_rnb[a] *= scaler;
-    }
+    float local_distr_sum = 0.0;
+    for (auto a = 0; a < a_max; a++) local_distr_sum += distr_rnb[a];
+    float scaler = 1.f / local_distr_sum;
+    for (auto a = 0; a < a_max; a++) distr_rnb[a] *= scaler;
 
     // pick an action
     int sampled_a = RndXorShift<float>(distr_rnb, a_max, x, y, z, (1 << 16));

@@ -90,7 +90,7 @@ struct sPrivateHandsInfo
     void SetBucketAndPayoff(AbstractGame *ag)
     {
         // set buckets by round
-        int rank[2];
+        int rank[2]; // FIXME(kwok): The number of players is not supposed to be fixed to 2.
         for (int player_pos = 0; player_pos < num_players; player_pos++) {
             auto high_low_pair = FromVectorIndex(hand_[player_pos]);
             rank[player_pos] = RankHand(high_low_pair.first, high_low_pair.second, &board_);
@@ -111,6 +111,7 @@ struct sPrivateHandsInfo
                 buckets_[player_pos][r] = bucket;
             }
         }
+        // FIXME(kwok): The number of players is not supposed to be fixed to 2.
         // set winning flag
         payoff_[0] = rank[0] > rank[1]
                      ? 1
@@ -193,11 +194,11 @@ public:
     // Depth-Limited Solving
     double EvalRootLeafNode(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info);
 
-    double EvalIntermediateChoiceNode(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info);
+    double EvalIntermediateChoiceNode(int trainee, Node *this_node, sPrivateHandsInfo &hand_info);
 
     void WavgUpdateSideWalk(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info);
 
-    double LeafRootRollout(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info);
+    double LeafRootRollout(int trainee, Node *this_node, sPrivateHandsInfo &hand_info);
 
     double WalkLeafTree(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info, int *c_strategy);
 
