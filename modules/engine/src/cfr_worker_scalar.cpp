@@ -386,7 +386,7 @@ double ScalarCfrWorker::LeafChoiceRollout(int trainee_pos,
     auto b = hand_info.buckets_[acting_player][r];
     int a_max = this_node->GetAmax();
 
-    float continuation_distr_rnb[a_max]; // NOTE(kwok): continuation strategy
+    float continuation_distr_rnb[a_max]; // NOTE(kwok): one of the four continuation strategies
     blueprint_->ComputeStrategy(this_node, b, continuation_distr_rnb, STRATEGY_ZIPAVG);
 
     auto bias_favor = bias_favors_for_all[acting_player];
@@ -434,9 +434,9 @@ double ScalarCfrWorker::LeafChoiceRollout(int trainee_pos,
         local_distr_sum += continuation_distr_rnb[a];
     }
 
-    float scaler = 1.f / local_distr_sum;
+    float factor = 1.f / local_distr_sum;
     for (auto a = 0; a < a_max; a++) {
-        continuation_distr_rnb[a] *= scaler;
+        continuation_distr_rnb[a] *= factor;
     }
 
     // NOTE(kwok): pick an action
@@ -451,7 +451,8 @@ double ScalarCfrWorker::LeafChoiceRollout(int trainee_pos,
     logger::debug("select child leaf node %d", this_node->children[sampled_a]->GetLastActionCode());
 #endif
 
-    double cfu = WalkLeafTree(trainee_pos, this_node->children[sampled_a], hand_info, bias_favors_for_all);
+    auto *sampled_child = this_node->children[sampled_a];
+    double cfu = WalkLeafTree(trainee_pos, sampled_child, hand_info, bias_favors_for_all);
     return cfu;
 }
 
