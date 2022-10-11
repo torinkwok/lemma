@@ -107,7 +107,7 @@ struct sPrivateHandsInfo
                                                                                    high_low_pair.second,
                                                                                    &board_, r
                 );
-                // NOTE(kwok): Differentiate buckets at different rounds
+                // NOTE(kwok): discriminate buckets at different rounds
                 buckets_[player_pos][r] = bucket;
             }
         }

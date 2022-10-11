@@ -269,15 +269,16 @@ double ScalarCfrWorker::LeafRootRollout(int trainee_pos, Node *this_node, sPriva
     auto matched_node = condition.matched_node_;
 
     // NOTE(kwok): Rollout for `rollout_rep` times starting from the matched node till we hit terminals.
-    // FIXME(kwok): The number of players is not supposed to be fixed to 2.
     sPrivateHandsInfo subgame_priv_hands_info(hand_info.num_players, hand_info.board_, gen);
+    // FIXME(kwok): The number of players is not supposed to be fixed to 2.
     subgame_priv_hands_info.hand_[0] = hand_info.hand_[0];
     subgame_priv_hands_info.hand_[1] = hand_info.hand_[1];
 
     // NOTE(kwok): Fill the board according to the round we are currently at
     auto r = this_node->GetRound();
-    int sum_bc = r == HOLDEM_ROUND_PREFLOP ? 0 : 3;
-    for (int c = sum_bc; c < HOLDEM_MAX_BOARD; c++) {
+    int n_init_board_cards = r == HOLDEM_ROUND_PREFLOP ? 0 : 3;
+    for (int c = n_init_board_cards; c < HOLDEM_MAX_BOARD; c++) {
+        // fill the rest of the board cards array with placeholders
         subgame_priv_hands_info.board_.cards[c] = IMPOSSIBLE_CARD;
     }
 
@@ -304,19 +305,19 @@ double ScalarCfrWorker::LeafRootRollout(int trainee_pos, Node *this_node, sPriva
      * doing 24 probing in total
      */
     for (int rollout_i = 0; rollout_i < rollout_rep; rollout_i++) {
-        // TODO(kwok): Make this loop body a testable function
-         // NOTE(kwok): Sample a board, which must not crash with the current hands.
+        // TODO(kwok): Make this loop body a testable function.
+        // NOTE(kwok): Sample a board, which must not crash with the current hands.
         HoldemDeck deck{subgame_priv_hands_info.board_};
         deck.Shuffle();
-        int total_bc = sum_bc;
+        int n_curr_board_cards = n_init_board_cards;
         int deck_cursor = 0;
-        while (total_bc <= HOLDEM_MAX_BOARD) {
-            auto sample_card = deck.cards_[deck_cursor++];
-            if (VectorIdxCrashesWithCard(subgame_priv_hands_info.hand_[0], sample_card)
-                || VectorIdxCrashesWithCard(subgame_priv_hands_info.hand_[1], sample_card)) {
+        while (n_curr_board_cards <= HOLDEM_MAX_BOARD) {
+            auto sampled_public_card = deck.cards_[deck_cursor++];
+            if (VectorIdxCrashesWithCard(subgame_priv_hands_info.hand_[0], sampled_public_card)
+                || VectorIdxCrashesWithCard(subgame_priv_hands_info.hand_[1], sampled_public_card)) {
                 continue;
             }
-            subgame_priv_hands_info.board_.cards[total_bc++] = sample_card;
+            subgame_priv_hands_info.board_.cards[n_curr_board_cards++] = sampled_public_card;
         }
 
         // subgame_priv_hands_info.board_.Print();
@@ -324,7 +325,7 @@ double ScalarCfrWorker::LeafRootRollout(int trainee_pos, Node *this_node, sPriva
 
         // FIXME(kwok): The number of players is not supposed to be fixed to 2.
         for (int p = 0; p < 2; p++) {
-            // Pick a strategy for the opponent.
+            // pick an action for the opponent based on its
             float opp_distr[MAX_META_STRATEGY];
             GetPolicy<double>(opp_distr, MAX_META_STRATEGY, c_str_regret[1 - p]);
             auto opp_sampled_a = RndXorShift<float>(opp_distr, MAX_META_STRATEGY, x, y, z, (1 << 16));
@@ -335,7 +336,7 @@ double ScalarCfrWorker::LeafRootRollout(int trainee_pos, Node *this_node, sPriva
                 }
             }
 
-            double cfu_s[MAX_META_STRATEGY];
+            double action_cfus[MAX_META_STRATEGY];
 
             // For each strategy of the current acting player
             for (int s = 0; s < MAX_META_STRATEGY; s++) {
@@ -344,14 +345,14 @@ double ScalarCfrWorker::LeafRootRollout(int trainee_pos, Node *this_node, sPriva
                 c_strategy[p] = s;
                 c_strategy[1 - p] = opp_sampled_a;
                 // rollout with the strategy combination
-                cfu_s[s] = WalkLeafTree(p, matched_node, subgame_priv_hands_info, c_strategy);
+                action_cfus[s] = WalkLeafTree(p, matched_node, subgame_priv_hands_info, c_strategy);
             }
 
             float distr[4]{};
             GetPolicy<double>(distr, MAX_META_STRATEGY, c_str_regret[p]);
             double cfu = 0.0;
             for (int s = 0; s < MAX_META_STRATEGY; s++) {
-                cfu += distr[s] * cfu_s[s];
+                cfu += distr[s] * action_cfus[s];
             }
 
             // If at the final iter
@@ -360,7 +361,7 @@ double ScalarCfrWorker::LeafRootRollout(int trainee_pos, Node *this_node, sPriva
             } else {
                 // update the regrets
                 for (int s = 0; s < MAX_META_STRATEGY; s++) {
-                    double diff = cfu_s[s] - cfu;
+                    double diff = action_cfus[s] - cfu;
                     c_str_regret[p][s] += diff;
                 }
             }
