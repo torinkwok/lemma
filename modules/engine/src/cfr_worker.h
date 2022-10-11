@@ -198,11 +198,11 @@ public:
 
     void WavgUpdateSideWalk(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info);
 
-    double LeafRootRollout(int trainee, Node *this_node, sPrivateHandsInfo &hand_info);
+    double WalkLeafTree(int trainee, Node *this_node, sPrivateHandsInfo &hand_info, int *bias_favors_for_all);
 
-    double WalkLeafTree(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info, int *bias_favors_for_all);
+    double LeafRootRollout(int trainee, Node *leaf_root_node, sPrivateHandsInfo &hand_info);
 
-    double LeafIntermediateChoiceNodeRollout(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info, int *bias_favors_for_all);
+    double LeafIntermediateNodeRollout(int trainee, Node *this_node, sPrivateHandsInfo &hand_info, int *bias_favors_for_all);
 };
 
 class VectorCfrWorker : public CfrWorker
