@@ -200,7 +200,7 @@ public:
 
     double WalkLeafTree(int trainee, Node *this_node, sPrivateHandsInfo &hand_info, int *bias_favors_for_all);
 
-    double LeafRootRollout(int trainee, Node *leaf_root_node, sPrivateHandsInfo &hand_info);
+    double LeafRootRollout(Node *leaf_root_node, sPrivateHandsInfo &hand_info);
 
     double LeafIntermediateNodeRollout(int trainee, Node *this_node, sPrivateHandsInfo &hand_info, int *bias_favors_for_all);
 };

@@ -137,7 +137,7 @@ double ScalarCfrWorker::EvalRootLeafNode(int trainee_pos, Node *this_node, sPriv
     /*
      * ROLLOUT for the current trainee rather than pairwise or alternatively
      */
-    double trainee_cfu = LeafRootRollout(trainee_pos, this_node, hand_info);
+    double trainee_cfu = LeafRootRollout(this_node, hand_info);
 
     /*
      * or use NN
@@ -258,7 +258,7 @@ double ScalarCfrWorker::WalkLeafTree(int trainee,
     return LeafIntermediateNodeRollout(trainee, this_node, hand_info, bias_favors_for_all);
 }
 
-double ScalarCfrWorker::LeafRootRollout(int trainee, Node *leaf_root_node, sPrivateHandsInfo &hand_info)
+double ScalarCfrWorker::LeafRootRollout(Node *leaf_root_node, sPrivateHandsInfo &hand_info)
 {
     // NOTE(kwok): Map leaf_root_node to a node from the blueprint. We only consider the blueprint during
     // the rollout.
@@ -326,47 +326,47 @@ double ScalarCfrWorker::LeafRootRollout(int trainee, Node *leaf_root_node, sPriv
         subgame_priv_hands_info.SetBucketAndPayoff(blueprint_->ag_);
 
         // FIXME(kwok): The number of players is not supposed to be fixed to 2.
-        for (int p = 0; p < 2; p++) {
+        for (int trainee = 0; trainee < 2; trainee++) {
             double bias_favor_cfus[MAX_META_STRATEGY];
 
             // NOTE(kwok): pick an action for the opponent based on its strategy profile
             float opp_distr[MAX_META_STRATEGY];
-            GetPolicy<double>(opp_distr, MAX_META_STRATEGY, all_players_regrets[1 - p]);
+            GetPolicy<double>(opp_distr, MAX_META_STRATEGY, all_players_regrets[1 - trainee]);
             auto opp_bias_favor = RndXorShift<float>(opp_distr, MAX_META_STRATEGY, x, y, z, (1 << 16));
             if (opp_bias_favor == -1) {
                 logger::warn("🚨depth limit meta strategy regret problem");
                 for (int g = 0; g < MAX_META_STRATEGY; g++) {
-                    logger::warn("action %d with the regret of %f", g, all_players_regrets[1 - p][g]);
+                    logger::warn("action %d with the regret of %f", g, all_players_regrets[1 - trainee][g]);
                 }
             }
 
             // NOTE(kwok): rollout each of the four continuation strategies
-            for (int p_bias_favor = 0; p_bias_favor < MAX_META_STRATEGY; p_bias_favor++) {
+            for (int trainee_bias_favor = 0; trainee_bias_favor < MAX_META_STRATEGY; trainee_bias_favor++) {
                 // FIXME(kwok): The number of players is not supposed to be fixed to 2.
                 int bias_favors_for_all[2];
-                bias_favors_for_all[p] = p_bias_favor;
-                bias_favors_for_all[1 - p] = opp_bias_favor;
+                bias_favors_for_all[trainee] = trainee_bias_favor;
+                bias_favors_for_all[1 - trainee] = opp_bias_favor;
                 // rollout with the strategy combination
-                bias_favor_cfus[p_bias_favor] = WalkLeafTree(p, matched_node, subgame_priv_hands_info,
-                                                             bias_favors_for_all
+                bias_favor_cfus[trainee_bias_favor] = WalkLeafTree(trainee, matched_node, subgame_priv_hands_info,
+                                                                   bias_favors_for_all
                 );
             }
 
-            float p_distr[MAX_META_STRATEGY];
-            GetPolicy<double>(p_distr, MAX_META_STRATEGY, all_players_regrets[p]);
+            float trainee_distr[MAX_META_STRATEGY];
+            GetPolicy<double>(trainee_distr, MAX_META_STRATEGY, all_players_regrets[trainee]);
             double cfu = 0.0;
             for (int s = 0; s < MAX_META_STRATEGY; s++) {
-                cfu += p_distr[s] * bias_favor_cfus[s];
+                cfu += trainee_distr[s] * bias_favor_cfus[s];
             }
 
             if (rollout_i == ROLLOUT_REPS - 1) {
                 // if at the final rollout iteration
-                final_cfus[p] = cfu;
+                final_cfus[trainee] = cfu;
             } else {
                 // update the regrets for the current player
                 for (int p_bias_favor = 0; p_bias_favor < MAX_META_STRATEGY; p_bias_favor++) {
                     double diff = bias_favor_cfus[p_bias_favor] - cfu;
-                    all_players_regrets[p][p_bias_favor] += diff;
+                    all_players_regrets[trainee][p_bias_favor] += diff;
                 }
             }
         }
