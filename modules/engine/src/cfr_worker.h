@@ -14,7 +14,7 @@ const int BIASED_CALLING = 0;
 const int BIASED_RAISING = 1;
 const int BIASED_FOLDING = 2;
 const int BIASED_NONE = 3;
-const int NUM_BIASED_STRATEGIES = 4;
+const int MAX_META_STRATEGY = 4;
 
 const int BIASED_SCALER = 5;
 

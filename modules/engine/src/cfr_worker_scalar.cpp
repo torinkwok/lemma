@@ -289,7 +289,7 @@ double ScalarCfrWorker::LeafRootRollout(int trainee, Node *this_node, sPrivateHa
      */
     // Allocate regrets for each four strategy. Should the regrets be global?
     // FIXME(kwok): The number of players is not supposed to be fixed to 2.
-    double all_players_regrets[2][NUM_BIASED_STRATEGIES];
+    double all_players_regrets[2][MAX_META_STRATEGY];
     for (auto &player_regrets: all_players_regrets) {
         for (auto &regret: player_regrets) {
             regret = 0;
@@ -326,20 +326,20 @@ double ScalarCfrWorker::LeafRootRollout(int trainee, Node *this_node, sPrivateHa
         // FIXME(kwok): The number of players is not supposed to be fixed to 2.
         for (int p = 0; p < 2; p++) {
             // NOTE(kwok): pick an action for the opponent based on its strategy profile
-            float opp_distr[NUM_BIASED_STRATEGIES];
-            GetPolicy<double>(opp_distr, NUM_BIASED_STRATEGIES, all_players_regrets[1 - p]);
-            auto opp_sampled_a = RndXorShift<float>(opp_distr, NUM_BIASED_STRATEGIES, x, y, z, (1 << 16));
+            float opp_distr[MAX_META_STRATEGY];
+            GetPolicy<double>(opp_distr, MAX_META_STRATEGY, all_players_regrets[1 - p]);
+            auto opp_sampled_a = RndXorShift<float>(opp_distr, MAX_META_STRATEGY, x, y, z, (1 << 16));
             if (opp_sampled_a == -1) {
                 logger::warn("🚨depth limit meta strategy regret problem");
-                for (int g = 0; g < NUM_BIASED_STRATEGIES; g++) {
+                for (int g = 0; g < MAX_META_STRATEGY; g++) {
                     logger::warn("action %d with the regret of %f", g, all_players_regrets[1 - p][g]);
                 }
             }
 
-            double action_cfus[NUM_BIASED_STRATEGIES];
+            double action_cfus[MAX_META_STRATEGY];
 
             // For each strategy of the current acting player
-            for (int s = 0; s < NUM_BIASED_STRATEGIES; s++) {
+            for (int s = 0; s < MAX_META_STRATEGY; s++) {
                 // FIXME(kwok): The number of players is not supposed to be fixed to 2.
                 int c_strategy[2];
                 c_strategy[p] = s;
@@ -349,10 +349,10 @@ double ScalarCfrWorker::LeafRootRollout(int trainee, Node *this_node, sPrivateHa
             }
 
             // NOTE(kwok): pick an action for the trainee p
-            float trainee_distr[NUM_BIASED_STRATEGIES];
-            GetPolicy<double>(trainee_distr, NUM_BIASED_STRATEGIES, all_players_regrets[p]);
+            float trainee_distr[MAX_META_STRATEGY];
+            GetPolicy<double>(trainee_distr, MAX_META_STRATEGY, all_players_regrets[p]);
             double cfu = 0.0;
-            for (int s = 0; s < NUM_BIASED_STRATEGIES; s++) {
+            for (int s = 0; s < MAX_META_STRATEGY; s++) {
                 cfu += trainee_distr[s] * action_cfus[s];
             }
 
@@ -361,7 +361,7 @@ double ScalarCfrWorker::LeafRootRollout(int trainee, Node *this_node, sPrivateHa
                 final_cfus[p] = cfu;
             } else {
                 // update the regrets for the current player
-                for (int s = 0; s < NUM_BIASED_STRATEGIES; s++) {
+                for (int s = 0; s < MAX_META_STRATEGY; s++) {
                     double diff = action_cfus[s] - cfu;
                     all_players_regrets[p][s] += diff;
                 }
