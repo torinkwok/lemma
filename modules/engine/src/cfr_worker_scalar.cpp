@@ -82,7 +82,7 @@ double ScalarCfrWorker::WalkTree(int trainee_pos, Node *this_node, sPrivateHands
     if (this_node->IsLeafNode()) {
         return EvalRootLeafNode(trainee_pos, this_node, hand_info);
     }
-    return EvalIntermediateChoiceNode(trainee_pos, this_node, hand_info);
+    return EvalInterNode(trainee_pos, this_node, hand_info);
 }
 
 double ScalarCfrWorker::EvalTermNode(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info)
@@ -153,7 +153,7 @@ double ScalarCfrWorker::EvalRootLeafNode(int trainee_pos, Node *this_node, sPriv
     return trainee_pos == 0 ? trainee_cfu : -trainee_cfu;
 }
 
-double ScalarCfrWorker::EvalIntermediateChoiceNode(int trainee, Node *this_node, sPrivateHandsInfo &hand_info)
+double ScalarCfrWorker::EvalInterNode(int trainee, Node *this_node, sPrivateHandsInfo &hand_info)
 {
     int acting_player = this_node->GetActingPlayer();
     bool is_trainee_turn = acting_player == trainee;
@@ -255,7 +255,7 @@ double ScalarCfrWorker::WalkLeafTree(int trainee,
     if (this_node->IsTerminal()) {
         return EvalTermNode(trainee, this_node, hand_info);
     }
-    return LeafIntermediateNodeRollout(trainee, this_node, hand_info, bias_favors_for_all);
+    return LeafInterNodeRollout(trainee, this_node, hand_info, bias_favors_for_all);
 }
 
 double ScalarCfrWorker::LeafRootRollout(Node *leaf_root_node, sPrivateHandsInfo &hand_info)
@@ -329,7 +329,8 @@ double ScalarCfrWorker::LeafRootRollout(Node *leaf_root_node, sPrivateHandsInfo 
         for (int trainee = 0; trainee < 2; trainee++) {
             double bias_favor_cfus[MAX_META_STRATEGY];
 
-            // NOTE(kwok): pick an action for the opponent based on its strategy profile
+            // NOTE(kwok): This iteration is all about the current trainee. For the opponents, simply pick
+            // an action based on their regrets accumulated during the rollouts.
             float opp_distr[MAX_META_STRATEGY];
             GetPolicy<double>(opp_distr, MAX_META_STRATEGY, all_players_regrets[1 - trainee]);
             auto opp_bias_favor = RndXorShift<float>(opp_distr, MAX_META_STRATEGY, x, y, z, (1 << 16));
@@ -346,9 +347,9 @@ double ScalarCfrWorker::LeafRootRollout(Node *leaf_root_node, sPrivateHandsInfo 
                 int bias_favors_for_all[2];
                 bias_favors_for_all[trainee] = trainee_bias_favor;
                 bias_favors_for_all[1 - trainee] = opp_bias_favor;
-                // rollout with the strategy combination
-                bias_favor_cfus[trainee_bias_favor] = WalkLeafTree(trainee, matched_node, subgame_priv_hands_info,
-                                                                   bias_favors_for_all
+                // NOTE(kwok): fire a rollout with the selected bias favors
+                bias_favor_cfus[trainee_bias_favor] = WalkLeafTree(
+                        trainee, matched_node, subgame_priv_hands_info, bias_favors_for_all
                 );
             }
 
@@ -375,10 +376,10 @@ double ScalarCfrWorker::LeafRootRollout(Node *leaf_root_node, sPrivateHandsInfo 
     return final_cfus[0]; // only for player 0
 }
 
-double ScalarCfrWorker::LeafIntermediateNodeRollout(int trainee,
-                                                    Node *this_node,
-                                                    sPrivateHandsInfo &hand_info,
-                                                    int *bias_favors_for_all)
+double ScalarCfrWorker::LeafInterNodeRollout(int trainee,
+                                             Node *this_node,
+                                             sPrivateHandsInfo &hand_info,
+                                             int *bias_favors_for_all)
 {
     auto r = this_node->GetRound();
     auto acting_player = this_node->GetActingPlayer();
@@ -404,7 +405,7 @@ double ScalarCfrWorker::LeafIntermediateNodeRollout(int trainee,
         logger::critical("calling should always be an available action");
     }
 
-    // NOTE(kwok): adjust according to the bias_favor
+    // NOTE(kwok): biased according to the specified favor
     switch (bias_favor) {
         case BIASED_CALLING: {
             continuation_distr_rnb[call_sibling_idx] *= BIASED_SCALER;

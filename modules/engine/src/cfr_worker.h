@@ -194,7 +194,7 @@ public:
     // Depth-Limited Solving
     double EvalRootLeafNode(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info);
 
-    double EvalIntermediateChoiceNode(int trainee, Node *this_node, sPrivateHandsInfo &hand_info);
+    double EvalInterNode(int trainee, Node *this_node, sPrivateHandsInfo &hand_info);
 
     void WavgUpdateSideWalk(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info);
 
@@ -202,7 +202,7 @@ public:
 
     double LeafRootRollout(Node *leaf_root_node, sPrivateHandsInfo &hand_info);
 
-    double LeafIntermediateNodeRollout(int trainee, Node *this_node, sPrivateHandsInfo &hand_info, int *bias_favors_for_all);
+    double LeafInterNodeRollout(int trainee, Node *this_node, sPrivateHandsInfo &hand_info, int *bias_favors_for_all);
 };
 
 class VectorCfrWorker : public CfrWorker
