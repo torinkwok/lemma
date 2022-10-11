@@ -202,7 +202,7 @@ public:
 
     double WalkLeafTree(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info, int *bias_favors_for_all);
 
-    double LeafChoiceRollout(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info, int *bias_favors_for_all);
+    double LeafIntermediateChoiceNodeRollout(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info, int *bias_favors_for_all);
 };
 
 class VectorCfrWorker : public CfrWorker

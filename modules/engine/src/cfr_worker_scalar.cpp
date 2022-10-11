@@ -255,7 +255,7 @@ double ScalarCfrWorker::WalkLeafTree(int trainee_pos,
     if (this_node->IsTerminal()) {
         return EvalTermNode(trainee_pos, this_node, hand_info);
     }
-    return LeafChoiceRollout(trainee_pos, this_node, hand_info, bias_favors_for_all);
+    return LeafIntermediateChoiceNodeRollout(trainee_pos, this_node, hand_info, bias_favors_for_all);
 }
 
 double ScalarCfrWorker::LeafRootRollout(int trainee, Node *this_node, sPrivateHandsInfo &hand_info)
@@ -376,10 +376,10 @@ double ScalarCfrWorker::LeafRootRollout(int trainee, Node *this_node, sPrivateHa
     return final_cfus[0]; // only for player 0
 }
 
-double ScalarCfrWorker::LeafChoiceRollout(int trainee_pos,
-                                          Node *this_node,
-                                          sPrivateHandsInfo &hand_info,
-                                          int *bias_favors_for_all)
+double ScalarCfrWorker::LeafIntermediateChoiceNodeRollout(int trainee_pos,
+                                                          Node *this_node,
+                                                          sPrivateHandsInfo &hand_info,
+                                                          int *bias_favors_for_all)
 {
     auto r = this_node->GetRound();
     auto acting_player = this_node->GetActingPlayer();
