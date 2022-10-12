@@ -9,8 +9,10 @@ struct sPrivHandRank
 {
     Card_t high_card;
     Card_t low_card;
+
     /// Computed and stored by external consumers, taking a external board into account.
     int rank;
+
     uint16_t vector_idx;
 
     [[nodiscard]] inline bool CheckCardCrash(Card_t check_card) const
@@ -93,14 +95,14 @@ struct sPrivHandRank
 class TermEvalKernel
 {
 public:
-    std::array<sPrivHandRank *, HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD> sorted_showdown_priv_hand_ranks;
+    std::array<sPrivHandRank *, HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD> sorted_infoset_by_rank;
 
     Board_t board;
     int min_rank = 0;
     size_t n_unique_rank = 0;
     int *rank_first_equal_index; // rank starting
     int *rank_first_losing_index; // next rank starting
-    uint16_t high_low_pos[52][52];
+    uint16_t rank_indices_by_high_low[52][52];
 
     // preparations
     void Prepare(Board_t *board_ptr);
@@ -128,7 +130,7 @@ public:
 
     virtual ~TermEvalKernel()
     {
-        for (auto a: sorted_showdown_priv_hand_ranks) {
+        for (auto a: sorted_infoset_by_rank) {
             delete a;
         }
         delete[] rank_first_losing_index;
