@@ -5,7 +5,7 @@ void TermEvalKernel::Prepare(Board_t *board_ptr)
     board = *board_ptr;
     int index = 0;
 
-    std::set<int> rank_set;
+    std::set<int> unique_ranks;
     for (Card_t low = 0; low < HOLDEM_MAX_CARDS - 1; low++) {
         for (Card_t high = low + 1; high < HOLDEM_MAX_CARDS; high++) {
             auto priv_hand = PrivHand_t{high, low};
@@ -17,7 +17,7 @@ void TermEvalKernel::Prepare(Board_t *board_ptr)
             // TODO(kwok): Let `sPrivHandRank` handle the calculation of the complete hand rank.
             showdown_sorted_hand_ranks[index] = new sPrivHandRank{high, low, complete_hand_rank, vector_idx};
             index++;
-            rank_set.insert(complete_hand_rank);
+            unique_ranks.insert(complete_hand_rank);
         }
     }
 
@@ -26,9 +26,9 @@ void TermEvalKernel::Prepare(Board_t *board_ptr)
     }
 
     // allocate memory on the heap
-    unique_rank_count = rank_set.size();
-    rank_first_equal_index = new int[unique_rank_count];
-    rank_first_losing_index = new int[unique_rank_count];
+    n_unique_rank = unique_ranks.size();
+    rank_first_equal_index = new int[n_unique_rank];
+    rank_first_losing_index = new int[n_unique_rank];
 
     Sort();
     PreStack();
@@ -75,11 +75,11 @@ void TermEvalKernel::PreStack()
         }
     }
 
-    for (int j = 0; j < unique_rank_count - 1; j++) {
+    for (int j = 0; j < n_unique_rank - 1; j++) {
         rank_first_losing_index[j] = rank_first_equal_index[j + 1];
     }
 
-    rank_first_losing_index[unique_rank_count - 1] = HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD;
+    rank_first_losing_index[n_unique_rank - 1] = HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD;
 }
 
 /**
@@ -99,7 +99,7 @@ void TermEvalKernel::FastShowdownEval(double *opp_full_belief,
         opp_belief[i] = opp_full_belief[showdown_sorted_hand_ranks[i]->vector_idx];
     }
 
-    double rank_net_win[unique_rank_count];
+    double rank_net_win[n_unique_rank];
     double card_net[HOLDEM_MAX_CARDS * HOLDEM_MAX_CARDS];
     for (auto &i: card_net) i = 0;
     int card_skipping_rank[46 * HOLDEM_MAX_CARDS]; // 52 - 5 - 1
@@ -120,7 +120,7 @@ void TermEvalKernel::FastShowdownEval(double *opp_full_belief,
         card_last_net[c] = card_net[ComboIdx(0, c)];
     }
 
-    for (int rank_i = 0; rank_i < unique_rank_count; rank_i++) {
+    for (int rank_i = 0; rank_i < n_unique_rank; rank_i++) {
         double base = rank_net_win[rank_i];
         for (int j = rank_first_equal_index[rank_i]; j < rank_first_losing_index[rank_i]; j++) {
             auto v_idx = showdown_sorted_hand_ranks[j]->vector_idx;
@@ -274,7 +274,7 @@ void TermEvalKernel::StackShowdownProb(double *opp_belief,
                                        double *card_rank_net,
                                        int *card_skipping_rank_list)
 {
-    double rank_sum[unique_rank_count];
+    double rank_sum[n_unique_rank];
     for (auto &i: rank_sum) {
         i = 0;
     }
@@ -302,7 +302,7 @@ void TermEvalKernel::StackShowdownProb(double *opp_belief,
 
     // first list iteration, tally the sum of belief, by rank, by card
     double opp_belief_sum = 0.0;
-    for (int rank_i = 0; rank_i < unique_rank_count; rank_i++) {
+    for (int rank_i = 0; rank_i < n_unique_rank; rank_i++) {
         for (int j = rank_first_equal_index[rank_i]; j < rank_first_losing_index[rank_i]; j++) {
             double w = opp_belief[j];
             // WARNING: FIXME(kwok): the below code snippet makes showdown not able to handle 0 items in opp belief!
@@ -329,7 +329,7 @@ void TermEvalKernel::StackShowdownProb(double *opp_belief,
     // second iters, iteratively compute needed values by rank
 
     // computing the base  //add the rank-1 and rank local sum
-    for (int rank_i = 0; rank_i < unique_rank_count; rank_i++) {
+    for (int rank_i = 0; rank_i < n_unique_rank; rank_i++) {
         if (rank_i == 0) {
             rank_net_win_prob[rank_i] = rank_sum[rank_i] - opp_belief_sum;
             continue;

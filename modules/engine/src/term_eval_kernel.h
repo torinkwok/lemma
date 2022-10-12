@@ -97,7 +97,7 @@ public:
 
     Board_t board;
     int min_rank = 0;
-    int unique_rank_count = 0;
+    int n_unique_rank = 0;
     int *rank_first_equal_index;  //rank starting
     int *rank_first_losing_index; //next rank starting
     uint16_t high_low_pos[52][52];
