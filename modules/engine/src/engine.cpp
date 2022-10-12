@@ -485,7 +485,7 @@ void Engine::EvalShowdown(MatchState &match_state) {
     auto opp_pos = 1 - match_state.viewingPlayer;
     auto opp_c1 = match_state.state.holeCards[opp_pos][0];
     auto opp_c2 = match_state.state.holeCards[opp_pos][1];
-    if (opp_c1 >= HOLDEM_MAX_CARDS || opp_c2 >= HOLDEM_MAX_CARDS) {
+    if (opp_c1 >= HOLDEM_MAX_DECK || opp_c2 >= HOLDEM_MAX_DECK) {
         logger::debug("skip showdown eval: illegal hands for opponents %d %d", opp_c1, opp_c2);
         return;
     }

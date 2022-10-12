@@ -6,8 +6,8 @@ void TermEvalKernel::Prepare(Board_t *board_ptr)
     int rank_index = 0;
 
     std::set<int> unique_ranks;
-    for (Card_t low = 0; low < HOLDEM_MAX_CARDS - 1; low++) {
-        for (Card_t high = low + 1; high < HOLDEM_MAX_CARDS; high++) {
+    for (Card_t low = 0; low < HOLDEM_MAX_DECK - 1; low++) {
+        for (Card_t high = low + 1; high < HOLDEM_MAX_DECK; high++) {
             auto priv_hand = PrivHand_t{high, low};
             if (board_ptr->PrivHandCrash(priv_hand)) {
                 continue;
@@ -96,23 +96,23 @@ void TermEvalKernel::FastShowdownEval(double *opp_full_belief,
     }
 
     double rank_net_win[n_unique_rank];
-    double card_net[HOLDEM_MAX_CARDS * HOLDEM_MAX_CARDS];
+    double card_net[HOLDEM_MAX_DECK * HOLDEM_MAX_DECK];
     for (auto &i: card_net) i = 0;
-    int card_skipping_rank[46 * HOLDEM_MAX_CARDS]; // 52 - 5 - 1
+    int card_skipping_rank[46 * HOLDEM_MAX_DECK]; // 52 - 5 - 1
     for (auto &i: card_skipping_rank) {
         i = -1;  // -1 as a cutoff flag
     }
 
     StackShowdownProb(sorted_opp_beliefs_by_rank, rank_net_win, card_net, card_skipping_rank);
 
-    int card_last_skip_idx[HOLDEM_MAX_CARDS];
+    int card_last_skip_idx[HOLDEM_MAX_DECK];
     for (auto &i: card_last_skip_idx) {
         i = 0;
     }
 
     // compute the drift
-    double card_last_net[HOLDEM_MAX_CARDS];
-    for (auto c = 0; c < HOLDEM_MAX_CARDS; c++) {
+    double card_last_net[HOLDEM_MAX_DECK];
+    for (auto c = 0; c < HOLDEM_MAX_DECK; c++) {
         card_last_net[c] = card_net[ComboIdx(0, c)];
     }
 
@@ -189,7 +189,7 @@ void TermEvalKernel::FastFoldEval(double *opp_full_belief,
                                   double *my_full_belief,
                                   int spent)
 {
-    double folding_drift[HOLDEM_MAX_CARDS];
+    double folding_drift[HOLDEM_MAX_DECK];
     for (auto &i: folding_drift) {
         i = 0;
     }
@@ -278,21 +278,21 @@ void TermEvalKernel::StackShowdownProb(double *opp_belief,
 
     //temporary object for constructing card_skipping_rank_list
     //e.g. 0->4, 1->67, 2->89, 3->126... skip_list_idx -> rank
-    int card_last_skipping_list_dx[HOLDEM_MAX_CARDS];
+    int card_last_skipping_list_dx[HOLDEM_MAX_DECK];
     for (auto &i: card_last_skipping_list_dx) {
         i = -1;
     }
 
     // skipping linked list no more than 52 - 5 - 1 = 46 unique rank.  rank * card
     // in practise it is a lot less
-    double card_rank_sum[46][HOLDEM_MAX_CARDS];
+    double card_rank_sum[46][HOLDEM_MAX_DECK];
     for (auto &i: card_rank_sum) {
         for (double &j: i) {
             j = 0;
         }
     }
 
-    double card_sum[HOLDEM_MAX_CARDS];
+    double card_sum[HOLDEM_MAX_DECK];
     for (auto &i: card_sum) {
         i = 0;
     }
@@ -314,7 +314,7 @@ void TermEvalKernel::StackShowdownProb(double *opp_belief,
                 if (idx < 0 || card_skipping_rank_list[idx] != rank_i) {
                     card_last_skipping_list_dx[c]++;
                     // present this one to rank_i, equivalent to ComboIdx(card_last_skipping_list_dx[c], c);, after ++
-                    card_skipping_rank_list[idx + HOLDEM_MAX_CARDS] = rank_i;
+                    card_skipping_rank_list[idx + HOLDEM_MAX_DECK] = rank_i;
                 }
                 card_rank_sum[card_last_skipping_list_dx[c]][c] += w;
                 card_sum[c] += w;
@@ -335,7 +335,7 @@ void TermEvalKernel::StackShowdownProb(double *opp_belief,
     }
 
     // compute the card drift, skipping linked list.
-    for (auto c = 0; c < HOLDEM_MAX_CARDS; c++) {
+    for (auto c = 0; c < HOLDEM_MAX_DECK; c++) {
         //skipping non-legit card
         if (board.CardCrash(c)) {
             continue;
@@ -353,9 +353,9 @@ void TermEvalKernel::StackShowdownProb(double *opp_belief,
                 break;
             }
             card_rank_net[combo_idx] =
-                    card_rank_net[combo_idx - HOLDEM_MAX_CARDS] + card_rank_sum[skip_idx][c]
+                    card_rank_net[combo_idx - HOLDEM_MAX_DECK] + card_rank_sum[skip_idx][c]
                     + card_rank_sum[skip_idx -
-                                    1][c];  //card_net[combo_idx - HOLDEM_MAX_CARDS]  equals combo(skip_idx-1, c)
+                                    1][c];  //card_net[combo_idx - HOLDEM_MAX_DECK]  equals combo(skip_idx-1, c)
             skip_idx++;
         }
     }
@@ -363,7 +363,7 @@ void TermEvalKernel::StackShowdownProb(double *opp_belief,
 
 inline int TermEvalKernel::ComboIdx(int rank, int card)
 {
-    return rank * HOLDEM_MAX_CARDS + card;
+    return rank * HOLDEM_MAX_DECK + card;
 }
 
 // FIXME(kwok): The number of players is not supposed to be fixed to 2.

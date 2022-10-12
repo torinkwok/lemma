@@ -21,7 +21,7 @@ const int HOLDEM_ROUND_PREFLOP = 0;
 
 const int HOLDEM_MAX_BOARD = 5;
 const int HOLDEM_MAX_HOLE_CARDS = 2;
-const int HOLDEM_MAX_CARDS = 52;
+const int HOLDEM_MAX_DECK = 52;
 const int HOLDEM_MAX_ROUNDS = 4;
 const int HOLDEM_MAX_HANDS_PERMUTATION = 1326; // (52 * 51) / 2
 const int HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD = 1081; // [(52 - 5)(52 - 5 - 1)] / 2
@@ -140,7 +140,7 @@ struct HoldemDeck
 
     explicit HoldemDeck(Board_t &board)
     {
-        for (int c = 0; c < HOLDEM_MAX_CARDS; c++) {
+        for (int c = 0; c < HOLDEM_MAX_DECK; c++) {
             if (!board.CardCrash(c)) {
                 cards_.emplace_back(c);
             }

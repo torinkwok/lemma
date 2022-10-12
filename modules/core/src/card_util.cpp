@@ -277,7 +277,7 @@ void SampleSequentialFullBoard(State &state,
             board.cards[i] = state.boardCards[i];
         }
     }
-    if (sum_bc < HOLDEM_MAX_CARDS) {
+    if (sum_bc < HOLDEM_MAX_DECK) {
         HoldemDeck deck{board};
         deck.Shuffle();
         for (int bs = sum_bc; bs < HOLDEM_MAX_BOARD; bs++) {
@@ -402,8 +402,8 @@ bool VectorIdxCrashesWithCard(VectorIndex vid, Card_t c)
 std::set<Colex> GetCannoSetByBoard(Board_t *board, int round)
 {
     std::set<Colex> colex_set;
-    for (Card_t low = 0; low < HOLDEM_MAX_CARDS - 1; low++) {
-        for (Card_t high = low + 1; high < HOLDEM_MAX_CARDS; high++) {
+    for (Card_t low = 0; low < HOLDEM_MAX_DECK - 1; low++) {
+        for (Card_t high = low + 1; high < HOLDEM_MAX_DECK; high++) {
             auto hand = PrivHand_t{high, low};
             if (board->PrivHandCrash(hand)) continue;
             auto colex = ComputeColexFromAllCards(high, low, *board, round);

@@ -117,8 +117,8 @@ void Bucket::LoadRangeColex(Board_t *board, int round)
     std::set < Colex > colex_set;
     int bucket_index = 0;
     //for each hand, compute the colex value.
-    for (Card_t low = 0; low < HOLDEM_MAX_CARDS - 1; low++) {
-        for (Card_t high = low + 1; high < HOLDEM_MAX_CARDS; high++) {
+    for (Card_t low = 0; low < HOLDEM_MAX_DECK - 1; low++) {
+        for (Card_t high = low + 1; high < HOLDEM_MAX_DECK; high++) {
             auto hand = PrivHand_t{high, low};
             if (board->PrivHandCrash(hand)) {
                 continue;
@@ -282,7 +282,7 @@ void Bucket::LoadSubgameColex(Board_t *board, int round)
     type_ = HIERARCHICAL_COLEX;
     //  auto cmd_begin = std::chrono::steady_clock::now();
     int bucket_idx_cursor = 0;
-    for (Card_t c = 0; c < HOLDEM_MAX_CARDS; c++) {
+    for (Card_t c = 0; c < HOLDEM_MAX_DECK; c++) {
         if (board->CardCrash(c)) continue;
         //use a local board
         Board_t local_board = *board;
@@ -294,8 +294,8 @@ void Bucket::LoadSubgameColex(Board_t *board, int round)
         }
         auto board_colex = ComputeColex(Canonize(board_set.cards));
         //for each hand, compute the colex value.
-        for (Card_t low = 0; low < HOLDEM_MAX_CARDS - 1; low++) {
-            for (Card_t high = low + 1; high < HOLDEM_MAX_CARDS; high++) {
+        for (Card_t low = 0; low < HOLDEM_MAX_DECK - 1; low++) {
+            for (Card_t high = low + 1; high < HOLDEM_MAX_DECK; high++) {
                 auto hand = PrivHand_t{high, low};
                 if (local_board.PrivHandCrash(hand)) continue;
                 auto full_colex = ComputeColexFromAllCards(high, low, local_board, round);
