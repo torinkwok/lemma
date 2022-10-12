@@ -93,7 +93,7 @@ struct sPrivHandRank
 class TermEvalKernel
 {
 public:
-    std::array<sPrivHandRank *, HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD> showdown_sorted_hand_ranks;
+    std::array<sPrivHandRank *, HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD> sorted_showdown_priv_hand_ranks;
 
     Board_t board;
     int min_rank = 0;
@@ -128,7 +128,7 @@ public:
 
     virtual ~TermEvalKernel()
     {
-        for (auto a: showdown_sorted_hand_ranks) {
+        for (auto a: sorted_showdown_priv_hand_ranks) {
             delete a;
         }
         delete[] rank_first_losing_index;
