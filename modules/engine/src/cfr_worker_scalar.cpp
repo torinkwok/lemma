@@ -137,7 +137,7 @@ double ScalarCfrWorker::EvalLeafRootNode(int trainee, Node *leaf_root_node, sPri
     /*
      * ROLLOUT for the current trainee rather than pairwise or alternatively
      */
-    double trainee_cfu = RolloutLeafRootNode(leaf_root_node, hand_info);
+    double player0_rollout_cfu = RolloutLeafRootNode(leaf_root_node, hand_info);
 
     /*
      * or use NN
@@ -145,12 +145,12 @@ double ScalarCfrWorker::EvalLeafRootNode(int trainee, Node *leaf_root_node, sPri
 
     // insert to cache
     if (cfr_param_->depth_limited_cache_) {
-        leaf_root_node->value_cache_->SetValue(b0, b1, trainee_cfu);
+        leaf_root_node->value_cache_->SetValue(b0, b1, player0_rollout_cfu);
     }
 
     // FIXME(kwok): The number of players is not supposed to be fixed to 2.
     // only in terms of player 0
-    return trainee == 0 ? trainee_cfu : -trainee_cfu;
+    return trainee == 0 ? player0_rollout_cfu : -player0_rollout_cfu;
 }
 
 double ScalarCfrWorker::EvalInterNode(int trainee, Node *this_node, sPrivateHandsInfo &hand_info)
@@ -292,7 +292,7 @@ double ScalarCfrWorker::RolloutLeafRootNode(Node *leaf_root_node, sPrivateHandsI
         }
     }
 
-    double final_cfus[2]; // FIXME(kwok): The number of players is not supposed to be fixed to 2.
+    double rollout_final_cfus[2]; // FIXME(kwok): The number of players is not supposed to be fixed to 2.
 
     // NOTE(kwok): The fundamental structure of the following giant loop:
     //      3 rollout reps (assumed here)
@@ -323,10 +323,10 @@ double ScalarCfrWorker::RolloutLeafRootNode(Node *leaf_root_node, sPrivateHandsI
 
         // FIXME(kwok): The number of players is not supposed to be fixed to 2.
         for (int trainee = 0; trainee < 2; trainee++) {
-            double bias_favor_cfus[MAX_META_STRATEGY];
+            double trainee_bias_favor_cfus[MAX_META_STRATEGY];
 
             // NOTE(kwok): This iteration is all about the current trainee. For the opponents, simply pick
-            // an action based on their regrets accumulated during the rollouts.
+            // a bias favor based on their regrets accumulated during the rollout.
             float opp_distr[MAX_META_STRATEGY];
             GetPolicy<double>(opp_distr, MAX_META_STRATEGY, all_players_regrets[1 - trainee]);
             auto opp_bias_favor = RndXorShift<float>(opp_distr, MAX_META_STRATEGY, x, y, z, (1 << 16));
@@ -337,39 +337,40 @@ double ScalarCfrWorker::RolloutLeafRootNode(Node *leaf_root_node, sPrivateHandsI
                 }
             }
 
-            // NOTE(kwok): rollout each of the four continuation strategies
+            // NOTE(kwok): probe with each of the four continuation strategies
             for (int trainee_bias_favor = 0; trainee_bias_favor < MAX_META_STRATEGY; trainee_bias_favor++) {
                 // FIXME(kwok): The number of players is not supposed to be fixed to 2.
                 int bias_favors_for_all[2];
                 bias_favors_for_all[trainee] = trainee_bias_favor;
                 bias_favors_for_all[1 - trainee] = opp_bias_favor;
-                // NOTE(kwok): fire a probe with the selected bias favors until reached a terminal
-                bias_favor_cfus[trainee_bias_favor] = RolloutWalkLeafTreeWithBiasFavor(
+                // NOTE(kwok): Fire a probe with the selected bias favor until reached a terminal. All nodes
+                // on the decision chain will be biased towards the specified bias favor.
+                trainee_bias_favor_cfus[trainee_bias_favor] = RolloutWalkLeafTreeWithBiasFavor(
                         trainee, matched_node, subgame_priv_hands_info, bias_favors_for_all
                 );
             }
 
             float trainee_distr[MAX_META_STRATEGY];
             GetPolicy<double>(trainee_distr, MAX_META_STRATEGY, all_players_regrets[trainee]);
-            double cfu = 0.0;
-            for (int s = 0; s < MAX_META_STRATEGY; s++) {
-                cfu += trainee_distr[s] * bias_favor_cfus[s];
+            double trainee_cfu = 0.0;
+            for (int bias_favor = 0; bias_favor < MAX_META_STRATEGY; bias_favor++) {
+                trainee_cfu += trainee_distr[bias_favor] * trainee_bias_favor_cfus[bias_favor];
             }
 
             if (rollout_i == ROLLOUT_REPS - 1) {
                 // if at the final rollout iteration
-                final_cfus[trainee] = cfu;
+                rollout_final_cfus[trainee] = trainee_cfu;
             } else {
                 // update the regrets for the current player
-                for (int p_bias_favor = 0; p_bias_favor < MAX_META_STRATEGY; p_bias_favor++) {
-                    double diff = bias_favor_cfus[p_bias_favor] - cfu;
-                    all_players_regrets[trainee][p_bias_favor] += diff;
+                for (int bias_favor = 0; bias_favor < MAX_META_STRATEGY; bias_favor++) {
+                    double diff = trainee_bias_favor_cfus[bias_favor] - trainee_cfu;
+                    all_players_regrets[trainee][bias_favor] += diff;
                 }
             }
         }
     }
 
-    return final_cfus[0]; // only for player 0
+    return rollout_final_cfus[0]; // only for player 0
 }
 
 double ScalarCfrWorker::RolloutLeafInterNodeWithBiasFavor(int trainee,
