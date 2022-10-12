@@ -82,7 +82,7 @@ struct sPrivateHandsInfo
     Board_t external_sampled_board_;
 
     // FIXME(kwok): The number of players is not supposed to be fixed to 2.
-    VectorIndex hand_[2];
+    VectorIndex internal_sampled_priv_hands_[2];
 
     // FIXME(kwok): The number of players is not supposed to be fixed to 2.
     int payoff_[2];
@@ -108,7 +108,7 @@ struct sPrivateHandsInfo
         // set buckets by round
         int rank[2]; // FIXME(kwok): The number of players is not supposed to be fixed to 2.
         for (int player_pos = 0; player_pos < num_players; player_pos++) {
-            auto high_low_pair = FromVectorIndex(hand_[player_pos]);
+            auto high_low_pair = FromVectorIndex(internal_sampled_priv_hands_[player_pos]);
             rank[player_pos] = RankHand(high_low_pair.first, high_low_pair.second, &external_sampled_board_);
 #if DEV > 1
             if (rank[player_pos] < 0) {
@@ -139,16 +139,16 @@ struct sPrivateHandsInfo
     void SamplePrivateHandsForAll(AbstractGame *ag, std::array<sPrivateHandBelief *, 2> &root_hand_belief)
     {
         // sample a private hand pair for player 0
-        hand_[0] = root_hand_belief[0]->SampleHand(x, y, z);
+        internal_sampled_priv_hands_[0] = root_hand_belief[0]->SampleHand(x, y, z);
 
         // sample a private hand pair for player 1
         // FIXME(kwok): The number of players is not supposed to be fixed to 2.
         while (true) {
             VectorIndex vidx_1 = root_hand_belief[1]->SampleHand(x, y, z);
             // and the new sampled pair must not crash with hand 0
-            if (!VectorIdxClash(hand_[0], vidx_1)) {
+            if (!VectorIdxClash(internal_sampled_priv_hands_[0], vidx_1)) {
                 // we have got a legit private hand pair
-                hand_[1] = vidx_1;
+                internal_sampled_priv_hands_[1] = vidx_1;
                 break;
             }
         }
@@ -157,7 +157,7 @@ struct sPrivateHandsInfo
 
 #if DEV > 1
         // ensure that nothing crashes with board
-        for (unsigned short i: hand_) {
+        for (unsigned short i: internal_sampled_priv_hands_) {
             auto high_low = FromVectorIndex(i);
             if (external_sampled_board_.CardCrash(high_low.first) || external_sampled_board_.CardCrash(high_low.second)) {
                 logger::critical("error in hand sampling");

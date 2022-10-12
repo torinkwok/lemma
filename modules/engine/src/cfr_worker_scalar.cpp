@@ -271,8 +271,8 @@ double ScalarCfrWorker::RolloutLeafRootNode(Node *leaf_root_node, sPrivateHandsI
     // NOTE(kwok): rollout for `ROLLOUT_REPS` times starting from the matched node till we hit terminals
     sPrivateHandsInfo subgame_priv_hands_info(hand_info.num_players, hand_info.external_sampled_board_, gen);
     // FIXME(kwok): The number of players is not supposed to be fixed to 2.
-    subgame_priv_hands_info.hand_[0] = hand_info.hand_[0];
-    subgame_priv_hands_info.hand_[1] = hand_info.hand_[1];
+    subgame_priv_hands_info.internal_sampled_priv_hands_[0] = hand_info.internal_sampled_priv_hands_[0];
+    subgame_priv_hands_info.internal_sampled_priv_hands_[1] = hand_info.internal_sampled_priv_hands_[1];
 
     // NOTE(kwok): fill the board according to the round we are currently at
     auto r = leaf_root_node->GetRound();
@@ -310,8 +310,8 @@ double ScalarCfrWorker::RolloutLeafRootNode(Node *leaf_root_node, sPrivateHandsI
         while (n_curr_board_cards <= HOLDEM_MAX_BOARD) {
             auto sampled_public_card = deck.cards_[deck_cursor++];
             // FIXME(kwok): The number of players is not supposed to be fixed to 2.
-            if (VectorIdxCrashesWithCard(subgame_priv_hands_info.hand_[0], sampled_public_card)
-                || VectorIdxCrashesWithCard(subgame_priv_hands_info.hand_[1], sampled_public_card)) {
+            if (VectorIdxCrashesWithCard(subgame_priv_hands_info.internal_sampled_priv_hands_[0], sampled_public_card)
+                || VectorIdxCrashesWithCard(subgame_priv_hands_info.internal_sampled_priv_hands_[1], sampled_public_card)) {
                 // NOTE(kwok): the sampled board must not crash with the current private hands
                 continue;
             }
