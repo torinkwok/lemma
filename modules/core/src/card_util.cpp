@@ -204,7 +204,7 @@ Colex ComputeColex(uint64_t cardmask)
 
 int RankHand(Card_t high, Card_t low, Board_t *board)
 {
-    if (board->HandCrash(Hand_t{high, low})) {
+    if (board->HandCrash(PrivateHand_t{high, low})) {
         return -1;
     }
     Cardset c = emptyCardset();
@@ -216,7 +216,7 @@ int RankHand(Card_t high, Card_t low, Board_t *board)
     return rankCardset(c);
 }
 
-int RankHand(Hand_t &hand, Board_t *board)
+int RankHand(PrivateHand_t &hand, Board_t *board)
 {
     return RankHand(hand.high_card, hand.low_card, board);
 }
@@ -322,7 +322,7 @@ void EnrichCardSetToRound(Cardset *c, Card_t high, Card_t low, Board_t *board, i
     }
 }
 
-void EnrichCardSetToRound(Cardset *c, Hand_t *hand, Board_t *board, int round)
+void EnrichCardSetToRound(Cardset *c, PrivateHand_t *hand, Board_t *board, int round)
 {
     EnrichCardSetToRound(c, hand->high_card, hand->low_card, board, round);
 }
@@ -404,7 +404,7 @@ std::set<Colex> GetCannoSetByBoard(Board_t *board, int round)
     std::set<Colex> colex_set;
     for (Card_t low = 0; low < HOLDEM_MAX_CARDS - 1; low++) {
         for (Card_t high = low + 1; high < HOLDEM_MAX_CARDS; high++) {
-            auto hand = Hand_t{high, low};
+            auto hand = PrivateHand_t{high, low};
             if (board->HandCrash(hand)) continue;
             auto colex = ComputeColexFromAllCards(high, low, *board, round);
             colex_set.insert(colex);

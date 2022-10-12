@@ -42,12 +42,12 @@ static std::map<int, int> HoldemSumBoardMap{
         {3, 5}
 };
 
-struct Hand_t
+struct PrivateHand_t
 {
     Card_t high_card;
     Card_t low_card;
 
-    bool Crash(Hand_t &that) const
+    bool Crash(PrivateHand_t &that) const
     {
         if (this->low_card == that.low_card) return true;
         if (this->high_card == that.high_card) return true;
@@ -113,7 +113,7 @@ struct Board_t
         return false;
     }
 
-    bool HandCrash(Hand_t check_hand)
+    bool HandCrash(PrivateHand_t check_hand)
     {
         return CardCrash(check_hand.high_card) || CardCrash(check_hand.low_card);
     }
@@ -199,7 +199,7 @@ void AddBoardToCardSetByRound(Cardset *c, Board_t *board, int round);
 
 void EnrichCardSetToRound(Cardset *c, Card_t high, Card_t low, Board_t *board, int round);
 
-void EnrichCardSetToRound(Cardset *c, Hand_t *hand, Board_t *board, int round);
+void EnrichCardSetToRound(Cardset *c, PrivateHand_t *hand, Board_t *board, int round);
 
 std::set<Colex> GetCannoSetByBoard(Board_t *board, int round);
 
@@ -256,7 +256,7 @@ int RndXorShift(const T *choices,
  */
 int RankHand(Card_t high, Card_t low, Board_t *board);
 
-int RankHand(Hand_t &hand, Board_t *board);
+int RankHand(PrivateHand_t &hand, Board_t *board);
 
 /*
  * Vector Index for Holdem

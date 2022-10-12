@@ -8,7 +8,7 @@ void TermEvalKernel::Prepare(Board_t *board)
     std::set<int> rank_set;
     for (Card_t low = 0; low < HOLDEM_MAX_CARDS - 1; low++) {
         for (Card_t high = low + 1; high < HOLDEM_MAX_CARDS; high++) {
-            auto hand = Hand_t{high, low};
+            auto hand = PrivateHand_t{high, low};
             if (board->HandCrash(hand)) {
                 continue;
             }
