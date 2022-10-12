@@ -269,7 +269,7 @@ double ScalarCfrWorker::RolloutLeafRootNode(Node *leaf_root_node, sPrivateHandsI
     auto *matched_node = condition.matched_node_;
 
     // NOTE(kwok): rollout for `ROLLOUT_REPS` times starting from the matched node till we hit terminals
-    sPrivateHandsInfo subgame_priv_hands_info(hand_info.num_players, hand_info.board_, gen);
+    sPrivateHandsInfo subgame_priv_hands_info(hand_info.num_players, hand_info.external_sampled_board_, gen);
     // FIXME(kwok): The number of players is not supposed to be fixed to 2.
     subgame_priv_hands_info.hand_[0] = hand_info.hand_[0];
     subgame_priv_hands_info.hand_[1] = hand_info.hand_[1];
@@ -279,7 +279,7 @@ double ScalarCfrWorker::RolloutLeafRootNode(Node *leaf_root_node, sPrivateHandsI
     int n_init_board_cards = r == HOLDEM_ROUND_PREFLOP ? 0 : 3;
     for (int c = n_init_board_cards; c < HOLDEM_MAX_BOARD; c++) {
         // fill the remainder of the board cards array with placeholders
-        subgame_priv_hands_info.board_.cards[c] = IMPOSSIBLE_CARD;
+        subgame_priv_hands_info.external_sampled_board_.cards[c] = IMPOSSIBLE_CARD;
     }
 
     int ROLLOUT_REPS = cfr_param_->depth_limited_rollout_reps_;
@@ -301,7 +301,7 @@ double ScalarCfrWorker::RolloutLeafRootNode(Node *leaf_root_node, sPrivateHandsI
     // doing 3 x 2 x 4 = 24 probes in total
     // TODO(kwok): Separate this loop body into several testable functions.
     for (int rollout_i = 0; rollout_i < ROLLOUT_REPS; rollout_i++) {
-        HoldemDeck deck{subgame_priv_hands_info.board_}; // excluding existing public cards
+        HoldemDeck deck{subgame_priv_hands_info.external_sampled_board_}; // excluding existing public cards
         deck.Shuffle();
 
         // NOTE(kwok): sample a board for every rollout iteration
@@ -315,10 +315,10 @@ double ScalarCfrWorker::RolloutLeafRootNode(Node *leaf_root_node, sPrivateHandsI
                 // NOTE(kwok): the sampled board must not crash with the current private hands
                 continue;
             }
-            subgame_priv_hands_info.board_.cards[n_curr_board_cards++] = sampled_public_card;
+            subgame_priv_hands_info.external_sampled_board_.cards[n_curr_board_cards++] = sampled_public_card;
         }
 
-        // subgame_priv_hands_info.board_.Print();
+        // subgame_priv_hands_info.external_sampled_board_.Print();
         subgame_priv_hands_info.SetBucketAndPayoff(blueprint_->ag_);
 
         // FIXME(kwok): The number of players is not supposed to be fixed to 2.

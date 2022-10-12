@@ -74,8 +74,24 @@ public:
 
 struct sPrivateHandsInfo
 {
+    unsigned long x, y, z;
+    int num_players;
+
+    /// NOTE(kwok): The board is specified by invokers. Typically sampled by a external public chance
+    /// events sampler, such as `SampleSequentialFullBoard()`.
+    Board_t external_sampled_board_;
+
+    // FIXME(kwok): The number of players is not supposed to be fixed to 2.
+    VectorIndex hand_[2];
+
+    // FIXME(kwok): The number of players is not supposed to be fixed to 2.
+    int payoff_[2];
+
+    // FIXME(kwok): The number of players is not supposed to be fixed to 2.
+    Bucket_t buckets_[2][4];
+
     sPrivateHandsInfo(int num_players, Board_t board, std::mt19937 &ran_gen)
-            : num_players(num_players), board_(board)
+            : num_players(num_players), external_sampled_board_(board)
     {
         std::uniform_int_distribution<int> distr(std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
         x = std::abs(distr(ran_gen));
@@ -93,19 +109,19 @@ struct sPrivateHandsInfo
         int rank[2]; // FIXME(kwok): The number of players is not supposed to be fixed to 2.
         for (int player_pos = 0; player_pos < num_players; player_pos++) {
             auto high_low_pair = FromVectorIndex(hand_[player_pos]);
-            rank[player_pos] = RankHand(high_low_pair.first, high_low_pair.second, &board_);
+            rank[player_pos] = RankHand(high_low_pair.first, high_low_pair.second, &external_sampled_board_);
 #if DEV > 1
             if (rank[player_pos] < 0) {
                 logger::critical("rank < 0 | %d | [high %d] [low %d]", rank[player_pos], high_low_pair.first,
                                  high_low_pair.second
                 );
-                board_.Print();
+                external_sampled_board_.Print();
             }
 #endif
             for (int r = ag->root_node_->GetRound(); r <= ag->GetMaxRound(); r++) {
                 auto bucket = ag->bucket_reader_.GetBucket_HighLowPair_Board_Round(high_low_pair.first,
                                                                                    high_low_pair.second,
-                                                                                   &board_, r
+                                                                                   &external_sampled_board_, r
                 );
                 // NOTE(kwok): discriminate buckets at different rounds
                 buckets_[player_pos][r] = bucket;
@@ -143,7 +159,7 @@ struct sPrivateHandsInfo
         // ensure that nothing crashes with board
         for (unsigned short i: hand_) {
             auto high_low = FromVectorIndex(i);
-            if (board_.CardCrash(high_low.first) || board_.CardCrash(high_low.second)) {
+            if (external_sampled_board_.CardCrash(high_low.first) || external_sampled_board_.CardCrash(high_low.second)) {
                 logger::critical("error in hand sampling");
             }
         }
@@ -151,22 +167,6 @@ struct sPrivateHandsInfo
 
         SetBucketAndPayoff(ag);
     }
-
-    unsigned long x, y, z;
-    int num_players;
-
-    /// NOTE(kwok): The board is specified by invokers. Typically sampled by a external public chance
-    /// events sampler, such as `SampleSequentialFullBoard()`.
-    Board_t board_;
-
-    // FIXME(kwok): The number of players is not supposed to be fixed to 2.
-    VectorIndex hand_[2];
-
-    // FIXME(kwok): The number of players is not supposed to be fixed to 2.
-    int payoff_[2];
-
-    // FIXME(kwok): The number of players is not supposed to be fixed to 2.
-    Bucket_t buckets_[2][4];
 };
 
 const int ACTION_DIMENSION = 0;
