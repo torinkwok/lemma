@@ -9,23 +9,22 @@
 struct sPrivateHandKernel
 {
     Bucket_t bucket_by_round_vector_idx[HOLDEM_MAX_ROUNDS][FULL_HAND_BELIEF_SIZE];
-    TermEvalKernel hand_eval_kernel_;
-    Board_t board_;
-    int starting_round_;
-
-    // valid combination indices
-    int valid_combo_indices_[HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD];
+    TermEvalKernel hand_eval_kernel;
+    Board_t external_sampled_board;
+    int starting_round;
+    int valid_priv_hand_vector_idxes[HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD];
 
     sPrivateHandKernel(const Board_t &board, int starting_round)
-            : board_(board), starting_round_(starting_round)
+            : external_sampled_board(board), starting_round(starting_round)
     {
         int cursor = 0;
         for (int i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {
             auto high_low_pair = FromVectorIndex(i);
-            if (board_.CardCrash(high_low_pair.first) || board_.CardCrash(high_low_pair.second)) {
+            if (external_sampled_board.CardCrash(high_low_pair.first) ||
+                external_sampled_board.CardCrash(high_low_pair.second)) {
                 continue;
             }
-            valid_combo_indices_[cursor] = i;
+            valid_priv_hand_vector_idxes[cursor] = i;
             cursor++;
         }
     }
@@ -41,17 +40,17 @@ struct sPrivateHandKernel
 
     void AbstractHandKernel(BucketReader *bucket_reader)
     {
-        for (int round = starting_round_; round < HOLDEM_MAX_ROUNDS; round++) {
+        for (int round = starting_round; round < HOLDEM_MAX_ROUNDS; round++) {
             for (auto vector_idx = 0; vector_idx < FULL_HAND_BELIEF_SIZE; vector_idx++) {
                 auto high_low = FromVectorIndex(vector_idx);
                 // skipping crash, set as -1
-                if (board_.CardCrashTillRound(high_low.first, round)
-                    || board_.CardCrashTillRound(high_low.second, round)) {
+                if (external_sampled_board.CardCrashTillRound(high_low.first, round)
+                    || external_sampled_board.CardCrashTillRound(high_low.second, round)) {
                     bucket_by_round_vector_idx[round][vector_idx] = INVALID_BUCKET;
                     continue;
                 }
                 auto bucket = bucket_reader->GetBucket_HighLowPair_Board_Round(
-                        high_low.first, high_low.second, &board_, round
+                        high_low.first, high_low.second, &external_sampled_board, round
                 );
                 bucket_by_round_vector_idx[round][vector_idx] = bucket;
             }
@@ -59,7 +58,7 @@ struct sPrivateHandKernel
 
 #if DEV > 1
         // count -1 sum
-        for (int round = starting_round_; round < HOLDEM_MAX_ROUNDS; round++) {
+        for (int round = starting_round; round < HOLDEM_MAX_ROUNDS; round++) {
             int sum_board = HoldemSumBoardMap[round];
             int actual_count = 0;
             int supposed_count = nCk_card(52, 2) - nCk_card(52 - sum_board, 2);
@@ -74,7 +73,7 @@ struct sPrivateHandKernel
         }
 #endif
 
-        hand_eval_kernel_.Prepare(&board_);
+        hand_eval_kernel.Prepare(&external_sampled_board);
     };
 };
 

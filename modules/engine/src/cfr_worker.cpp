@@ -101,10 +101,10 @@ sPrivateHandBelief *VectorCfrWorker::WalkTree_Alternate(Node *this_node, int tra
     }
     if (this_node->IsTerminal()) {
         auto cfu = new sPrivateHandBelief(0.0);
-        priv_hand_kernel->hand_eval_kernel_.FastTerminalEval(opp_belief->belief_,
-                                                             cfu->belief_,
-                                                             this_node->GetStake(trainee),
-                                                             this_node->IsShowdown());
+        priv_hand_kernel->hand_eval_kernel.FastTerminalEval(opp_belief->belief_,
+                                                            cfu->belief_,
+                                                            this_node->GetStake(trainee),
+                                                            this_node->IsShowdown());
         return cfu;
     }
     return EvalChoiceNode_Alternate(this_node, trainee, opp_belief);
@@ -156,7 +156,7 @@ VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivate
     if (is_my_turn) {
         // unless we have pruning, we don't need to skip any one. it is a bit wasteful but makes it more accurate.
         all_belief_distr_1dim = new float[FULL_HAND_BELIEF_SIZE * a_max];
-        for (auto &i: priv_hand_kernel->valid_combo_indices_) {
+        for (auto &i: priv_hand_kernel->valid_priv_hand_vector_idxes) {
             int offset = a_max * i;
             auto b = priv_hand_kernel->GetBucket(this_node->GetRound(), i);
             strategy_->ComputeStrategy(this_node, b, all_belief_distr_1dim + offset, cfr_param_->strategy_cal_mode_);
@@ -207,7 +207,7 @@ Ranges *VectorCfrWorker::WalkTree_Pairwise(Node *this_node, Ranges *reach_ranges
         // some range are 0. do some early return processing
         auto this_cfu = new Ranges(reach_ranges); // copy the masks as well.
         for (auto my_pos = 0; my_pos < reach_ranges->num_player_; my_pos++) {
-            priv_hand_kernel->hand_eval_kernel_.FastTerminalEval(
+            priv_hand_kernel->hand_eval_kernel.FastTerminalEval(
                     reach_ranges->beliefs_[
                             // FIXME(kwok): The number of players is not supposed to be fixed to 2.
                             1 - my_pos
@@ -313,7 +313,7 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sPrivateHandBelief *belief_d
     auto n = this_node->GetN();
     auto frozen_b = this_node->frozen_b;
 
-    for (auto &combo_index: priv_hand_kernel->valid_combo_indices_) {
+    for (auto &combo_index: priv_hand_kernel->valid_priv_hand_vector_idxes) {
         // greedily outer skip the 0 belief and board cards
         if (belief_distr->IsPruned(combo_index)) {
             continue;
@@ -451,7 +451,7 @@ void VectorCfrWorker::ComputeCfu(Node *this_node,
     int a_max = this_node->GetAmax();
     // auto r = this_node->GetRound();
 
-    for (auto &i: priv_hand_kernel->valid_combo_indices_) {
+    for (auto &i: priv_hand_kernel->valid_priv_hand_vector_idxes) {
         // outer pruning || lossless.
         if (this_node_cfu->IsPruned(i)) {
             continue;
@@ -540,7 +540,7 @@ VectorCfrWorker::CollectRegrets(Node *this_node,
     auto frozen_b = this_node->frozen_b;
 
     // NOTE(kwok): Try all possible private hands for the opponent
-    for (auto &combo_index: priv_hand_kernel->valid_combo_indices_) {
+    for (auto &combo_index: priv_hand_kernel->valid_priv_hand_vector_idxes) {
         // no need to update with the pruned hands, outer pruning
         if (this_node_cfu->IsPruned(combo_index)) {
             continue;
