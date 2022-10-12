@@ -36,9 +36,11 @@ void TermEvalKernel::Prepare(Board_t *board)
 void TermEvalKernel::Sort()
 {
     std::sort(showdown_sorted_hand_ranks_.begin(), showdown_sorted_hand_ranks_.end(),
-              [](const sHandAndRank *lhs, const sHandAndRank *rhs) {
+              [](const sHandAndRank *lhs, const sHandAndRank *rhs)
+              {
                   return lhs->RankHighLowSort(rhs);
-              });
+              }
+    );
 
     // for (auto a : showdown_sorted_hand_ranks_)
     //     a->Print();

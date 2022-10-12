@@ -3,23 +3,22 @@
 double ScalarCfrWorker::Solve(Board_t board)
 {
     auto ag = strategy_->ag_;
-
     auto active_players = AbstractGame::GetActivePlayerNum();
     auto private_hands_info = sPrivateHandsInfo(active_players, board, gen);
-    // generate root belief based on the board
+
+    // NOTE(kwok): assemble local root private hand beliefs based on the given board
     std::array<
             sPrivateHandBelief *,
             2 // FIXME(kwok): The number of players is not supposed to be fixed to 2.
     > local_root_beliefs{};
     for (int p = 0; p < active_players; p++) {
-        // do preparations
         local_root_beliefs[p] = new sPrivateHandBelief(&ag->root_hand_beliefs_for_all_[p]);
         local_root_beliefs[p]->NormalizeExcludeBoard(board);
     }
 
-    static const int REPS = 1000;
+    static const int n_iters = 1000;
     double utility = 0.0;
-    for (int loc_iter = 0; loc_iter < REPS; loc_iter++) {
+    for (int i = 0; i < n_iters; i++) {
         // NOTE(kwok): On each iteration, we start by sampling all of chance’s actions: the public chance
         // events visible to each player, as well as the private chance events that are visible to only a
         // subset of the players. In poker, this corresponds to randomly choosing the public cards revealed
@@ -51,10 +50,10 @@ double ScalarCfrWorker::Solve(Board_t board)
         }
     }
 
-    // Do a sidewalk for updating WAVG
+    // conduct a sidewalk for updating WAVG
     if (cfr_param_->avg_side_update_ && cfr_param_->rm_avg_update == AVG_CLASSIC) {
-        int SIDE_REPS = 50;
-        for (int loc_iter = 0; loc_iter < SIDE_REPS; loc_iter++) {
+        int n_sidewalk_iters = 50;
+        for (int i = 0; i < n_sidewalk_iters; i++) {
             private_hands_info.SamplePrivateHandsForAll(ag, local_root_beliefs);
             for (int trainee_pos = 0; trainee_pos < active_players; trainee_pos++) {
                 WavgUpdateSideWalk(trainee_pos, ag->root_node_, private_hands_info);
@@ -62,10 +61,10 @@ double ScalarCfrWorker::Solve(Board_t board)
         }
     }
 
-    utility /= (REPS * 2 * ag->GetBigBlind());
+    utility /= (n_iters * 2 * ag->GetBigBlind());
 
-    for (auto hb: local_root_beliefs) {
-        delete hb;
+    for (auto b: local_root_beliefs) {
+        delete b;
     }
 
     return utility;
@@ -268,7 +267,7 @@ double ScalarCfrWorker::RolloutLeafRootNode(Node *leaf_root_node, sPrivateHandsI
 
     auto *matched_node = condition.matched_node_;
 
-    // NOTE(kwok): rollout for `ROLLOUT_REPS` times starting from the matched node till we hit terminals
+    // NOTE(kwok): rollout for `n_rollout_iters` times starting from the matched node till we hit terminals
     sPrivateHandsInfo subgame_priv_hands_info(hand_info.num_players, hand_info.external_sampled_board_, gen);
     // FIXME(kwok): The number of players is not supposed to be fixed to 2.
     subgame_priv_hands_info.internal_sampled_priv_hands_[0] = hand_info.internal_sampled_priv_hands_[0];
@@ -282,7 +281,7 @@ double ScalarCfrWorker::RolloutLeafRootNode(Node *leaf_root_node, sPrivateHandsI
         subgame_priv_hands_info.external_sampled_board_.cards[c] = IMPOSSIBLE_CARD;
     }
 
-    int ROLLOUT_REPS = cfr_param_->depth_limited_rollout_reps_;
+    int n_rollout_iters = cfr_param_->depth_limited_rollout_reps_;
 
     // Allocate regrets for each four strategy. Should the regrets be global?
     double all_players_regrets[2][MAX_META_STRATEGY]; // FIXME(kwok): The number of players is not supposed to be fixed to 2.
@@ -300,7 +299,7 @@ double ScalarCfrWorker::RolloutLeafRootNode(Node *leaf_root_node, sPrivateHandsI
     //              4 continuation strategies (pre-computed, along with biased towards folding, calling, and raising respectively)
     // doing 3 x 2 x 4 = 24 probes in total
     // TODO(kwok): Separate this loop body into several testable functions.
-    for (int rollout_i = 0; rollout_i < ROLLOUT_REPS; rollout_i++) {
+    for (int rollout_i = 0; rollout_i < n_rollout_iters; rollout_i++) {
         HoldemDeck deck{subgame_priv_hands_info.external_sampled_board_}; // excluding existing public cards
         deck.Shuffle();
 
@@ -311,7 +310,8 @@ double ScalarCfrWorker::RolloutLeafRootNode(Node *leaf_root_node, sPrivateHandsI
             auto sampled_public_card = deck.cards_[deck_cursor++];
             // FIXME(kwok): The number of players is not supposed to be fixed to 2.
             if (VectorIdxCrashesWithCard(subgame_priv_hands_info.internal_sampled_priv_hands_[0], sampled_public_card)
-                || VectorIdxCrashesWithCard(subgame_priv_hands_info.internal_sampled_priv_hands_[1], sampled_public_card)) {
+                || VectorIdxCrashesWithCard(subgame_priv_hands_info.internal_sampled_priv_hands_[1], sampled_public_card
+            )) {
                 // NOTE(kwok): the sampled board must not crash with the current private hands
                 continue;
             }
@@ -357,7 +357,7 @@ double ScalarCfrWorker::RolloutLeafRootNode(Node *leaf_root_node, sPrivateHandsI
                 trainee_cfu += trainee_distr[bias_favor] * trainee_bias_favor_cfus[bias_favor];
             }
 
-            if (rollout_i == ROLLOUT_REPS - 1) {
+            if (rollout_i == n_rollout_iters - 1) {
                 // if at the final rollout iteration
                 rollout_final_cfus[trainee] = trainee_cfu;
             } else {
