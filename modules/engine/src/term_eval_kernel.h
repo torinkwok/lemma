@@ -10,7 +10,7 @@ struct sHandAndRank
     Card_t high_card;
     Card_t low_card;
     int rank;
-    uint16_t v_idx;
+    uint16_t vector_idx;
 
     inline bool CheckCardCrash(Card_t check_card)
     {
@@ -65,7 +65,7 @@ struct sHandAndRank
 
     void Print()
     {
-        logger::debug("high %d low %d | rank %d | idx = %d", high_card, low_card, rank, v_idx);
+        logger::debug("high %d low %d | rank %d | idx = %d", high_card, low_card, rank, vector_idx);
     }
 };
 

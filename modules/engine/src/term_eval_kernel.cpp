@@ -13,15 +13,15 @@ void TermEvalKernel::Prepare(Board_t *board)
                 continue;
             }
             int rank = RankHand(high, low, board);
-            auto v_idx = ToVectorIndex(high, low);
-            showdown_sorted_hand_ranks_[index] = new sHandAndRank{high, low, rank, v_idx};
+            auto vector_idx = ToVectorIndex(high, low);
+            showdown_sorted_hand_ranks_[index] = new sHandAndRank{high, low, rank, vector_idx};
             index++;
             rank_set.insert(rank);
         }
     }
 
     if (index != nCk_card(47, 2)) {
-        logger::error("💢total number of hands is not correct = %d, which should've been nCk_Card(47, 2)", index);
+        logger::error("💢total number of hands is not correct = %d. We're expecting nCk_Card(47, 2)", index);
     }
 
     // allocate memory on the heap
@@ -95,7 +95,7 @@ void TermEvalKernel::FastShowdownEval(double *opp_full_belief,
     // Transform the opponent's belief from 1326 into 1081 accordingly
     double opp_belief[HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD];
     for (auto i = 0; i < HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD; i++) {
-        opp_belief[i] = opp_full_belief[showdown_sorted_hand_ranks_[i]->v_idx];
+        opp_belief[i] = opp_full_belief[showdown_sorted_hand_ranks_[i]->vector_idx];
     }
 
     double rank_net_win[unique_rank_count];
@@ -122,7 +122,7 @@ void TermEvalKernel::FastShowdownEval(double *opp_full_belief,
     for (int rank_i = 0; rank_i < unique_rank_count; rank_i++) {
         double base = rank_net_win[rank_i];
         for (int j = rank_first_equal_index_[rank_i]; j < rank_first_losing_index_[rank_i]; j++) {
-            auto v_idx = showdown_sorted_hand_ranks_[j]->v_idx;
+            auto v_idx = showdown_sorted_hand_ranks_[j]->vector_idx;
             // pruning
             if (my_full_belief[v_idx] == kBeliefPrunedFlag) {
                 continue;
@@ -148,7 +148,7 @@ void TermEvalKernel::NaiveShowdownEval(double *opp_belief,
 {
     auto begin = std::chrono::steady_clock::now();
     for (auto my_pos = 0; my_pos < HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD; my_pos++) {
-        auto v_idx = showdown_sorted_hand_ranks_[my_pos]->v_idx;
+        auto v_idx = showdown_sorted_hand_ranks_[my_pos]->vector_idx;
         //pruning
         if (my_full_belief[v_idx] == kBeliefPrunedFlag) {
             continue;
@@ -158,7 +158,7 @@ void TermEvalKernel::NaiveShowdownEval(double *opp_belief,
             if (my_pos == opp_pos) {
                 continue;
             }
-            auto weight = opp_belief[showdown_sorted_hand_ranks_[opp_pos]->v_idx];
+            auto weight = opp_belief[showdown_sorted_hand_ranks_[opp_pos]->vector_idx];
             // no hand belief or just too low
             if (weight == 0) {
                 continue;
@@ -198,7 +198,7 @@ void TermEvalKernel::FastFoldEval(double *opp_full_belief,
     double base = 0.0;
     StackFoldingProb(opp_full_belief, folding_drift, base);
     for (auto my_pos = 0; my_pos < HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD; my_pos++) {
-        auto v_idx = showdown_sorted_hand_ranks_[my_pos]->v_idx;
+        auto v_idx = showdown_sorted_hand_ranks_[my_pos]->vector_idx;
         //pruning
         if (my_full_belief[v_idx] == kBeliefPrunedFlag) {
             continue;
