@@ -8,15 +8,16 @@ void TermEvalKernel::Prepare(Board_t *board)
     std::set<int> rank_set;
     for (Card_t low = 0; low < HOLDEM_MAX_CARDS - 1; low++) {
         for (Card_t high = low + 1; high < HOLDEM_MAX_CARDS; high++) {
-            auto hand = PrivateHand_t{high, low};
-            if (board->HandCrash(hand)) {
+            auto priv_hand = PrivHand_t{high, low};
+            if (board->PrivHandCrash(priv_hand)) {
                 continue;
             }
-            int rank = RankHand(high, low, board);
+            int complete_hand_rank = RankHand(high, low, board);
             auto vector_idx = ToVectorIndex(high, low);
-            showdown_sorted_hand_ranks_[index] = new sPrivateHandRank{high, low, rank, vector_idx};
+            // TODO(kwok): Let `sPrivHandRank` handle the calculation of the complete hand rank.
+            showdown_sorted_hand_ranks_[index] = new sPrivHandRank{high, low, complete_hand_rank, vector_idx};
             index++;
-            rank_set.insert(rank);
+            rank_set.insert(complete_hand_rank);
         }
     }
 
@@ -36,7 +37,7 @@ void TermEvalKernel::Prepare(Board_t *board)
 void TermEvalKernel::Sort()
 {
     std::sort(showdown_sorted_hand_ranks_.begin(), showdown_sorted_hand_ranks_.end(),
-              [](const sPrivateHandRank *lhs, const sPrivateHandRank *rhs)
+              [](const sPrivHandRank *lhs, const sPrivHandRank *rhs)
               {
                   return lhs->RankHighLowSort(rhs);
               }

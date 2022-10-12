@@ -5,10 +5,11 @@
 
 static const int REGRET_SCALER = 1000; // turn into milli big blind. also counter the regret integer rounding problem
 
-struct sPrivateHandRank
+struct sPrivHandRank
 {
     Card_t high_card;
     Card_t low_card;
+    /// Computed and stored by external consumers, taking a external board into account.
     int rank;
     uint16_t vector_idx;
 
@@ -32,7 +33,7 @@ struct sPrivateHandRank
         return rank < that_rank;
     }
 
-    inline bool CardCrash(const sPrivateHandRank *that) const
+    inline bool CardCrash(const sPrivHandRank *that) const
     {
         // NOTE(kwok): short-circuited check
         if (high_card < that->low_card) return false;
@@ -45,13 +46,13 @@ struct sPrivateHandRank
         }
     }
 
-    inline bool RankEqual(const sPrivateHandRank *that) const
+    inline bool RankEqual(const sPrivHandRank *that) const
     {
         return rank == that->rank;
     }
 
     /// Sort not only by rank but also by cards: rank > high > low
-    inline bool RankHighLowSort(const sPrivateHandRank *that) const
+    inline bool RankHighLowSort(const sPrivHandRank *that) const
     {
         // don't even think further about it if the ranks are not equal
         if (rank < that->rank) return true;
@@ -92,7 +93,7 @@ struct sPrivateHandRank
 class TermEvalKernel
 {
 public:
-    std::array<sPrivateHandRank *, HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD> showdown_sorted_hand_ranks_;
+    std::array<sPrivHandRank *, HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD> showdown_sorted_hand_ranks_;
 
     Board_t board_;
     int min_rank = 0;

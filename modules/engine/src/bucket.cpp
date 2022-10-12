@@ -119,8 +119,8 @@ void Bucket::LoadRangeColex(Board_t *board, int round)
     //for each hand, compute the colex value.
     for (Card_t low = 0; low < HOLDEM_MAX_CARDS - 1; low++) {
         for (Card_t high = low + 1; high < HOLDEM_MAX_CARDS; high++) {
-            auto hand = PrivateHand_t{high, low};
-            if (board->HandCrash(hand)) {
+            auto hand = PrivHand_t{high, low};
+            if (board->PrivHandCrash(hand)) {
                 continue;
             }
             auto colex = ComputeColexFromAllCards(high, low, *board, round);
@@ -296,8 +296,8 @@ void Bucket::LoadSubgameColex(Board_t *board, int round)
         //for each hand, compute the colex value.
         for (Card_t low = 0; low < HOLDEM_MAX_CARDS - 1; low++) {
             for (Card_t high = low + 1; high < HOLDEM_MAX_CARDS; high++) {
-                auto hand = PrivateHand_t{high, low};
-                if (local_board.HandCrash(hand)) continue;
+                auto hand = PrivHand_t{high, low};
+                if (local_board.PrivHandCrash(hand)) continue;
                 auto full_colex = ComputeColexFromAllCards(high, low, local_board, round);
                 if (master_map_[board_colex].find(full_colex) == master_map_[board_colex].end()) {
                     //insert, and increment the value.
