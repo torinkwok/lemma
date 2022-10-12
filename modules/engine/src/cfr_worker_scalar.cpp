@@ -72,28 +72,28 @@ double ScalarCfrWorker::Solve(Board_t board)
 }
 
 /// NOTE(kwok): Where CFR iterations taking place.
-double ScalarCfrWorker::WalkTree(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info)
+double ScalarCfrWorker::WalkTree(int trainee, Node *this_node, sPrivateHandsInfo &hand_info)
 {
     if (this_node->IsTerminal()) {
-        return EvalTermNode(trainee_pos, this_node, hand_info);
+        return EvalTermNode(trainee, this_node, hand_info);
     }
     // NOTE(kwok): depth limited solving, till the local root of next round (rather than the local
     // root of this round)
     if (this_node->IsLeafNode()) {
-        return EvalRootLeafNode(trainee_pos, this_node, hand_info);
+        return EvalLeafRootNode(trainee, this_node, hand_info);
     }
-    return EvalInterNode(trainee_pos, this_node, hand_info);
+    return EvalInterNode(trainee, this_node, hand_info);
 }
 
-double ScalarCfrWorker::EvalTermNode(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info)
+double ScalarCfrWorker::EvalTermNode(int trainee, Node *this_node, sPrivateHandsInfo &hand_info)
 {
     if (this_node->IsShowdown()) {
-        int stake = this_node->GetStake(trainee_pos);
-        stake *= hand_info.payoff_[trainee_pos]; // tie 0, win 1, lose -1
+        int stake = this_node->GetStake(trainee);
+        stake *= hand_info.payoff_[trainee]; // tie 0, win 1, lose -1
         return (double) stake;
     } else {
         // fold
-        int stake = this_node->GetStake(trainee_pos);
+        int stake = this_node->GetStake(trainee);
         return (double) stake;
     }
 }
@@ -105,10 +105,10 @@ double ScalarCfrWorker::EvalTermNode(int trainee_pos, Node *this_node, sPrivateH
  * v3: cache preflop as file
  * v4: ...
  */
-double ScalarCfrWorker::EvalRootLeafNode(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info)
+double ScalarCfrWorker::EvalLeafRootNode(int trainee, Node *leaf_root_node, sPrivateHandsInfo &hand_info)
 {
     // NOTE(kwok): Should be the last round. It's the Pluribus way.
-    auto r = this_node->GetRound() - 1;
+    auto r = leaf_root_node->GetRound() - 1;
     /*
      * If exists, read from the cache:
      * (PREFLOP) RAM cache from file
@@ -117,17 +117,17 @@ double ScalarCfrWorker::EvalRootLeafNode(int trainee_pos, Node *this_node, sPriv
     auto b0 = 0;
     auto b1 = 0;
     if (cfr_param_->depth_limited_cache_) {
-        this_node->CreateValueCacheIfNull();
+        leaf_root_node->CreateValueCacheIfNull();
         if (r > HOLDEM_ROUND_FLOP) {
             logger::critical("We don't do DLS for post-flop");
         }
         // FIXME(kwok): The number of players is not supposed to be fixed to 2.
         b0 = hand_info.buckets_[0][r];
         b1 = hand_info.buckets_[1][r];
-        if (this_node->value_cache_->Exists(b0, b1)) {
-            auto player0_cfu = this_node->value_cache_->GetValue(b0, b1);
+        if (leaf_root_node->value_cache_->Exists(b0, b1)) {
+            auto player0_cfu = leaf_root_node->value_cache_->GetValue(b0, b1);
             // FIXME(kwok): The number of players is not supposed to be fixed to 2.
-            if (trainee_pos == 1) {
+            if (trainee == 1) {
                 player0_cfu *= -1;
             }
             return player0_cfu;
@@ -137,7 +137,7 @@ double ScalarCfrWorker::EvalRootLeafNode(int trainee_pos, Node *this_node, sPriv
     /*
      * ROLLOUT for the current trainee rather than pairwise or alternatively
      */
-    double trainee_cfu = LeafRootRollout(this_node, hand_info);
+    double trainee_cfu = RolloutLeafRootNode(leaf_root_node, hand_info);
 
     /*
      * or use NN
@@ -145,12 +145,12 @@ double ScalarCfrWorker::EvalRootLeafNode(int trainee_pos, Node *this_node, sPriv
 
     // insert to cache
     if (cfr_param_->depth_limited_cache_) {
-        this_node->value_cache_->SetValue(b0, b1, trainee_cfu);
+        leaf_root_node->value_cache_->SetValue(b0, b1, trainee_cfu);
     }
 
     // FIXME(kwok): The number of players is not supposed to be fixed to 2.
     // only in terms of player 0
-    return trainee_pos == 0 ? trainee_cfu : -trainee_cfu;
+    return trainee == 0 ? trainee_cfu : -trainee_cfu;
 }
 
 double ScalarCfrWorker::EvalInterNode(int trainee, Node *this_node, sPrivateHandsInfo &hand_info)
@@ -244,10 +244,10 @@ double ScalarCfrWorker::EvalInterNode(int trainee, Node *this_node, sPrivateHand
     }
 }
 
-double ScalarCfrWorker::WalkLeafTree(int trainee,
-                                     Node *this_node,
-                                     sPrivateHandsInfo &hand_info,
-                                     int *bias_favors_for_all)
+double ScalarCfrWorker::RolloutWalkLeafTreeWithBiasFavor(int trainee,
+                                                         Node *this_node,
+                                                         sPrivateHandsInfo &hand_info,
+                                                         int *bias_favors_for_all)
 {
 #if 0
     this_node->PrintState("leaf node: ");
@@ -255,10 +255,10 @@ double ScalarCfrWorker::WalkLeafTree(int trainee,
     if (this_node->IsTerminal()) {
         return EvalTermNode(trainee, this_node, hand_info);
     }
-    return LeafInterNodeRollout(trainee, this_node, hand_info, bias_favors_for_all);
+    return RolloutLeafInterNodeWithBiasFavor(trainee, this_node, hand_info, bias_favors_for_all);
 }
 
-double ScalarCfrWorker::LeafRootRollout(Node *leaf_root_node, sPrivateHandsInfo &hand_info)
+double ScalarCfrWorker::RolloutLeafRootNode(Node *leaf_root_node, sPrivateHandsInfo &hand_info)
 {
     // NOTE(kwok): Map leaf_root_node to a node from the blueprint. We only consider the blueprint during
     // the rollout.
@@ -284,9 +284,6 @@ double ScalarCfrWorker::LeafRootRollout(Node *leaf_root_node, sPrivateHandsInfo 
 
     int ROLLOUT_REPS = cfr_param_->depth_limited_rollout_reps_;
 
-    /*
-     * V1: Externally sampling
-     */
     // Allocate regrets for each four strategy. Should the regrets be global?
     double all_players_regrets[2][MAX_META_STRATEGY]; // FIXME(kwok): The number of players is not supposed to be fixed to 2.
     for (auto &player_regrets: all_players_regrets) {
@@ -297,12 +294,11 @@ double ScalarCfrWorker::LeafRootRollout(Node *leaf_root_node, sPrivateHandsInfo 
 
     double final_cfus[2]; // FIXME(kwok): The number of players is not supposed to be fixed to 2.
 
-    /*
-     * reps 3
-     *      traverser 2 FIXME(kwok): The number of players is not supposed to be fixed to 2.
-     *          strategy 4
-     * doing 24 probing in total
-     */
+    // NOTE(kwok): The fundamental structure of the following giant loop:
+    //      3 rollout reps (assumed here)
+    //          2 trainees (a.k.a. traversers) FIXME(kwok): The number of players is not supposed to be fixed to 2.
+    //              4 continuation strategies (pre-computed, along with biased towards folding, calling, and raising respectively)
+    // doing 3 x 2 x 4 = 24 probes in total
     // TODO(kwok): Separate this loop body into several testable functions.
     for (int rollout_i = 0; rollout_i < ROLLOUT_REPS; rollout_i++) {
         HoldemDeck deck{subgame_priv_hands_info.board_}; // excluding existing public cards
@@ -347,8 +343,8 @@ double ScalarCfrWorker::LeafRootRollout(Node *leaf_root_node, sPrivateHandsInfo 
                 int bias_favors_for_all[2];
                 bias_favors_for_all[trainee] = trainee_bias_favor;
                 bias_favors_for_all[1 - trainee] = opp_bias_favor;
-                // NOTE(kwok): fire a rollout with the selected bias favors
-                bias_favor_cfus[trainee_bias_favor] = WalkLeafTree(
+                // NOTE(kwok): fire a probe with the selected bias favors until reached a terminal
+                bias_favor_cfus[trainee_bias_favor] = RolloutWalkLeafTreeWithBiasFavor(
                         trainee, matched_node, subgame_priv_hands_info, bias_favors_for_all
                 );
             }
@@ -376,10 +372,10 @@ double ScalarCfrWorker::LeafRootRollout(Node *leaf_root_node, sPrivateHandsInfo 
     return final_cfus[0]; // only for player 0
 }
 
-double ScalarCfrWorker::LeafInterNodeRollout(int trainee,
-                                             Node *this_node,
-                                             sPrivateHandsInfo &hand_info,
-                                             int *bias_favors_for_all)
+double ScalarCfrWorker::RolloutLeafInterNodeWithBiasFavor(int trainee,
+                                                          Node *this_node,
+                                                          sPrivateHandsInfo &hand_info,
+                                                          int *bias_favors_for_all)
 {
     auto r = this_node->GetRound();
     auto acting_player = this_node->GetActingPlayer();
@@ -452,7 +448,7 @@ double ScalarCfrWorker::LeafInterNodeRollout(int trainee,
 #endif
 
     auto *sampled_child = this_node->children[sampled_a];
-    double cfu = WalkLeafTree(trainee, sampled_child, hand_info, bias_favors_for_all);
+    double cfu = RolloutWalkLeafTreeWithBiasFavor(trainee, sampled_child, hand_info, bias_favors_for_all);
     return cfu;
 }
 

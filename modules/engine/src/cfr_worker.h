@@ -187,22 +187,22 @@ public:
 
     double Solve(Board_t board) override;
 
-    double WalkTree(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info);
+    double WalkTree(int trainee, Node *this_node, sPrivateHandsInfo &hand_info);
 
-    static double EvalTermNode(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info);
+    static double EvalTermNode(int trainee, Node *this_node, sPrivateHandsInfo &hand_info);
 
     // Depth-Limited Solving
-    double EvalRootLeafNode(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info);
+    double EvalLeafRootNode(int trainee, Node *leaf_root_node, sPrivateHandsInfo &hand_info);
 
     double EvalInterNode(int trainee, Node *this_node, sPrivateHandsInfo &hand_info);
 
     void WavgUpdateSideWalk(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info);
 
-    double WalkLeafTree(int trainee, Node *this_node, sPrivateHandsInfo &hand_info, int *bias_favors_for_all);
+    double RolloutWalkLeafTreeWithBiasFavor(int trainee, Node *this_node, sPrivateHandsInfo &hand_info, int *bias_favors_for_all);
 
-    double LeafRootRollout(Node *leaf_root_node, sPrivateHandsInfo &hand_info);
+    double RolloutLeafRootNode(Node *leaf_root_node, sPrivateHandsInfo &hand_info);
 
-    double LeafInterNodeRollout(int trainee, Node *this_node, sPrivateHandsInfo &hand_info, int *bias_favors_for_all);
+    double RolloutLeafInterNodeWithBiasFavor(int trainee, Node *this_node, sPrivateHandsInfo &hand_info, int *bias_favors_for_all);
 };
 
 class VectorCfrWorker : public CfrWorker
