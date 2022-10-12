@@ -8,11 +8,11 @@ double VectorCfrWorker::Solve(Board_t board)
     if (starting_round < 3 /* pre-flop, flop, and turn */) {
         delete priv_hand_kernel;
         priv_hand_kernel = new sPrivateHandKernel(board, starting_round);
-        priv_hand_kernel->EnrichHandKernel(&ag->bucket_reader_);
+        priv_hand_kernel->AbstractHandKernel(&ag->bucket_reader_);
     } else if (starting_round == 3 /* river */ && priv_hand_kernel == nullptr) {
         // cache the hand kernel if just solving round RIVER subgame
         priv_hand_kernel = new sPrivateHandKernel(board, starting_round);
-        priv_hand_kernel->EnrichHandKernel(&ag->bucket_reader_);
+        priv_hand_kernel->AbstractHandKernel(&ag->bucket_reader_);
     }
 
     // pruning with prob

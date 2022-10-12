@@ -39,7 +39,7 @@ struct sPrivateHandKernel
         return b;
     }
 
-    void EnrichHandKernel(BucketReader *bucket_reader)
+    void AbstractHandKernel(BucketReader *bucket_reader)
     {
         for (int round = starting_round_; round < HOLDEM_MAX_ROUNDS; round++) {
             for (auto vector_idx = 0; vector_idx < FULL_HAND_BELIEF_SIZE; vector_idx++) {
