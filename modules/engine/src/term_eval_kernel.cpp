@@ -3,7 +3,7 @@
 void TermEvalKernel::Prepare(Board_t *board_ptr)
 {
     board = *board_ptr;
-    int rank_index = 0;
+    int rank_i = 0;
 
     std::set<int> unique_ranks;
     for (Card_t low = 0; low < HOLDEM_MAX_DECK - 1; low++) {
@@ -15,14 +15,14 @@ void TermEvalKernel::Prepare(Board_t *board_ptr)
             int rank = RankHand(high, low, board_ptr);
             auto vector_idx = ToVectorIndex(high, low);
             // TODO(kwok): Let `sPrivHandRank` handle the calculation of the complete hand rank.
-            sorted_infoset_by_rank[rank_index] = new sPrivHandRank{high, low, rank, vector_idx};
-            rank_index++;
+            sorted_infoset_by_rank[rank_i] = new sPrivHandRank{high, low, rank, vector_idx};
+            rank_i++;
             unique_ranks.insert(rank);
         }
     }
 
-    if (rank_index != nCk_card(47, 2)) {
-        logger::error("💢total number of hands is not correct = %d. We're expecting nCk_Card(47, 2)", rank_index);
+    if (rank_i != nCk_card(47, 2)) {
+        logger::error("💢total number of hands is not correct = %d. We're expecting nCk_Card(47, 2)", rank_i);
     }
 
     // allocate memory on the heap
@@ -50,31 +50,31 @@ void TermEvalKernel::Sort()
     min_rank = sorted_infoset_by_rank[0]->rank;
 
     // NOTE(kwok): build an inverse lookup
-    for (unsigned long rank_index = 0; rank_index < sorted_infoset_by_rank.size(); rank_index++) {
-        auto h = sorted_infoset_by_rank[rank_index]->high_card;
-        auto l = sorted_infoset_by_rank[rank_index]->low_card;
-        rank_indices_by_high_low[h][l] = rank_index;
+    for (unsigned long rank_i = 0; rank_i < sorted_infoset_by_rank.size(); rank_i++) {
+        auto h = sorted_infoset_by_rank[rank_i]->high_card;
+        auto l = sorted_infoset_by_rank[rank_i]->low_card;
+        rank_indices_by_high_low[h][l] = rank_i;
         // Cardset c = emptyCardset();
-        // addCardToCardset(&c, suitOfCard(list_[rank_index]->high_card, 4), rankOfCard(list_[rank_index]->high_card, 4));
-        // addCardToCardset(&c, suitOfCard(list_[rank_index]->low_card, 4), rankOfCard(list_[rank_index]->low_card, 4));
-        // printf("%s pos:%d\n", CardsToString(c.cards).c_str(), rank_index);
+        // addCardToCardset(&c, suitOfCard(list_[rank_i]->high_card, 4), rankOfCard(list_[rank_i]->high_card, 4));
+        // addCardToCardset(&c, suitOfCard(list_[rank_i]->low_card, 4), rankOfCard(list_[rank_i]->low_card, 4));
+        // printf("%s pos:%d\n", CardsToString(c.cards).c_str(), rank_i);
     }
 }
 
 void TermEvalKernel::PreStack()
 {
     int last_seen_rank = min_rank;
-    int cursor = 0;
-    rank_first_equal_index[cursor] = 0;
+    int rank_i = 0;
+    rank_first_equal_index[rank_i] = 0;
 
-    for (int rank_index = 0; rank_index < HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD; rank_index++) {
-        auto priv_hand_rank = sorted_infoset_by_rank[rank_index];
+    for (int i = 0; i < HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD; i++) {
+        auto priv_hand_rank = sorted_infoset_by_rank[i];
         auto rank = priv_hand_rank->rank;
         if (rank != last_seen_rank) {
             last_seen_rank = rank;
-            cursor++;
+            rank_i++;
             // store new rank's value and index
-            rank_first_equal_index[cursor] = rank_index;
+            rank_first_equal_index[rank_i] = i;
         }
     }
 
