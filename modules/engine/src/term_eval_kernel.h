@@ -98,18 +98,18 @@ public:
     Board_t board;
     int min_rank = 0;
     int n_unique_rank = 0;
-    int *rank_first_equal_index;  //rank starting
-    int *rank_first_losing_index; //next rank starting
+    int *rank_first_equal_index; // rank starting
+    int *rank_first_losing_index; // next rank starting
     uint16_t high_low_pos[52][52];
 
-    //prepare related
+    // preparations
     void Prepare(Board_t *board_ptr);
 
     inline void Sort();;
 
     void PreStack();
 
-    //showdown
+    // showdown evaluations
     void FastShowdownEval(double *opp_full_belief, double *my_full_belief, int spent);
 
     void NaiveShowdownEval(double *opp_belief, double *my_full_belief, int spent);
@@ -117,7 +117,7 @@ public:
     void StackShowdownProb(double *opp_belief, double *rank_net_win_prob, double *card_rank_net,
                            int *card_skipping_rank_list);
 
-    //fold eval
+    // folding evaluations
     void FastFoldEval(double *opp_full_belief, double *my_full_belief, int spent);
 
     void NaiveFoldEval(double *opp_belief, double *my_belief, int spent);
@@ -128,7 +128,9 @@ public:
 
     virtual ~TermEvalKernel()
     {
-        for (auto a: showdown_sorted_hand_ranks) delete a;
+        for (auto a: showdown_sorted_hand_ranks) {
+            delete a;
+        }
         delete[] rank_first_losing_index;
         delete[] rank_first_equal_index;
     }
