@@ -13,7 +13,7 @@ double ScalarCfrWorker::Solve(Board_t board)
     > local_root_beliefs{};
     for (int p = 0; p < active_players; p++) {
         // do preparations
-        local_root_beliefs[p] = new sPrivateHandBelief(&ag->root_hand_belief_[p]);
+        local_root_beliefs[p] = new sPrivateHandBelief(&ag->root_hand_beliefs_for_all_[p]);
         local_root_beliefs[p]->NormalizeExcludeBoard(board);
     }
 

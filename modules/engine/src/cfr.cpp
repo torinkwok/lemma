@@ -21,8 +21,8 @@ int CFR::Solve(Strategy *blueprint,
 
     //more safegaurding codes
     if (strategy->ag_->root_node_->GetRound() != HOLDEM_ROUND_RIVER) {
-        if (strategy->ag_->root_hand_belief_[0].NonZeroBeliefCount() <= 30
-            || strategy->ag_->root_hand_belief_[1].NonZeroBeliefCount() <= 30) {
+        if (strategy->ag_->root_hand_beliefs_for_all_[0].NonZeroBeliefCount() <= 30
+            || strategy->ag_->root_hand_beliefs_for_all_[1].NonZeroBeliefCount() <= 30) {
             logger::warn(
                     "the new ag is not at river and the range width is too small. It may all become 0 in cfr solving"
             );

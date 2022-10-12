@@ -511,7 +511,7 @@ double VectorCfrWorker::Solve(Board_t board)
     auto active_players = ag->GetActivePlayerNum();
     for (int p = 0; p < active_players; p++) {
         // preparations
-        local_root_belief[p].CopyValue(&ag->root_hand_belief_[p]);
+        local_root_belief[p].CopyValue(&ag->root_hand_beliefs_for_all_[p]);
         local_root_belief[p].NormalizeExcludeBoard(board);
     }
 

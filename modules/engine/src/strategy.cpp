@@ -57,14 +57,14 @@ bool Strategy::EstimateNewAgReach(AbstractGame *new_ag, MatchState *new_match_st
 {
     // FIXME(kwok): The number of players is not supposed to be fixed to 2.
     std::array<sPrivateHandBelief, 2> new_base_reach;
-    new_base_reach[0].CopyValue(&ag_->root_hand_belief_[0]);
-    new_base_reach[1].CopyValue(&ag_->root_hand_belief_[1]);
+    new_base_reach[0].CopyValue(&ag_->root_hand_beliefs_for_all_[0]);
+    new_base_reach[1].CopyValue(&ag_->root_hand_beliefs_for_all_[1]);
 
     if (StateBettingEqual(&ag_->root_node_->state_, &new_ag->root_state_)) {
         logger::debug("the new strategy having the same root node. it happens when step back to last root");
         // FIXME(kwok): The number of players is not supposed to be fixed to 2.
-        new_ag->root_hand_belief_[0].CopyValue(&new_base_reach[0]);
-        new_ag->root_hand_belief_[1].CopyValue(&new_base_reach[1]);
+        new_ag->root_hand_beliefs_for_all_[0].CopyValue(&new_base_reach[0]);
+        new_ag->root_hand_beliefs_for_all_[1].CopyValue(&new_base_reach[1]);
         new_ag->NormalizeRootReachProb();
         return true;
     }
@@ -82,12 +82,12 @@ bool Strategy::EstimateNewAgReach(AbstractGame *new_ag, MatchState *new_match_st
         if (this_board.CardCrashTillRound(high_low.first, new_round)
             || this_board.CardCrashTillRound(high_low.second, new_round)) {
             for (auto p = 0; p < AbstractGame::GetActivePlayerNum(); p++) {
-                if (!ag_->root_hand_belief_[p].IsPruned(i))
+                if (!ag_->root_hand_beliefs_for_all_[p].IsPruned(i))
                     logger::warn(
                             "🚨root reach prob estimate failed.. beliefs of player [%d] at board cards [round %d] is not pruned [%f]",
                             p,
                             new_round,
-                            ag_->root_hand_belief_[p].belief_[i]);
+                            ag_->root_hand_beliefs_for_all_[p].belief_[i]);
             }
         }
     }
@@ -144,13 +144,13 @@ bool Strategy::EstimateNewAgReach(AbstractGame *new_ag, MatchState *new_match_st
         // NOTE(kwok): If the `new_ag` sub-game can be reached from any other part of the game tree.
         if (estimate_return_code == RANGE_ESTIMATE_SUCCESS) {
             //direct copy first. then normalize it.
-            new_ag->root_hand_belief_[0].CopyValue(&local_base_reach[0]);
-            new_ag->root_hand_belief_[1].CopyValue(&local_base_reach[1]);
+            new_ag->root_hand_beliefs_for_all_[0].CopyValue(&local_base_reach[0]);
+            new_ag->root_hand_beliefs_for_all_[1].CopyValue(&local_base_reach[1]);
             new_ag->NormalizeRootReachProb();
 
             //print root belief for debugging
-            new_ag->root_hand_belief_[0].PrintNonZeroBelief();
-            new_ag->root_hand_belief_[1].PrintNonZeroBelief();
+            new_ag->root_hand_beliefs_for_all_[0].PrintNonZeroBelief();
+            new_ag->root_hand_beliefs_for_all_[1].PrintNonZeroBelief();
 
             return true;
         } else {

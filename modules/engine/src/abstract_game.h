@@ -92,7 +92,7 @@ class AbstractGame
 public:
     explicit AbstractGame()
     {
-        root_hand_belief_ = new sPrivateHandBelief[player_num_];
+        root_hand_beliefs_for_all_ = new sPrivateHandBelief[player_num_];
     };
 
     virtual ~AbstractGame()
@@ -100,7 +100,7 @@ public:
         delete kernel_;
         if (root_node_ != nullptr)
             Node::DestroyBettingTree(root_node_);
-        delete[] root_hand_belief_;
+        delete[] root_hand_beliefs_for_all_;
         logger::trace("abstract game object gracefully shutting down");
     }
 
@@ -120,7 +120,7 @@ public:
     // NOTE(kwok): Constructed within or set up by `AbstractGame` itself.
     sRNBAKernel *kernel_ = nullptr;
     // Assume to be a fair estimate of the reach_prob of the root_node.
-    sPrivateHandBelief *root_hand_belief_ = nullptr;
+    sPrivateHandBelief *root_hand_beliefs_for_all_ = nullptr;
     std::map<uint8_t /* round number */, std::multimap<uint8_t /* acting player */, Node *>> node_map_;
 
     // FIXME(kwok): The number of players is not supposed to be fixed to 2.

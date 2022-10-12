@@ -72,7 +72,7 @@ void AbstractGame::NormalizeRootReachProb()
     Board_t board{};
     BoardFromState(&game_, &root_state_, &board);
     for (auto p = 0; p < GetActivePlayerNum(); p++) {
-        root_hand_belief_[p].NormalizeExcludeBoard(board);
+        root_hand_beliefs_for_all_[p].NormalizeExcludeBoard(board);
 #if DEV > 1
         // Check if all boards cards are pruned.
         auto round = root_node_->GetRound();
@@ -80,7 +80,7 @@ void AbstractGame::NormalizeRootReachProb()
         auto supposed_count = nCk_card(52, 2) - nCk_card(52 - board_card, 2);
         int count = 0;
         for (auto i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {
-            if (root_hand_belief_[p].IsPruned(i)) {
+            if (root_hand_beliefs_for_all_[p].IsPruned(i)) {
                 count++;
             }
         }
@@ -103,7 +103,7 @@ void AbstractGame::BuildKernelFromRootNode(Bucket_t *bucket_counts)
 void AbstractGame::PurifyLowProbRange() const
 {
     for (auto p = 0; p < GetActivePlayerNum(); p++) {
-        root_hand_belief_[p].Purify();
+        root_hand_beliefs_for_all_[p].Purify();
     }
 }
 

@@ -404,8 +404,8 @@ int Engine::GetAction(MatchState *current_acpc_match_state, Action &r_action, do
                     logger::debug("check reach on blueprint");
                     // FIXME(kwok): The number of players is not supposed to be fixed to 2.
                     std::array<sPrivateHandBelief, 2> new_base_reach;
-                    new_base_reach[0].CopyValue(&pb.strategy_->ag_->root_hand_belief_[0]);
-                    new_base_reach[1].CopyValue(&pb.strategy_->ag_->root_hand_belief_[1]);
+                    new_base_reach[0].CopyValue(&pb.strategy_->ag_->root_hand_beliefs_for_all_[0]);
+                    new_base_reach[1].CopyValue(&pb.strategy_->ag_->root_hand_beliefs_for_all_[1]);
                     auto estimate_return_code = pb.strategy_->EstimateReachProbAtNode(
                             current_acpc_match_state,
                             mr.matched_node_,
@@ -517,7 +517,7 @@ void Engine::EvalShowdown(MatchState &match_state) {
         double real_b_canon_sum = 0.0;
         std::set<Bucket_t> seen_bucket;
         for (auto i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {
-            double belief = pb_strategy->ag_->root_hand_belief_[opp_pos].belief_[i];
+            double belief = pb_strategy->ag_->root_hand_beliefs_for_all_[opp_pos].belief_[i];
             // Skip belief values of 0.
             if (belief == 0.0) {
                 continue;
@@ -535,7 +535,7 @@ void Engine::EvalShowdown(MatchState &match_state) {
         }
 
         /* Ready to print. */
-        auto opp_hand_belief = pb_strategy->ag_->root_hand_belief_[opp_pos].belief_[opp_hand_vdx];
+        auto opp_hand_belief = pb_strategy->ag_->root_hand_beliefs_for_all_[opp_pos].belief_[opp_hand_vdx];
         pb_strategy->ag_->root_node_->PrintState("    strategy root : ");
         logger::debug("    [strategy %s] [%s %f] [weight %f] [bucket_sum %f] [all_buckets_count %d]",
                       pb_strategy->name_,
@@ -789,8 +789,8 @@ bool Engine::ValidatePlaybook(PlayBook &playbook, MatchState *new_match_state, i
             reached = true;
         } else {
             std::array<sPrivateHandBelief, 2> new_base_reach;
-            new_base_reach[0].CopyValue(&new_strategy->ag_->root_hand_belief_[0]);
-            new_base_reach[1].CopyValue(&new_strategy->ag_->root_hand_belief_[1]);
+            new_base_reach[0].CopyValue(&new_strategy->ag_->root_hand_beliefs_for_all_[0]);
+            new_base_reach[1].CopyValue(&new_strategy->ag_->root_hand_beliefs_for_all_[1]);
             auto estimate_return_code = new_strategy->EstimateReachProbAtNode(new_match_state,
                                                                               selected_candidate.matched_node_,
                                                                               new_base_reach,
