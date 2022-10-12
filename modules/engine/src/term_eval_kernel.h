@@ -5,65 +5,67 @@
 
 static const int REGRET_SCALER = 1000; // turn into milli big blind. also counter the regret integer rounding problem
 
-struct sHandAndRank
+struct sPrivateHandRank
 {
     Card_t high_card;
     Card_t low_card;
     int rank;
     uint16_t vector_idx;
 
-    inline bool CheckCardCrash(Card_t check_card)
+    [[nodiscard]] inline bool CheckCardCrash(Card_t check_card) const
     {
-        if (low_card == check_card) return true;
-        return high_card == check_card;
+        if (low_card == check_card) {
+            return true;
+        } else {
+            return high_card == check_card;
+        }
     }
 
-    inline std::array<Card_t, 2> GetHand()
+    inline std::array<Card_t, 2> GetHandPair()
     {
         return std::array<Card_t, 2>{high_card, low_card};
     }
 
-    /*
-     * for simple sorting by rank
-     */
-    inline bool RankLower(int that_rank) const
+    /// A utility function for sorting by rank.
+    [[nodiscard]] inline bool RankLower(int that_rank) const
     {
         return rank < that_rank;
     }
 
-    inline bool CardCrash(const sHandAndRank *that)
+    inline bool CardCrash(const sPrivateHandRank *that) const
     {
-        //gaurantee no crash
+        // NOTE(kwok): short-circuited check
         if (high_card < that->low_card) return false;
         if (low_card > that->high_card) return false;
-        //check crash
-        if (CheckCardCrash(that->high_card)) return true;
-        return CheckCardCrash(that->low_card);
+        // NOTE(kwok): real check
+        if (CheckCardCrash(that->high_card)) {
+            return true;
+        } else {
+            return CheckCardCrash(that->low_card);
+        }
     }
 
-    inline bool RankEqual(const sHandAndRank *that)
+    inline bool RankEqual(const sPrivateHandRank *that) const
     {
         return rank == that->rank;
     }
 
-    /*
-     * sort not just by hand but also by card
-     * rank -> high -> low
-     */
-    inline bool RankHighLowSort(const sHandAndRank *that) const
+    /// Sort not only by rank but also by cards: rank > high > low
+    inline bool RankHighLowSort(const sPrivateHandRank *that) const
     {
+        // don't even think further about it if the ranks are not equal
         if (rank < that->rank) return true;
         if (rank > that->rank) return false;
-        // rank ==
+        // if the ranks are equal
         if (high_card > that->high_card) return true;
         if (high_card < that->high_card) return false;
-        // rank == && high =+
+        // if the ranks are equal, and if the high cards are equal as well
         if (low_card > that->low_card) return true;
         if (low_card < that->low_card) return false;
         return false;
     }
 
-    void Print()
+    void Print() const
     {
         logger::debug("high %d low %d | rank %d | idx = %d", high_card, low_card, rank, vector_idx);
     }
@@ -90,7 +92,7 @@ struct sHandAndRank
 class TermEvalKernel
 {
 public:
-    std::array<sHandAndRank *, HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD> showdown_sorted_hand_ranks_;
+    std::array<sPrivateHandRank *, HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD> showdown_sorted_hand_ranks_;
 
     Board_t board_;
     int min_rank = 0;

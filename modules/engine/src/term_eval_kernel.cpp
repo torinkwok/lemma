@@ -14,7 +14,7 @@ void TermEvalKernel::Prepare(Board_t *board)
             }
             int rank = RankHand(high, low, board);
             auto vector_idx = ToVectorIndex(high, low);
-            showdown_sorted_hand_ranks_[index] = new sHandAndRank{high, low, rank, vector_idx};
+            showdown_sorted_hand_ranks_[index] = new sPrivateHandRank{high, low, rank, vector_idx};
             index++;
             rank_set.insert(rank);
         }
@@ -36,7 +36,7 @@ void TermEvalKernel::Prepare(Board_t *board)
 void TermEvalKernel::Sort()
 {
     std::sort(showdown_sorted_hand_ranks_.begin(), showdown_sorted_hand_ranks_.end(),
-              [](const sHandAndRank *lhs, const sHandAndRank *rhs)
+              [](const sPrivateHandRank *lhs, const sPrivateHandRank *rhs)
               {
                   return lhs->RankHighLowSort(rhs);
               }
@@ -128,7 +128,7 @@ void TermEvalKernel::FastShowdownEval(double *opp_full_belief,
                 continue;
             }
             double total_drift = 0.0;
-            for (auto &c: showdown_sorted_hand_ranks_[j]->GetHand()) {
+            for (auto &c: showdown_sorted_hand_ranks_[j]->GetHandPair()) {
                 auto idx = ComboIdx(card_last_skip_idx[c], c);
                 if (card_skipping_rank[idx] != rank_i) {
                     card_last_skip_idx[c]++;
@@ -310,7 +310,7 @@ void TermEvalKernel::StackShowdownProb(double *opp_belief,
             //     continue;
             rank_sum[rank_i] += w;
             // card
-            for (auto &c: showdown_sorted_hand_ranks_[j]->GetHand()) {
+            for (auto &c: showdown_sorted_hand_ranks_[j]->GetHandPair()) {
                 int idx = ComboIdx(card_last_skipping_list_dx[c], c);
                 //if idx < 0. then it is not init at all, ++ to 0
                 if (idx < 0 || card_skipping_rank_list[idx] != rank_i) {

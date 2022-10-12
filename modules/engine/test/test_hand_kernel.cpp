@@ -200,10 +200,10 @@ TEST_CASE("eval kernel speed bechmarking", "[engine]") {
 }
 
 TEST_CASE("hand and rank function", "[engine]") {
-  sHandAndRank hr{3, 2, 1};
-  sHandAndRank hr2{4, 2, 1};
-  sHandAndRank hr22{4, 0, 1};
-  sHandAndRank hr3{4, 2, 2};
+  sPrivateHandRank hr{3, 2, 1};
+  sPrivateHandRank hr2{4, 2, 1};
+  sPrivateHandRank hr22{4, 0, 1};
+  sPrivateHandRank hr3{4, 2, 2};
   REQUIRE(hr.CheckCardCrash(3));
   REQUIRE(hr.CheckCardCrash(2));
   REQUIRE(hr.CardCrash(&hr2));
