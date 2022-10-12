@@ -1,10 +1,99 @@
 #include "cfr_worker.h"
 #include "node.h"
 
-// todo: add back the pruning is necessary
-/*
- * We ignore those pruned hands anyway, hence no need to set -1. The program won't crash.
- */
+double VectorCfrWorker::Solve(Board_t board)
+{
+    auto ag = strategy_->ag_;
+    auto starting_round = ag->root_state_.round;
+    if (starting_round < 3 /* pre-flop, flop, and turn */) {
+        delete priv_hand_kernel;
+        priv_hand_kernel = new sPrivateHandKernel(board, starting_round);
+        priv_hand_kernel->EnrichHandKernel(&ag->bucket_reader_);
+    } else if (starting_round == 3 /* river */ && priv_hand_kernel == nullptr) {
+        // cache the hand kernel if just solving round RIVER subgame
+        priv_hand_kernel = new sPrivateHandKernel(board, starting_round);
+        priv_hand_kernel->EnrichHandKernel(&ag->bucket_reader_);
+    }
+
+    // pruning with prob
+    ConditionalPrune();
+
+    // TODO(kwok): Cache the results for RIVER subgames.
+    sPrivateHandBelief local_root_belief[2];
+    auto active_players = ag->GetActivePlayerNum();
+    for (int p = 0; p < active_players; p++) {
+        // preparations
+        local_root_belief[p].CopyValue(&ag->root_hand_beliefs_for_all_[p]);
+        local_root_belief[p].NormalizeExcludeBoard(board);
+    }
+
+    double sum_cfus = 0.0;
+
+    // NOTE(kwok): There are three different methods of sampling chance events that have slower iterations,
+    // but do more work on each iteration:
+    //
+    //   0. Chance-Sampling
+    //      * ⬇ (A SCALAR for us, A SCALAR for the opponent)
+    //      * ⬆ A SCALAR (the sampled counterfactual value v ̃_i(σ, I) for player i)
+    //
+    //   1. Opponent-Public Chance Sampling
+    //      * ⬇ (A VECTOR for us, A SCALAR for the opponent)
+    //      * ⬆ A VECTOR(our counterfactual value for each of our private chance outcomes)
+    //
+    //   2. Self-Public Chance Sampling
+    //      * ⬇ (A SCALAR for us, A VECTOR for the opponent)
+    //      * ⬆ A SCALAR (the counterfactual value for our sampled outcome)
+    //
+    //   3. Public Chance Sampling
+    //      * ⬇ (A VECTOR for us, A VECTOR for the opponent)
+    //      * ⬆ A VECTOR (containing the counterfactual value for each of our n information set)
+    //      * At the terminal nodes, we seemingly have an O(n^2) computation, as for each of our n information
+    //        sets, we must consider all n of the opponent’s possible private outcomes in order to compute our
+    //        utility for that information set. However, if the payoffs at terminal nodes are structured in some
+    //        way, we can often reduce this to an O(n) evaluation that returns exactly the same value as the
+    //        O(n^2) evaluation. Doing so gives PCS the advantage of both SPCS (accurate strategy updates) and
+    //        OPCS (many strategy updates) for the same evaluation cost of either.
+    switch (mode_) {
+        case CFR_VECTOR_PAIRWISE_SOLVE: {
+            Ranges starting_ranges{active_players};
+            for (int p = 0; p < starting_ranges.num_player_; p++) {
+                starting_ranges.beliefs_[p].CopyValue(&local_root_belief[p]);
+                starting_ranges.beliefs_[p].Scale(REGRET_SCALER);
+            }
+            auto cfu = WalkTree_Pairwise(ag->root_node_, &starting_ranges);
+            for (int p = 0; p < starting_ranges.num_player_; p++) {
+                cfu->beliefs_[p].DotMultiply(&local_root_belief[p]);
+            }
+            sum_cfus = cfu->ValueSum();
+            // logger::debug("%f | %f", local_root_belief[0].BeliefSum(), local_root_belief[1].BeliefSum());
+            delete cfu;
+            break;
+        }
+        case CFR_VECTOR_ALTERNATE_SOLVE: {
+            // NOTE(kwok): walk down the vector training tree alternatively
+            for (int trainee = 0; trainee < active_players; trainee++) {
+                // FIXME(kwok): The number of players is not supposed to be fixed to 2.
+                auto opp_local_root_belief = local_root_belief[1 - trainee];
+                opp_local_root_belief.Scale(REGRET_SCALER);
+                sPrivateHandBelief *cfu_p = WalkTree_Alternate(ag->root_node_, trainee, &opp_local_root_belief);
+                cfu_p->DotMultiply(&local_root_belief[trainee]);  // illegal parts are 0, so it is fine.
+                sum_cfus += cfu_p->BeliefSum();
+                delete cfu_p;
+            }
+            break;
+        }
+        default: {
+            logger::critical("invalid CFR mode %d", mode_);
+        }
+    }
+
+    // FIXME(kwok): The number of players is not supposed to be fixed to 2.
+    double avg_cfu = sum_cfus / (2 * ag->GetBigBlind());
+    return avg_cfu;
+}
+
+// TODO(kwok): Adding back the pruned is necessary.
+// We ignore those pruned hands anyway, hence no need to set -1. The program won't panic.
 sPrivateHandBelief *VectorCfrWorker::WalkTree_Alternate(Node *this_node, int trainee, sPrivateHandBelief *opp_belief)
 {
     if (opp_belief->AllZero()) {
@@ -487,97 +576,6 @@ VectorCfrWorker::CollectRegrets(Node *this_node,
             strategy_->double_regret_[rnb0 + a] = new_reg;
         }
     }
-}
-
-double VectorCfrWorker::Solve(Board_t board)
-{
-    auto ag = strategy_->ag_;
-    auto starting_round = ag->root_state_.round;
-    if (starting_round < 3) {
-        delete priv_hand_kernel;
-        priv_hand_kernel = new sPrivateHandKernel(board, starting_round);
-        priv_hand_kernel->EnrichHandKernel(&ag->bucket_reader_);
-    } else if (starting_round == 3 && priv_hand_kernel == nullptr) {
-        //cache the hand kernel if just solving round RIVER subgame
-        priv_hand_kernel = new sPrivateHandKernel(board, starting_round);
-        priv_hand_kernel->EnrichHandKernel(&ag->bucket_reader_);
-    }
-
-    // pruning with prob
-    ConditionalPrune();
-
-    // todo: cache this for RIVER subgame.
-    sPrivateHandBelief local_root_belief[2];
-    auto active_players = ag->GetActivePlayerNum();
-    for (int p = 0; p < active_players; p++) {
-        // preparations
-        local_root_belief[p].CopyValue(&ag->root_hand_beliefs_for_all_[p]);
-        local_root_belief[p].NormalizeExcludeBoard(board);
-    }
-
-    double cfu_sum = 0.0;
-
-    // NOTE(kwok): There are three different methods of sampling chance events that have slower iterations,
-    // but do more work on each iteration:
-    //
-    //   0. Chance-Sampling
-    //      * ⬇ (A SCALAR for us, A SCALAR for the opponent)
-    //      * ⬆ A SCALAR (the sampled counterfactual value v ̃_i(σ, I) for player i)
-    //
-    //   1. Opponent-Public Chance Sampling
-    //      * ⬇ (A VECTOR for us, A SCALAR for the opponent)
-    //      * ⬆ A VECTOR(our counterfactual value for each of our private chance outcomes)
-    //
-    //   2. Self-Public Chance Sampling
-    //      * ⬇ (A SCALAR for us, A VECTOR for the opponent)
-    //      * ⬆ A SCALAR (the counterfactual value for our sampled outcome)
-    //
-    //   3. Public Chance Sampling
-    //      * ⬇ (A VECTOR for us, A VECTOR for the opponent)
-    //      * ⬆ A VECTOR (containing the counterfactual value for each of our n information set)
-    //      * At the terminal nodes, we seemingly have an O(n^2) computation, as for each of our n information
-    //        sets, we must consider all n of the opponent’s possible private outcomes in order to compute our
-    //        utility for that information set. However, if the payoffs at terminal nodes are structured in some
-    //        way, we can often reduce this to an O(n) evaluation that returns exactly the same value as the
-    //        O(n^2) evaluation. Doing so gives PCS the advantage of both SPCS (accurate strategy updates) and
-    //        OPCS (many strategy updates) for the same evaluation cost of either.
-    switch (mode_) {
-        case CFR_VECTOR_PAIRWISE_SOLVE: {
-            Ranges starting_ranges{active_players};
-            for (int p = 0; p < starting_ranges.num_player_; p++) {
-                starting_ranges.beliefs_[p].CopyValue(&local_root_belief[p]);
-                starting_ranges.beliefs_[p].Scale(REGRET_SCALER);
-            }
-            auto cfu = WalkTree_Pairwise(ag->root_node_, &starting_ranges);
-            for (int p = 0; p < starting_ranges.num_player_; p++) {
-                cfu->beliefs_[p].DotMultiply(&local_root_belief[p]);
-            }
-            cfu_sum = cfu->ValueSum();
-            // logger::debug("%f | %f", local_root_belief[0].BeliefSum(), local_root_belief[1].BeliefSum());
-            delete cfu;
-            break;
-        }
-        case CFR_VECTOR_ALTERNATE_SOLVE: {
-            // NOTE(kwok): Walk down the training tree alternatively.
-            for (int trainee = 0; trainee < active_players; trainee++) {
-                // FIXME(kwok): The number of players is not supposed to be fixed to 2.
-                auto opp_local_root_belief = local_root_belief[1 - trainee];
-                opp_local_root_belief.Scale(REGRET_SCALER);
-                sPrivateHandBelief *cfu_p = WalkTree_Alternate(ag->root_node_, trainee, &opp_local_root_belief);
-                cfu_p->DotMultiply(&local_root_belief[trainee]);  // illegal parts are 0, so it is fine.
-                cfu_sum += cfu_p->BeliefSum();
-                delete cfu_p;
-            }
-            break;
-        }
-        default: {
-            logger::critical("invalid CFR mode %d", mode_);
-        }
-    }
-
-    // FIXME(kwok): The number of players is not supposed to be fixed to 2.
-    double avg_cfu = cfu_sum / (2 * ag->GetBigBlind());
-    return avg_cfu;
 }
 
 std::vector<sPrivateHandBelief *> VectorCfrWorker::ExtractBeliefs(std::vector<Ranges *> &ranges, int pos)

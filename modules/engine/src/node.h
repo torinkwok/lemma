@@ -20,7 +20,9 @@ using Round_t = uint8_t;
 using Node_t = uint32_t;
 using Bucket_t = uint32_t;
 using Action_t = uint8_t;
-const Bucket_t INVALID_BUCKET = 100000000; // we are not using more than 100m
+
+// NOTE(kwok): the number of buckets won't exceed 100m
+const Bucket_t INVALID_BUCKET = 100000000; // FIXME(kwok): Consider a more elegant way.
 
 struct NodeValueCache
 {

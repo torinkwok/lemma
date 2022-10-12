@@ -21,8 +21,8 @@ struct sPrivateHandKernel
     {
         int cursor = 0;
         for (int i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {
-            auto high_low = FromVectorIndex(i);
-            if (board_.CardCrash(high_low.first) || board_.CardCrash(high_low.second)) {
+            auto high_low_pair = FromVectorIndex(i);
+            if (board_.CardCrash(high_low_pair.first) || board_.CardCrash(high_low_pair.second)) {
                 continue;
             }
             valid_combo_indices_[cursor] = i;
@@ -42,18 +42,18 @@ struct sPrivateHandKernel
     void EnrichHandKernel(BucketReader *bucket_reader)
     {
         for (int round = starting_round_; round < HOLDEM_MAX_ROUNDS; round++) {
-            for (auto i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {
-                auto high_low = FromVectorIndex(i);
+            for (auto vector_idx = 0; vector_idx < FULL_HAND_BELIEF_SIZE; vector_idx++) {
+                auto high_low = FromVectorIndex(vector_idx);
                 // skipping crash, set as -1
                 if (board_.CardCrashTillRound(high_low.first, round)
                     || board_.CardCrashTillRound(high_low.second, round)) {
-                    bucket_by_round_vector_idx[round][i] = INVALID_BUCKET;
+                    bucket_by_round_vector_idx[round][vector_idx] = INVALID_BUCKET;
                     continue;
                 }
                 auto bucket = bucket_reader->GetBucket_HighLowPair_Board_Round(
                         high_low.first, high_low.second, &board_, round
                 );
-                bucket_by_round_vector_idx[round][i] = bucket;
+                bucket_by_round_vector_idx[round][vector_idx] = bucket;
             }
         }
 

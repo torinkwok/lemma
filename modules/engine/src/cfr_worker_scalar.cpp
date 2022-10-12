@@ -17,7 +17,7 @@ double ScalarCfrWorker::Solve(Board_t board)
     }
 
     static const int n_iters = 1000;
-    double utility = 0.0;
+    double sum_cfus = 0.0;
     for (int i = 0; i < n_iters; i++) {
         // NOTE(kwok): On each iteration, we start by sampling all of chance’s actions: the public chance
         // events visible to each player, as well as the private chance events that are visible to only a
@@ -42,11 +42,11 @@ double ScalarCfrWorker::Solve(Board_t board)
         // counterfactual value v ̃i(σ, I) for player i. At each choice node for player i, these values are all
         // that is needed to calculate the regret for each action and update the strategy.
         //
-        // Note that at a terminal node z ∈ Z, it takes O(1) work to determine the utility for player i, u_i(z).
+        // Note that at a terminal node z ∈ Z, it takes O(1) work to determine the sum_cfus for player i, u_i(z).
 
         // NOTE(kwok): Walk down the training tree alternatively.
         for (int trainee = 0; trainee < active_players; trainee++) {
-            utility += WalkTree(trainee, ag->root_node_, private_hands_info);
+            sum_cfus += WalkTree(trainee, ag->root_node_, private_hands_info);
         }
     }
 
@@ -61,13 +61,13 @@ double ScalarCfrWorker::Solve(Board_t board)
         }
     }
 
-    utility /= (n_iters * 2 * ag->GetBigBlind());
+    sum_cfus /= (n_iters * 2 * ag->GetBigBlind());
 
     for (auto b: local_root_beliefs) {
         delete b;
     }
 
-    return utility;
+    return sum_cfus;
 }
 
 /// NOTE(kwok): Where CFR iterations taking place.
