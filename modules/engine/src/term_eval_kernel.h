@@ -112,21 +112,21 @@ public:
     void PreStack();
 
     // showdown evaluations
-    void FastShowdownEval(double *opp_full_belief, double *my_full_belief, int spent);
+    void FastShowdownEval(const double *opp_full_belief, double *my_full_belief, int spent);
 
-    void NaiveShowdownEval(double *opp_belief, double *my_full_belief, int spent);
+    void NaiveShowdownEval(const double *opp_belief, double *my_full_belief, int spent);
 
-    void StackShowdownProb(double *opp_belief, double *rank_net_win_prob, double *card_rank_net,
-                           int *card_skipping_rank_list);
+    void StackShowdownProb(const double *opp_belief, double *io_nets_per_rank, double *io_nets_per_card,
+                           int *io_card_skipping_ranks);
 
     // folding evaluations
-    void FastFoldEval(double *opp_full_belief, double *my_full_belief, int spent);
+    void FastFoldEval(const double *opp_full_belief, double *my_full_belief, int spent);
 
-    void NaiveFoldEval(double *opp_belief, double *my_belief, int spent);
+    static void NaiveFoldEval(const double *opp_belief, double *my_belief, int spent);
 
-    void StackFoldingProb(double *opp_belief, double *drift_by_card, double &sum);
+    static void StackFoldingProb(const double *opp_belief, double *drift_by_card, double &sum);
 
-    void FastTerminalEval(double *opp_belief, double *my_full_belief, int spent, bool showdown);
+    void FastTerminalEval(const double *opp_full_belief, double *io_my_full_belief, int spent, bool showdown);
 
     virtual ~TermEvalKernel()
     {

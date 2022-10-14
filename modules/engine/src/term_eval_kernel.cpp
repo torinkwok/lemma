@@ -85,51 +85,47 @@ void TermEvalKernel::PreStack()
 }
 
 // FIXME(kwok): The number of players is not supposed to be fixed to 2.
-void TermEvalKernel::FastShowdownEval(double *opp_full_belief,
+void TermEvalKernel::FastShowdownEval(const double *opp_full_belief,
                                       double *my_full_belief,
                                       int spent)
 {
-    // transform the opponent's belief from 1326 into 1081 accordingly
-    double sorted_opp_beliefs_by_rank[HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD];
+    // NOTE(kwok): transform the number of the opponents' beliefs from 1326 into 1081 accordingly
+    double sorted_opp_belief_of_ranks[HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD];
     for (auto i = 0; i < HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD; i++) {
-        sorted_opp_beliefs_by_rank[i] = opp_full_belief[sorted_infoset_by_rank[i]->vector_idx];
+        sorted_opp_belief_of_ranks[i] = opp_full_belief[sorted_infoset_by_rank[i]->vector_idx];
     }
 
-    double rank_net_win[n_unique_rank];
-    double card_net[HOLDEM_MAX_DECK * HOLDEM_MAX_DECK];
-    for (auto &i: card_net) i = 0;
-    int card_skipping_rank[46 * HOLDEM_MAX_DECK]; // 52 - 5 - 1
-    for (auto &i: card_skipping_rank) {
-        i = -1;  // -1 as a cutoff flag
-    }
+    double nets_per_rank[n_unique_rank];
+    double nets_per_card[HOLDEM_MAX_DECK * HOLDEM_MAX_DECK];
+    for (auto &net: nets_per_card) net = 0;
 
-    StackShowdownProb(sorted_opp_beliefs_by_rank, rank_net_win, card_net, card_skipping_rank);
+    int card_skipping_ranks[46 * HOLDEM_MAX_DECK]; // 52 - 5 - 1
+    for (auto &rank: card_skipping_ranks) rank = -1; // -1 as a cutoff flag
 
-    int card_last_skip_idx[HOLDEM_MAX_DECK];
-    for (auto &i: card_last_skip_idx) {
-        i = 0;
-    }
+    StackShowdownProb(sorted_opp_belief_of_ranks, nets_per_rank, nets_per_card, card_skipping_ranks);
+
+    int card_last_skip_idxes[HOLDEM_MAX_DECK];
+    for (auto &i: card_last_skip_idxes) i = 0;
 
     // compute the drift
     double card_last_net[HOLDEM_MAX_DECK];
     for (auto c = 0; c < HOLDEM_MAX_DECK; c++) {
-        card_last_net[c] = card_net[ComboIdx(0, c)];
+        card_last_net[c] = nets_per_card[ComboIdx(0, c)];
     }
 
     for (int rank_i = 0; rank_i < n_unique_rank; rank_i++) {
-        double base = rank_net_win[rank_i];
+        double base = nets_per_rank[rank_i];
         for (int j = rank_first_equal_index[rank_i]; j < rank_first_losing_index[rank_i]; j++) {
             auto v_idx = sorted_infoset_by_rank[j]->vector_idx;
-            // pruning
             if (my_full_belief[v_idx] == kBeliefPrunedFlag) {
                 continue;
             }
             double total_drift = 0.0;
             for (auto &c: sorted_infoset_by_rank[j]->GetHandPair()) {
-                auto idx = ComboIdx(card_last_skip_idx[c], c);
-                if (card_skipping_rank[idx] != rank_i) {
-                    card_last_skip_idx[c]++;
-                    card_last_net[c] = card_net[ComboIdx(card_last_skip_idx[c], c)];
+                auto idx = ComboIdx(card_last_skip_idxes[c], c);
+                if (card_skipping_ranks[idx] != rank_i) {
+                    card_last_skip_idxes[c]++;
+                    card_last_net[c] = nets_per_card[ComboIdx(card_last_skip_idxes[c], c)];
                 }
                 total_drift += card_last_net[c]; // No need to delete double count [high, low] as it must be the same value
             }
@@ -139,7 +135,7 @@ void TermEvalKernel::FastShowdownEval(double *opp_full_belief,
     }
 }
 
-void TermEvalKernel::NaiveShowdownEval(double *opp_belief,
+void TermEvalKernel::NaiveShowdownEval(const double *opp_belief,
                                        double *my_full_belief,
                                        int spent)
 {
@@ -185,7 +181,7 @@ void TermEvalKernel::NaiveShowdownEval(double *opp_belief,
  * @param spent
  * @param win_loss_multiplier win = 1, lose = -1
  */
-void TermEvalKernel::FastFoldEval(double *opp_full_belief,
+void TermEvalKernel::FastFoldEval(const double *opp_full_belief,
                                   double *my_full_belief,
                                   int spent)
 {
@@ -210,7 +206,7 @@ void TermEvalKernel::FastFoldEval(double *opp_full_belief,
     }
 }
 
-void TermEvalKernel::NaiveFoldEval(double *opp_belief,
+void TermEvalKernel::NaiveFoldEval(const double *opp_belief,
                                    double *my_belief,
                                    int spent)
 {
@@ -243,7 +239,7 @@ void TermEvalKernel::NaiveFoldEval(double *opp_belief,
 
 }
 
-void TermEvalKernel::StackFoldingProb(double *opp_belief,
+void TermEvalKernel::StackFoldingProb(const double *opp_belief,
                                       double *drift_by_card, double &sum)
 {
     for (int i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {
@@ -262,24 +258,24 @@ void TermEvalKernel::StackFoldingProb(double *opp_belief,
  * the net sum is calculated iteratively...
  * using a skipping linked list.
  * @param opp_belief
- * @param rank_net_win_prob
- * @param card_rank_net
- * @param card_skipping_rank_list , default -1
+ * @param io_nets_per_rank
+ * @param io_nets_per_card
+ * @param io_card_skipping_ranks , default -1
  */
-void TermEvalKernel::StackShowdownProb(double *opp_belief,
-                                       double *rank_net_win_prob,
-                                       double *card_rank_net,
-                                       int *card_skipping_rank_list)
+void TermEvalKernel::StackShowdownProb(const double *opp_belief,
+                                       double *io_nets_per_rank,
+                                       double *io_nets_per_card,
+                                       int *io_card_skipping_ranks)
 {
-    double rank_sum[n_unique_rank];
-    for (auto &i: rank_sum) {
+    double rank_net_accu_sums[n_unique_rank];
+    for (auto &i: rank_net_accu_sums) {
         i = 0;
     }
 
-    //temporary object for constructing card_skipping_rank_list
-    //e.g. 0->4, 1->67, 2->89, 3->126... skip_list_idx -> rank
-    int card_last_skipping_list_dx[HOLDEM_MAX_DECK];
-    for (auto &i: card_last_skipping_list_dx) {
+    // temporary object for constructing io_card_skipping_ranks
+    // e.g. 0->4, 1->67, 2->89, 3->126... skip_list_idx -> rank
+    int card_last_skipping_list_idxes[HOLDEM_MAX_DECK];
+    for (auto &i: card_last_skipping_list_idxes) {
         i = -1;
     }
 
@@ -306,56 +302,57 @@ void TermEvalKernel::StackShowdownProb(double *opp_belief,
             // Maybe because it makes the skipping rank_list part not accurate, i.e. missing some steps.
             // if (w == 0)
             //     continue;
-            rank_sum[rank_i] += w;
+            rank_net_accu_sums[rank_i] += w;
             // card
             for (auto &c: sorted_infoset_by_rank[j]->GetHandPair()) {
-                int idx = ComboIdx(card_last_skipping_list_dx[c], c);
+                int idx = ComboIdx(card_last_skipping_list_idxes[c], c);
                 //if idx < 0. then it is not init at all, ++ to 0
-                if (idx < 0 || card_skipping_rank_list[idx] != rank_i) {
-                    card_last_skipping_list_dx[c]++;
-                    // present this one to rank_i, equivalent to ComboIdx(card_last_skipping_list_dx[c], c);, after ++
-                    card_skipping_rank_list[idx + HOLDEM_MAX_DECK] = rank_i;
+                if (idx < 0 || io_card_skipping_ranks[idx] != rank_i) {
+                    card_last_skipping_list_idxes[c]++;
+                    // present this one to rank_i, equivalent to ComboIdx(card_last_skipping_list_idxes[c], c);, after ++
+                    io_card_skipping_ranks[idx + HOLDEM_MAX_DECK] = rank_i;
                 }
-                card_rank_sum[card_last_skipping_list_dx[c]][c] += w;
+                card_rank_sum[card_last_skipping_list_idxes[c]][c] += w;
                 card_sum[c] += w;
             }
         }
-        opp_belief_sum += rank_sum[rank_i];
+        opp_belief_sum += rank_net_accu_sums[rank_i];
     }
 
-    // second iters, iteratively compute needed values by rank
+    // second iter, iteratively compute needed values by rank
 
     // computing the base  //add the rank-1 and rank local sum
     for (int rank_i = 0; rank_i < n_unique_rank; rank_i++) {
         if (rank_i == 0) {
-            rank_net_win_prob[rank_i] = rank_sum[rank_i] - opp_belief_sum;
+            io_nets_per_rank[rank_i] = rank_net_accu_sums[rank_i] - opp_belief_sum;
             continue;
         }
-        rank_net_win_prob[rank_i] = rank_net_win_prob[rank_i - 1] + rank_sum[rank_i - 1] + rank_sum[rank_i];
+        io_nets_per_rank[rank_i] =
+                io_nets_per_rank[rank_i - 1] + rank_net_accu_sums[rank_i - 1] + rank_net_accu_sums[rank_i];
     }
 
     // compute the card drift, skipping linked list.
     for (auto c = 0; c < HOLDEM_MAX_DECK; c++) {
-        //skipping non-legit card
+        // skipping non-legit card
         if (board.CardCrash(c)) {
             continue;
         }
         int skip_idx = 0;
         while (true) {
             if (skip_idx == 0) {
-                card_rank_net[ComboIdx(skip_idx, c)] = card_rank_sum[skip_idx][c] - card_sum[c];
+                io_nets_per_card[ComboIdx(skip_idx, c)] = card_rank_sum[skip_idx][c] - card_sum[c];
                 skip_idx++;
                 continue;
             }
             int combo_idx = ComboIdx(skip_idx, c);
-            //cut off if -1
-            if (card_skipping_rank_list[combo_idx] == -1) {
+            // cut off if -1
+            if (io_card_skipping_ranks[combo_idx] == -1) {
                 break;
             }
-            card_rank_net[combo_idx] =
-                    card_rank_net[combo_idx - HOLDEM_MAX_DECK] + card_rank_sum[skip_idx][c]
-                    + card_rank_sum[skip_idx -
-                                    1][c];  //card_net[combo_idx - HOLDEM_MAX_DECK]  equals combo(skip_idx-1, c)
+            io_nets_per_card[combo_idx] =
+                    io_nets_per_card[combo_idx - HOLDEM_MAX_DECK] + card_rank_sum[skip_idx][c]
+                    +
+                    card_rank_sum[skip_idx - 1][c]; //card_net[combo_idx - HOLDEM_MAX_DECK]  equals combo(skip_idx-1, c)
             skip_idx++;
         }
     }
@@ -367,11 +364,12 @@ inline int TermEvalKernel::ComboIdx(int rank, int card)
 }
 
 // FIXME(kwok): The number of players is not supposed to be fixed to 2.
-void TermEvalKernel::FastTerminalEval(double *opp_belief, double *my_full_belief, int spent, bool showdown)
+void
+TermEvalKernel::FastTerminalEval(const double *opp_full_belief, double *io_my_full_belief, int spent, bool showdown)
 {
     if (showdown) {
-        FastShowdownEval(opp_belief, my_full_belief, spent);
+        FastShowdownEval(opp_full_belief, io_my_full_belief, spent);
     } else {
-        FastFoldEval(opp_belief, my_full_belief, spent);
+        FastFoldEval(opp_full_belief, io_my_full_belief, spent);
     }
 }
