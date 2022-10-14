@@ -15,7 +15,7 @@ void TermEvalKernel::Prepare(Board_t *board_ptr)
             int rank = RankHand(high, low, board_ptr);
             auto vector_idx = ToVectorIndex(high, low);
             // TODO(kwok): Let `sPrivHandRank` handle the calculation of the complete hand rank.
-            sorted_infoset_by_rank[rank_i] = new sPrivHandRank{high, low, rank, vector_idx};
+            sorted_infosets_by_rank[rank_i] = new sPrivHandRank{high, low, rank, vector_idx};
             rank_i++;
             unique_ranks.insert(rank);
         }
@@ -27,8 +27,8 @@ void TermEvalKernel::Prepare(Board_t *board_ptr)
 
     // allocate memory on the heap
     n_unique_rank = unique_ranks.size();
-    rank_first_equal_index = new int[n_unique_rank];
-    rank_first_losing_index = new int[n_unique_rank];
+    rank_first_equal_idxs = new int[n_unique_rank];
+    rank_first_weaker_idxs = new int[n_unique_rank];
 
     Sort();
     PreStack();
@@ -36,24 +36,24 @@ void TermEvalKernel::Prepare(Board_t *board_ptr)
 
 void TermEvalKernel::Sort()
 {
-    std::sort(sorted_infoset_by_rank.begin(), sorted_infoset_by_rank.end(),
+    std::sort(sorted_infosets_by_rank.begin(), sorted_infosets_by_rank.end(),
               [](const sPrivHandRank *lhs, const sPrivHandRank *rhs)
               {
                   return lhs->RankHighLowSort(rhs);
               }
     );
 
-    // for (auto *a: sorted_infoset_by_rank) {
+    // for (auto *a: sorted_infosets_by_rank) {
     //     a->Print();
     // }
 
-    min_rank = sorted_infoset_by_rank[0]->rank;
+    min_rank = sorted_infosets_by_rank[0]->rank;
 
     // NOTE(kwok): build an inverse lookup
-    for (unsigned long rank_i = 0; rank_i < sorted_infoset_by_rank.size(); rank_i++) {
-        auto h = sorted_infoset_by_rank[rank_i]->high_card;
-        auto l = sorted_infoset_by_rank[rank_i]->low_card;
-        rank_indices_by_high_low[h][l] = rank_i;
+    for (unsigned long rank_i = 0; rank_i < sorted_infosets_by_rank.size(); rank_i++) {
+        auto h = sorted_infosets_by_rank[rank_i]->high_card;
+        auto l = sorted_infosets_by_rank[rank_i]->low_card;
+        rank_idxs_by_high_low[h][l] = rank_i;
         // Cardset c = emptyCardset();
         // addCardToCardset(&c, suitOfCard(list_[rank_i]->high_card, 4), rankOfCard(list_[rank_i]->high_card, 4));
         // addCardToCardset(&c, suitOfCard(list_[rank_i]->low_card, 4), rankOfCard(list_[rank_i]->low_card, 4));
@@ -65,23 +65,23 @@ void TermEvalKernel::PreStack()
 {
     int last_seen_rank = min_rank;
     int rank_i = 0;
-    rank_first_equal_index[rank_i] = 0;
+    rank_first_equal_idxs[rank_i] = 0;
 
     for (int i = 0; i < HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD; i++) {
-        auto priv_hand_rank = sorted_infoset_by_rank[i];
+        auto priv_hand_rank = sorted_infosets_by_rank[i];
         auto rank = priv_hand_rank->rank;
         if (rank != last_seen_rank) {
             last_seen_rank = rank;
             rank_i++;
             // store new rank's value and index
-            rank_first_equal_index[rank_i] = i;
+            rank_first_equal_idxs[rank_i] = i;
         }
     }
 
     for (int j = 0; j < n_unique_rank - 1; j++) {
-        rank_first_losing_index[j] = rank_first_equal_index[j + 1];
+        rank_first_weaker_idxs[j] = rank_first_equal_idxs[j + 1];
     }
-    rank_first_losing_index[n_unique_rank - 1] = HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD;
+    rank_first_weaker_idxs[n_unique_rank - 1] = HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD;
 }
 
 // FIXME(kwok): The number of players is not supposed to be fixed to 2.
@@ -92,7 +92,7 @@ void TermEvalKernel::FastShowdownEval(const double *opp_full_belief,
     // NOTE(kwok): transform the number of the opponents' beliefs from 1326 into 1081 accordingly
     double sorted_opp_belief_of_ranks[HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD];
     for (auto i = 0; i < HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD; i++) {
-        sorted_opp_belief_of_ranks[i] = opp_full_belief[sorted_infoset_by_rank[i]->vector_idx];
+        sorted_opp_belief_of_ranks[i] = opp_full_belief[sorted_infosets_by_rank[i]->vector_idx];
     }
 
     double nets_per_rank[n_unique_rank];
@@ -104,8 +104,8 @@ void TermEvalKernel::FastShowdownEval(const double *opp_full_belief,
 
     StackShowdownProb(sorted_opp_belief_of_ranks, nets_per_rank, nets_per_card, card_skipping_ranks);
 
-    int card_last_skip_idxes[HOLDEM_MAX_DECK];
-    for (auto &i: card_last_skip_idxes) i = 0;
+    int card_last_skip_idxs[HOLDEM_MAX_DECK];
+    for (auto &i: card_last_skip_idxs) i = 0;
 
     // compute the drift
     double card_last_net[HOLDEM_MAX_DECK];
@@ -115,17 +115,17 @@ void TermEvalKernel::FastShowdownEval(const double *opp_full_belief,
 
     for (int rank_i = 0; rank_i < n_unique_rank; rank_i++) {
         double base = nets_per_rank[rank_i];
-        for (int j = rank_first_equal_index[rank_i]; j < rank_first_losing_index[rank_i]; j++) {
-            auto v_idx = sorted_infoset_by_rank[j]->vector_idx;
+        for (int j = rank_first_equal_idxs[rank_i]; j < rank_first_weaker_idxs[rank_i]; j++) {
+            auto v_idx = sorted_infosets_by_rank[j]->vector_idx;
             if (io_my_full_belief[v_idx] == kBeliefPrunedFlag) {
                 continue;
             }
             double total_drift = 0.0;
-            for (auto &c: sorted_infoset_by_rank[j]->GetHandPair()) {
-                auto idx = ComboIdx(card_last_skip_idxes[c], c);
+            for (auto &c: sorted_infosets_by_rank[j]->GetHandPair()) {
+                auto idx = ComboIdx(card_last_skip_idxs[c], c);
                 if (card_skipping_ranks[idx] != rank_i) {
-                    card_last_skip_idxes[c]++;
-                    card_last_net[c] = nets_per_card[ComboIdx(card_last_skip_idxes[c], c)];
+                    card_last_skip_idxs[c]++;
+                    card_last_net[c] = nets_per_card[ComboIdx(card_last_skip_idxs[c], c)];
                 }
                 total_drift += card_last_net[c]; // No need to delete double count [high, low] as it must be the same value
             }
@@ -142,7 +142,7 @@ void TermEvalKernel::NaiveShowdownEval(const double *opp_belief,
     auto begin = std::chrono::steady_clock::now();
 
     for (auto my_pos = 0; my_pos < HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD; my_pos++) {
-        auto v_idx = sorted_infoset_by_rank[my_pos]->vector_idx;
+        auto v_idx = sorted_infosets_by_rank[my_pos]->vector_idx;
         // pruning
         if (io_my_full_belief[v_idx] == kBeliefPrunedFlag) {
             continue;
@@ -152,15 +152,15 @@ void TermEvalKernel::NaiveShowdownEval(const double *opp_belief,
             if (my_pos == opp_pos) {
                 continue;
             }
-            auto weight = opp_belief[sorted_infoset_by_rank[opp_pos]->vector_idx];
+            auto weight = opp_belief[sorted_infosets_by_rank[opp_pos]->vector_idx];
             // no hand belief or just too low
             if (weight == 0) {
                 continue;
             }
-            if (sorted_infoset_by_rank[my_pos]->RankEqual(sorted_infoset_by_rank[opp_pos])) {
+            if (sorted_infosets_by_rank[my_pos]->RankEqual(sorted_infosets_by_rank[opp_pos])) {
                 continue;
             }
-            if (sorted_infoset_by_rank[my_pos]->CardCrash(sorted_infoset_by_rank[opp_pos])) {
+            if (sorted_infosets_by_rank[my_pos]->CardCrash(sorted_infosets_by_rank[opp_pos])) {
                 continue;
             }
             // compare
@@ -192,7 +192,7 @@ void TermEvalKernel::FastFoldEval(const double *opp_full_belief,
     double base = 0.0;
     StackFoldingProb(opp_full_belief, folding_drift, base);
     for (auto my_pos = 0; my_pos < HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD; my_pos++) {
-        auto v_idx = sorted_infoset_by_rank[my_pos]->vector_idx;
+        auto v_idx = sorted_infosets_by_rank[my_pos]->vector_idx;
         // pruning
         if (io_my_full_belief[v_idx] == kBeliefPrunedFlag) {
             continue;
@@ -274,8 +274,8 @@ void TermEvalKernel::StackShowdownProb(const double *opp_full_belief,
 
     // temporary object for constructing io_card_skipping_ranks
     // e.g. 0->4, 1->67, 2->89, 3->126... skip_list_idx -> rank
-    int card_last_skipping_list_idxes[HOLDEM_MAX_DECK];
-    for (auto &i: card_last_skipping_list_idxes) {
+    int card_last_skipping_list_idxs[HOLDEM_MAX_DECK];
+    for (auto &i: card_last_skipping_list_idxs) {
         i = -1;
     }
 
@@ -296,7 +296,7 @@ void TermEvalKernel::StackShowdownProb(const double *opp_full_belief,
     // first list iteration, tally the sum of belief, by rank, by card
     double opp_belief_sum = 0.0;
     for (int rank_i = 0; rank_i < n_unique_rank; rank_i++) {
-        for (int j = rank_first_equal_index[rank_i]; j < rank_first_losing_index[rank_i]; j++) {
+        for (int j = rank_first_equal_idxs[rank_i]; j < rank_first_weaker_idxs[rank_i]; j++) {
             double w = opp_full_belief[j];
             // WARNING: FIXME(kwok): the below code snippet makes showdown not able to handle 0 items in opp belief!
             // Maybe because it makes the skipping rank_list part not accurate, i.e. missing some steps.
@@ -304,15 +304,15 @@ void TermEvalKernel::StackShowdownProb(const double *opp_full_belief,
             //     continue;
             rank_net_accu_sums[rank_i] += w;
             // card
-            for (auto &c: sorted_infoset_by_rank[j]->GetHandPair()) {
-                int idx = ComboIdx(card_last_skipping_list_idxes[c], c);
+            for (auto &c: sorted_infosets_by_rank[j]->GetHandPair()) {
+                int idx = ComboIdx(card_last_skipping_list_idxs[c], c);
                 //if idx < 0. then it is not init at all, ++ to 0
                 if (idx < 0 || io_card_skipping_ranks[idx] != rank_i) {
-                    card_last_skipping_list_idxes[c]++;
-                    // present this one to rank_i, equivalent to ComboIdx(card_last_skipping_list_idxes[c], c);, after ++
+                    card_last_skipping_list_idxs[c]++;
+                    // present this one to rank_i, equivalent to ComboIdx(card_last_skipping_list_idxs[c], c);, after ++
                     io_card_skipping_ranks[idx + HOLDEM_MAX_DECK] = rank_i;
                 }
-                card_rank_sum[card_last_skipping_list_idxes[c]][c] += w;
+                card_rank_sum[card_last_skipping_list_idxs[c]][c] += w;
                 card_sum[c] += w;
             }
         }

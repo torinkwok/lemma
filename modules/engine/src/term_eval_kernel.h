@@ -95,14 +95,14 @@ struct sPrivHandRank
 class TermEvalKernel
 {
 public:
-    std::array<sPrivHandRank *, HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD> sorted_infoset_by_rank;
+    std::array<sPrivHandRank *, HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD> sorted_infosets_by_rank;
 
     Board_t board;
     int min_rank = 0;
     size_t n_unique_rank = 0;
-    int *rank_first_equal_index; // rank starting
-    int *rank_first_losing_index; // next rank starting
-    uint16_t rank_indices_by_high_low[52][52];
+    int *rank_first_equal_idxs; // rank starting
+    int *rank_first_weaker_idxs; // next rank starting
+    uint16_t rank_idxs_by_high_low[52][52];
 
     // preparations
     void Prepare(Board_t *board_ptr);
@@ -130,11 +130,11 @@ public:
 
     virtual ~TermEvalKernel()
     {
-        for (auto a: sorted_infoset_by_rank) {
+        for (auto a: sorted_infosets_by_rank) {
             delete a;
         }
-        delete[] rank_first_losing_index;
-        delete[] rank_first_equal_index;
+        delete[] rank_first_weaker_idxs;
+        delete[] rank_first_equal_idxs;
     }
 
     static int ComboIdx(int rank, int card);
