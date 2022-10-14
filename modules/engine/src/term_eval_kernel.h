@@ -100,8 +100,8 @@ public:
     Board_t board;
     int min_rank = 0;
     size_t n_unique_rank = 0;
-    int *rank_first_equal_idxs; // rank starting
-    int *rank_first_weaker_idxs; // next rank starting
+    int *equal_ranks_first_idxs; // rank starting
+    int *weaker_ranks_first_idxs; // next rank starting
     uint16_t rank_idxs_by_high_low[52][52];
 
     // preparations
@@ -133,8 +133,8 @@ public:
         for (auto a: sorted_infosets_by_rank) {
             delete a;
         }
-        delete[] rank_first_weaker_idxs;
-        delete[] rank_first_equal_idxs;
+        delete[] weaker_ranks_first_idxs;
+        delete[] equal_ranks_first_idxs;
     }
 
     static int ComboIdx(int rank, int card);
