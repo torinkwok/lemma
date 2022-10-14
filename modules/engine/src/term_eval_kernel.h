@@ -116,8 +116,8 @@ public:
 
     void NaiveShowdownEval(const double *opp_belief, double *io_my_full_belief, int spent);
 
-    void StackShowdownProb(const double *opp_full_belief, double *io_nets_per_rank, double *io_nets_per_card,
-                           int *io_card_skipping_ranks);
+    void StackShowdownProb(const double *opp_full_belief, double *io_nets_by_rank, double *io_nets_by_combo,
+                           int *io_skipping_ranks_by_combo);
 
     // folding evaluations
     void FastFoldEval(const double *opp_full_belief, double *io_my_full_belief, int spent);

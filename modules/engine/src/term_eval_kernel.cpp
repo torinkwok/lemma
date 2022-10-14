@@ -94,39 +94,39 @@ void TermEvalKernel::FastShowdownEval(const double *opp_full_belief,
         sorted_opp_belief_of_ranks[i] = opp_full_belief[sorted_infosets_by_rank[i]->vector_idx];
     }
 
-    double nets_per_rank[n_unique_rank];
-    double nets_per_card[HOLDEM_MAX_DECK * HOLDEM_MAX_DECK];
-    for (auto &net: nets_per_card) net = 0;
+    double nets_by_rank[n_unique_rank];
+    double nets_by_combo[HOLDEM_MAX_DECK * HOLDEM_MAX_DECK];
+    for (auto &net: nets_by_combo) net = 0;
 
-    int card_skipping_ranks[46 * HOLDEM_MAX_DECK]; // 52 - 5 - 1
-    for (auto &rank: card_skipping_ranks) rank = -1; // -1 as a cutoff flag
+    int skipping_ranks_by_combo[46 * HOLDEM_MAX_DECK]; // 52 - 5 - 1
+    for (auto &rank_id: skipping_ranks_by_combo) rank_id = -1; // -1 as a cutoff flag
 
-    StackShowdownProb(sorted_opp_belief_of_ranks, nets_per_rank, nets_per_card, card_skipping_ranks);
+    StackShowdownProb(sorted_opp_belief_of_ranks, nets_by_rank, nets_by_combo, skipping_ranks_by_combo);
 
-    int card_last_skip_idxs[HOLDEM_MAX_DECK];
-    for (auto &i: card_last_skip_idxs) i = 0;
+    int last_skipping_ranks_by_card[HOLDEM_MAX_DECK];
+    for (auto &c: last_skipping_ranks_by_card) c = 0;
 
     // compute the drift
-    double card_last_net[HOLDEM_MAX_DECK];
+    double last_nets_by_card[HOLDEM_MAX_DECK];
     for (auto c = 0; c < HOLDEM_MAX_DECK; c++) {
-        card_last_net[c] = nets_per_card[ComboIdx(0, c)];
+        last_nets_by_card[c] = nets_by_combo[ComboIdx(0, c)];
     }
 
     for (int rank_id = 0; rank_id < n_unique_rank; rank_id++) {
-        double base = nets_per_rank[rank_id];
-        for (int j = equal_ranks_first_idxs[rank_id]; j < weaker_ranks_first_idxs[rank_id]; j++) {
-            auto v_idx = sorted_infosets_by_rank[j]->vector_idx;
+        double base = nets_by_rank[rank_id];
+        for (int i = equal_ranks_first_idxs[rank_id]; i < weaker_ranks_first_idxs[rank_id]; i++) {
+            auto v_idx = sorted_infosets_by_rank[i]->vector_idx;
             if (io_my_full_belief[v_idx] == kBeliefPrunedFlag) {
                 continue;
             }
             double total_drift = 0.0;
-            for (auto &c: sorted_infosets_by_rank[j]->GetHandPair()) {
-                auto idx = ComboIdx(card_last_skip_idxs[c], c);
-                if (card_skipping_ranks[idx] != rank_id) {
-                    card_last_skip_idxs[c]++;
-                    card_last_net[c] = nets_per_card[ComboIdx(card_last_skip_idxs[c], c)];
+            for (auto &c: sorted_infosets_by_rank[i]->GetHandPair()) {
+                auto combo = ComboIdx(last_skipping_ranks_by_card[c], c);
+                if (skipping_ranks_by_combo[combo] != rank_id) {
+                    last_skipping_ranks_by_card[c]++;
+                    last_nets_by_card[c] = nets_by_combo[ComboIdx(last_skipping_ranks_by_card[c], c)];
                 }
-                total_drift += card_last_net[c]; // No need to delete double count [high, low] as it must be the same value
+                total_drift += last_nets_by_card[c]; // no need to delete double count [high, low] as it must be the same value
             }
             double net = base - total_drift;
             io_my_full_belief[v_idx] = net * spent;
@@ -257,21 +257,21 @@ void TermEvalKernel::StackFoldingProb(const double *opp_full_belief,
  * the net sum is calculated iteratively...
  * using a skipping linked list.
  * @param opp_full_belief
- * @param io_nets_per_rank
- * @param io_nets_per_card
- * @param io_card_skipping_ranks , default -1
+ * @param io_nets_by_rank
+ * @param io_nets_by_combo
+ * @param io_skipping_ranks_by_combo , default -1
  */
 void TermEvalKernel::StackShowdownProb(const double *opp_full_belief,
-                                       double *io_nets_per_rank,
-                                       double *io_nets_per_card,
-                                       int *io_card_skipping_ranks)
+                                       double *io_nets_by_rank,
+                                       double *io_nets_by_combo,
+                                       int *io_skipping_ranks_by_combo)
 {
     double net_sums_by_rank[n_unique_rank];
     for (auto &i: net_sums_by_rank) {
         i = 0;
     }
 
-    // temporary object for constructing io_card_skipping_ranks
+    // temporary object for constructing io_skipping_ranks_by_combo
     // e.g. 0->4, 1->67, 2->89, 3->126... skip_list_idx -> rank
     int card_last_skiplist_idxs[HOLDEM_MAX_DECK];
     for (auto &i: card_last_skiplist_idxs) {
@@ -280,8 +280,8 @@ void TermEvalKernel::StackShowdownProb(const double *opp_full_belief,
 
     // skipping linked list no more than 52 - 5 - 1 = 46 unique rank.  rank * card
     // in practise it is a lot less
-    double sums_by_rank_card[46][HOLDEM_MAX_DECK];
-    for (auto &i: sums_by_rank_card) {
+    double sums_by_rank_combo[46][HOLDEM_MAX_DECK];
+    for (auto &i: sums_by_rank_combo) {
         for (double &j: i) {
             j = 0;
         }
@@ -308,14 +308,15 @@ void TermEvalKernel::StackShowdownProb(const double *opp_full_belief,
             net_sums_by_rank[rank_id] += w;
             // NOTE(kwok): deal with nets per card
             for (auto &c: sorted_infosets_by_rank[i]->GetHandPair()) {
-                int combo_idx = ComboIdx(card_last_skiplist_idxs[c], c);
-                if (combo_idx < 0 || io_card_skipping_ranks[combo_idx] != rank_id) {
-                    // NOTE(kwok): If combo_idx < 0, it has yet to be initialized. Increase it to 0.
+                int combo = ComboIdx(card_last_skiplist_idxs[c], c);
+                if (combo < 0 || io_skipping_ranks_by_combo[combo] != rank_id) {
+                    // NOTE(kwok): `combo` being less than 0 means that `card_last_skiplist_index` has
+                    // yet to be initialized
                     card_last_skiplist_idxs[c]++;
                     // present this one to rank_id, equivalent to ComboIdx(card_last_skiplist_idxs[c], c);, after ++
-                    io_card_skipping_ranks[combo_idx + HOLDEM_MAX_DECK] = rank_id;
+                    io_skipping_ranks_by_combo[combo + HOLDEM_MAX_DECK] = rank_id;
                 }
-                sums_by_rank_card[card_last_skiplist_idxs[c]][c] += w;
+                sums_by_rank_combo[card_last_skiplist_idxs[c]][c] += w;
                 sums_by_card[c] += w;
             }
         }
@@ -329,37 +330,37 @@ void TermEvalKernel::StackShowdownProb(const double *opp_full_belief,
     // computing the base  //add the rank-1 and rank local sum
     for (int rank_id = 0; rank_id < n_unique_rank; rank_id++) {
         if (rank_id == 0) {
-            io_nets_per_rank[rank_id] = net_sums_by_rank[rank_id] - opp_belief_sum;
+            io_nets_by_rank[rank_id] = net_sums_by_rank[rank_id] - opp_belief_sum;
             continue;
         }
-        io_nets_per_rank[rank_id] =
-                io_nets_per_rank[rank_id - 1] + net_sums_by_rank[rank_id - 1] + net_sums_by_rank[rank_id];
+        io_nets_by_rank[rank_id] =
+                io_nets_by_rank[rank_id - 1] + net_sums_by_rank[rank_id - 1] + net_sums_by_rank[rank_id];
     }
 
     // compute the card drift, skipping linked list.
     for (auto c = 0; c < HOLDEM_MAX_DECK; c++) {
-        // skipping non-legit card
+        // ignoring non-legit card
         if (board.CardCrash(c)) {
             continue;
         }
-        int skip_idx = 0;
+        int rank_id = 0; // skip index
         while (true) {
-            if (skip_idx == 0) {
-                io_nets_per_card[ComboIdx(skip_idx, c)] = sums_by_rank_card[skip_idx][c] - sums_by_card[c];
-                skip_idx++;
+            if (rank_id == 0) {
+                io_nets_by_combo[ComboIdx(rank_id, c)] = sums_by_rank_combo[rank_id][c] - sums_by_card[c];
+                rank_id++;
                 continue;
             }
-            int combo_idx = ComboIdx(skip_idx, c);
+            int combo_idx = ComboIdx(rank_id, c);
             // cut off if -1
-            if (io_card_skipping_ranks[combo_idx] == -1) {
+            if (io_skipping_ranks_by_combo[combo_idx] == -1) {
                 break;
             }
-            io_nets_per_card[combo_idx] =
-                    io_nets_per_card[combo_idx - HOLDEM_MAX_DECK] + sums_by_rank_card[skip_idx][c]
+            io_nets_by_combo[combo_idx] =
+                    io_nets_by_combo[combo_idx - HOLDEM_MAX_DECK] + sums_by_rank_combo[rank_id][c]
                     +
-                    sums_by_rank_card[skip_idx -
-                                      1][c]; //card_net[combo_idx - HOLDEM_MAX_DECK]  equals combo(skip_idx-1, c)
-            skip_idx++;
+                    sums_by_rank_combo[rank_id - 1][c];
+            // card_net[combo_idx - HOLDEM_MAX_DECK] equals combo(rank_id-1, c)
+            rank_id++;
         }
     }
 }
