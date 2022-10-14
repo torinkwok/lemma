@@ -86,7 +86,7 @@ void TermEvalKernel::PreStack()
 
 // FIXME(kwok): The number of players is not supposed to be fixed to 2.
 void TermEvalKernel::FastShowdownEval(const double *opp_full_belief,
-                                      double *my_full_belief,
+                                      double *io_my_full_belief,
                                       int spent)
 {
     // NOTE(kwok): transform the number of the opponents' beliefs from 1326 into 1081 accordingly
@@ -117,7 +117,7 @@ void TermEvalKernel::FastShowdownEval(const double *opp_full_belief,
         double base = nets_per_rank[rank_i];
         for (int j = rank_first_equal_index[rank_i]; j < rank_first_losing_index[rank_i]; j++) {
             auto v_idx = sorted_infoset_by_rank[j]->vector_idx;
-            if (my_full_belief[v_idx] == kBeliefPrunedFlag) {
+            if (io_my_full_belief[v_idx] == kBeliefPrunedFlag) {
                 continue;
             }
             double total_drift = 0.0;
@@ -130,13 +130,13 @@ void TermEvalKernel::FastShowdownEval(const double *opp_full_belief,
                 total_drift += card_last_net[c]; // No need to delete double count [high, low] as it must be the same value
             }
             double net = base - total_drift;
-            my_full_belief[v_idx] = net * spent;
+            io_my_full_belief[v_idx] = net * spent;
         }
     }
 }
 
 void TermEvalKernel::NaiveShowdownEval(const double *opp_belief,
-                                       double *my_full_belief,
+                                       double *io_my_full_belief,
                                        int spent)
 {
     auto begin = std::chrono::steady_clock::now();
@@ -144,7 +144,7 @@ void TermEvalKernel::NaiveShowdownEval(const double *opp_belief,
     for (auto my_pos = 0; my_pos < HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD; my_pos++) {
         auto v_idx = sorted_infoset_by_rank[my_pos]->vector_idx;
         // pruning
-        if (my_full_belief[v_idx] == kBeliefPrunedFlag) {
+        if (io_my_full_belief[v_idx] == kBeliefPrunedFlag) {
             continue;
         }
         auto weighted_sum = 0.0;
@@ -166,7 +166,7 @@ void TermEvalKernel::NaiveShowdownEval(const double *opp_belief,
             // compare
             weighted_sum += my_pos > opp_pos ? weight : -1.0 * weight;
         }
-        my_full_belief[v_idx] = weighted_sum * spent;
+        io_my_full_belief[v_idx] = weighted_sum * spent;
     }
 
     auto end = std::chrono::steady_clock::now();
@@ -177,12 +177,12 @@ void TermEvalKernel::NaiveShowdownEval(const double *opp_belief,
 /**
  * not board-card safe
  * @param opp_full_belief
- * @param my_full_belief
+ * @param io_my_full_belief
  * @param spent
  * @param win_loss_multiplier win = 1, lose = -1
  */
 void TermEvalKernel::FastFoldEval(const double *opp_full_belief,
-                                  double *my_full_belief,
+                                  double *io_my_full_belief,
                                   int spent)
 {
     double folding_drift[HOLDEM_MAX_DECK];
@@ -194,7 +194,7 @@ void TermEvalKernel::FastFoldEval(const double *opp_full_belief,
     for (auto my_pos = 0; my_pos < HOLDEM_MAX_HANDS_PERMUTATION_EXCLUDE_BOARD; my_pos++) {
         auto v_idx = sorted_infoset_by_rank[my_pos]->vector_idx;
         // pruning
-        if (my_full_belief[v_idx] == kBeliefPrunedFlag) {
+        if (io_my_full_belief[v_idx] == kBeliefPrunedFlag) {
             continue;
         }
         auto high_low = FromVectorIndex(v_idx);
@@ -202,18 +202,18 @@ void TermEvalKernel::FastFoldEval(const double *opp_full_belief,
                 folding_drift[high_low.first]
                 + folding_drift[high_low.second] - opp_full_belief[v_idx]; // - double count
         auto net = base - total_drift;
-        my_full_belief[v_idx] = net * spent;
+        io_my_full_belief[v_idx] = net * spent;
     }
 }
 
-void TermEvalKernel::NaiveFoldEval(const double *opp_belief,
-                                   double *my_belief,
+void TermEvalKernel::NaiveFoldEval(const double *opp_full_belief,
+                                   double *io_my_belief,
                                    int spent)
 {
     auto begin = std::chrono::steady_clock::now();
     for (auto my_pos = 0; my_pos < FULL_HAND_BELIEF_SIZE; my_pos++) {
         // pruning
-        if (my_belief[my_pos] == kBeliefPrunedFlag) {
+        if (io_my_belief[my_pos] == kBeliefPrunedFlag) {
             continue;
         }
         auto weighted_sum = 0.0;
@@ -225,13 +225,13 @@ void TermEvalKernel::NaiveFoldEval(const double *opp_belief,
             if (VectorIdxClash(my_pos, opp_pos)) {
                 continue;
             }
-            auto weight = opp_belief[opp_pos];
+            auto weight = opp_full_belief[opp_pos];
             //no hand belief or just too low
             if (weight > 0.0) {
                 weighted_sum += weight;
             }
         }
-        my_belief[my_pos] = weighted_sum * spent;
+        io_my_belief[my_pos] = weighted_sum * spent;
     }
     auto end = std::chrono::steady_clock::now();
     auto total_time_ms = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
@@ -239,11 +239,11 @@ void TermEvalKernel::NaiveFoldEval(const double *opp_belief,
 
 }
 
-void TermEvalKernel::StackFoldingProb(const double *opp_belief,
+void TermEvalKernel::StackFoldingProb(const double *opp_full_belief,
                                       double *drift_by_card, double &sum)
 {
     for (int i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {
-        double w = opp_belief[i];
+        double w = opp_full_belief[i];
         //skipping 0 and -1
         if (w > 0.0) {
             sum += w;
@@ -257,12 +257,12 @@ void TermEvalKernel::StackFoldingProb(const double *opp_belief,
 /**
  * the net sum is calculated iteratively...
  * using a skipping linked list.
- * @param opp_belief
+ * @param opp_full_belief
  * @param io_nets_per_rank
  * @param io_nets_per_card
  * @param io_card_skipping_ranks , default -1
  */
-void TermEvalKernel::StackShowdownProb(const double *opp_belief,
+void TermEvalKernel::StackShowdownProb(const double *opp_full_belief,
                                        double *io_nets_per_rank,
                                        double *io_nets_per_card,
                                        int *io_card_skipping_ranks)
@@ -297,7 +297,7 @@ void TermEvalKernel::StackShowdownProb(const double *opp_belief,
     double opp_belief_sum = 0.0;
     for (int rank_i = 0; rank_i < n_unique_rank; rank_i++) {
         for (int j = rank_first_equal_index[rank_i]; j < rank_first_losing_index[rank_i]; j++) {
-            double w = opp_belief[j];
+            double w = opp_full_belief[j];
             // WARNING: FIXME(kwok): the below code snippet makes showdown not able to handle 0 items in opp belief!
             // Maybe because it makes the skipping rank_list part not accurate, i.e. missing some steps.
             // if (w == 0)
