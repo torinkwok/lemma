@@ -323,16 +323,22 @@ void TermEvalKernel::StackOppShowdownProb(const double *opp_belief_of_sorted_ran
         opp_belief_total_sum += opp_belief_sums_by_rank[rank_id];
     }
 
-    /* NOTE(kwok): The Second Iteration */
+    /* NOTE(kwok): The Second Iteration. Dynamic Programming Structures. */
 
     // NOTE(kwok): compute the opponents' nets by rank
     for (int rank_id = 0; rank_id < n_unique_rank; rank_id++) {
         if (rank_id == 0) {
+            // NOTE(kwok): If `rank_id` is 0, the hands bucketed by it will always lose to other hands.
             io_opp_nets_by_rank[rank_id] = opp_belief_sums_by_rank[rank_id] - opp_belief_total_sum;
             continue;
         }
-        io_opp_nets_by_rank[rank_id] = io_opp_nets_by_rank[rank_id - 1] +
-                                       opp_belief_sums_by_rank[rank_id - 1] + opp_belief_sums_by_rank[rank_id];
+        io_opp_nets_by_rank[rank_id] =
+                // NOTE(kwok): take advantage of the value previously computed for the last rank id
+                io_opp_nets_by_rank[rank_id - 1]
+                // This term is equivalent to the previous iteration's `opp_belief_sums_by_rank[rank_id]`
+                // FIXME(kwok): Is this term repeatly included?
+                + opp_belief_sums_by_rank[rank_id - 1]
+                + opp_belief_sums_by_rank[rank_id];
     }
 
     // NOTE(kwok): compute the opponents' nets by combo
@@ -355,10 +361,13 @@ void TermEvalKernel::StackOppShowdownProb(const double *opp_belief_of_sorted_ran
                 break;
             }
             io_opp_nets_by_combo[combo] =
-                    io_opp_nets_by_combo[combo - HOLDEM_MAX_DECK /* combo with the last rank_id */] +
-                    opp_belief_sums_by_rank_card[rank_id - 1][c] +
-                    opp_belief_sums_by_rank_card[rank_id][c];
-            // card_net[combo - HOLDEM_MAX_DECK] equals combo(rank_id-1, c)
+                    // NOTE(kwok): Take advantage of the value previously computed for the last rank id.
+                    // This `combo - HOLDEM_MAX_DECK` is equivalent to `ComboIdx(rank_id - 1, c)`.
+                    io_opp_nets_by_combo[combo - HOLDEM_MAX_DECK /* combo with the last rank_id */]
+                    // This term is equivalent to the previous iteration's `opp_belief_sums_by_rank[rank_id]`
+                    // FIXME(kwok): Is this term repeatly included?
+                    + opp_belief_sums_by_rank_card[rank_id - 1][c]
+                    + opp_belief_sums_by_rank_card[rank_id][c];
             rank_id++;
         }
     }
