@@ -103,16 +103,16 @@ void TermEvalKernel::FastShowdownEval(const double *opp_full_belief,
 
     StackOppShowdownProb(opp_belief_of_sorted_ranks, opp_nets_by_rank, opp_nets_by_combo, skipping_ranks_of_combo);
 
-    int last_skipping_ranks_by_card[HOLDEM_MAX_DECK];
-    for (auto &rank_id: last_skipping_ranks_by_card) rank_id = 0;
+    int last_skipping_ranks_for_card[HOLDEM_MAX_DECK];
+    for (auto &rank_id: last_skipping_ranks_for_card) rank_id = 0;
 
     // compute the drift
-    double last_nets_by_card[HOLDEM_MAX_DECK];
+    double last_nets_for_card[HOLDEM_MAX_DECK];
     for (auto c = 0; c < HOLDEM_MAX_DECK; c++) {
-        last_nets_by_card[c] = opp_nets_by_combo[ComboIdx(0, c)];
+        last_nets_for_card[c] = opp_nets_by_combo[ComboIdx(0, c)];
     }
 
-    // NOTE(kwok): evaluate our full belief against pre-computed three-section lookup structure
+    // NOTE(kwok): evaluate our full belief against the opponents'
     for (int rank_id = 0; rank_id < n_unique_rank; rank_id++) {
         double opp_rank_net = opp_nets_by_rank[rank_id];
         // NOTE(kwok): enumerate all the private hands ranked same
@@ -123,12 +123,12 @@ void TermEvalKernel::FastShowdownEval(const double *opp_full_belief,
             }
             double my_total_drift = 0.0;
             for (auto &c: sorted_infosets_by_rank[i]->GetHandPair()) {
-                auto combo = ComboIdx(last_skipping_ranks_by_card[c], c);
+                auto combo = ComboIdx(last_skipping_ranks_for_card[c], c);
                 if (skipping_ranks_of_combo[combo] != rank_id) {
-                    last_skipping_ranks_by_card[c]++;
-                    last_nets_by_card[c] = opp_nets_by_combo[ComboIdx(last_skipping_ranks_by_card[c], c)];
+                    last_skipping_ranks_for_card[c]++;
+                    last_nets_for_card[c] = opp_nets_by_combo[ComboIdx(last_skipping_ranks_for_card[c], c)];
                 }
-                my_total_drift += last_nets_by_card[c]; // no need to delete double count [high, low] as it must be the same value
+                my_total_drift += last_nets_for_card[c]; // no need to delete double count [high, low] as it must be the same value
             }
             double my_net = opp_rank_net - my_total_drift;
             io_my_full_belief[v_idx] = my_net * spent;
@@ -306,14 +306,15 @@ void TermEvalKernel::StackOppShowdownProb(const double *opp_belief_of_sorted_ran
             //     continue;
             // }
             opp_belief_sums_by_rank[rank_id] += w;
-            // NOTE(kwok): deal with nets per card
+            // NOTE(kwok): deal with nets in terms of individual card
             for (auto &c: sorted_infosets_by_rank[i]->GetHandPair()) {
                 int combo = ComboIdx(last_skipping_ranks_by_card[c], c);
                 if (combo < 0 || io_skipping_ranks_of_combo[combo] != rank_id) {
                     // NOTE(kwok): `combo` being negative means that `last_skipping_ranks_by_card[c]` has
                     // yet to be initialized (still being -1). Self-increase to zero it.
                     last_skipping_ranks_by_card[c]++;
-                    // present this one to rank_id, equivalent to ComboIdx(last_skipping_ranks_by_card[c], c);, after ++
+                    // NOTE(kwok): `combo` remains negative here. `combo + HOLDEM_MAX_DECK` here is equivalent
+                    // to `ComboIdx(last_skipping_ranks_by_card[c], c)`.
                     io_skipping_ranks_of_combo[combo + HOLDEM_MAX_DECK] = rank_id;
                 }
                 opp_belief_sums_by_rank_card[last_skipping_ranks_by_card[c]][c] += w;
@@ -328,7 +329,8 @@ void TermEvalKernel::StackOppShowdownProb(const double *opp_belief_of_sorted_ran
     // NOTE(kwok): compute the opponents' nets by rank
     for (int rank_id = 0; rank_id < n_unique_rank; rank_id++) {
         if (rank_id == 0) {
-            // NOTE(kwok): If `rank_id` is 0, the hands bucketed by it will always lose to other hands.
+            // NOTE(kwok): If `rank_id` is 0, hands bucketed by it will always lose to hands with
+            // other rank ids.
             io_opp_nets_by_rank[rank_id] = opp_belief_sums_by_rank[rank_id] - opp_belief_total_sum;
             continue;
         }
@@ -350,6 +352,8 @@ void TermEvalKernel::StackOppShowdownProb(const double *opp_belief_of_sorted_ran
         int rank_id = 0; // the last skipping index
         while (true) { // TODO(kwok): Refactor this while-loop into a standard for-loop.
             if (rank_id == 0) {
+                // NOTE(kwok): If `rank_id` is 0, hands with the same rank which contains `c` will always
+                // lose to other hands containing the same `c`.
                 io_opp_nets_by_combo[ComboIdx(rank_id, c)] =
                         opp_belief_sums_by_rank_card[rank_id][c] - opp_belief_sums_by_card[c];
                 rank_id++;
