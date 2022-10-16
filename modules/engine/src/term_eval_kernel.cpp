@@ -103,13 +103,13 @@ void TermEvalKernel::FastShowdownEval(const double *opp_full_belief,
 
     StackOppShowdownProb(opp_belief_of_sorted_ranks, opp_nets_by_rank, opp_nets_by_combo, skipping_ranks_of_combo);
 
-    int last_skipping_ranks_for_card[HOLDEM_MAX_DECK];
-    for (auto &rank_id: last_skipping_ranks_for_card) rank_id = 0;
+    int recent_skipping_ranks_for_card[HOLDEM_MAX_DECK];
+    double recent_nets_for_card[HOLDEM_MAX_DECK];
 
-    // compute the drift
-    double last_nets_for_card[HOLDEM_MAX_DECK];
+    for (auto &rank_id: recent_skipping_ranks_for_card) rank_id = 0;
     for (auto c = 0; c < HOLDEM_MAX_DECK; c++) {
-        last_nets_for_card[c] = opp_nets_by_combo[ComboIdx(0, c)];
+        // NOTE(kwok): with the rank id being 0, all initialized with the weakest combinations
+        recent_nets_for_card[c] = opp_nets_by_combo[ComboIdx(0, c)];
     }
 
     // NOTE(kwok): evaluate our full belief against the opponents'
@@ -121,14 +121,15 @@ void TermEvalKernel::FastShowdownEval(const double *opp_full_belief,
             if (io_my_full_belief[v_idx] == kBeliefPrunedFlag) {
                 continue;
             }
+            // NOTE(kwok): the total net of all possible `c` ranked as `rank_id` by pairing with another card
             double my_total_drift = 0.0;
             for (auto &c: sorted_infosets_by_rank[i]->GetHandPair()) {
-                auto combo = ComboIdx(last_skipping_ranks_for_card[c], c);
+                auto combo = ComboIdx(recent_skipping_ranks_for_card[c], c);
                 if (skipping_ranks_of_combo[combo] != rank_id) {
-                    last_skipping_ranks_for_card[c]++;
-                    last_nets_for_card[c] = opp_nets_by_combo[ComboIdx(last_skipping_ranks_for_card[c], c)];
+                    recent_skipping_ranks_for_card[c]++;
+                    recent_nets_for_card[c] = opp_nets_by_combo[ComboIdx(recent_skipping_ranks_for_card[c], c)];
                 }
-                my_total_drift += last_nets_for_card[c]; // no need to delete double count [high, low] as it must be the same value
+                my_total_drift += recent_nets_for_card[c]; // no need to delete double count [high, low] as it must be the same value
             }
             double my_net = opp_rank_net - my_total_drift;
             io_my_full_belief[v_idx] = my_net * spent;
