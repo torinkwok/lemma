@@ -116,8 +116,8 @@ public:
 
     void NaiveShowdownEval(const double *opp_belief, double *io_my_full_belief, int spent);
 
-    void StackShowdownProb(const double *opp_full_belief, double *io_nets_by_rank, double *io_nets_by_combo,
-                           int *io_skipping_ranks_by_combo);
+    void StackOppShowdownProb(const double *opp_belief_of_sorted_ranks, double *io_opp_nets_by_rank, double *io_opp_nets_by_combo,
+                              int *io_skipping_ranks_of_combo);
 
     // folding evaluations
     void FastFoldEval(const double *opp_full_belief, double *io_my_full_belief, int spent);
@@ -137,7 +137,7 @@ public:
         delete[] equal_ranks_first_idxs;
     }
 
-    static int ComboIdx(int rank, int card);
+    static int ComboIdx(int rank_id, int card);
 };
 
 #endif //BULLDOG_MODULES_ENGINE_SRC_TERM_EVAL_KERNEL_H_
