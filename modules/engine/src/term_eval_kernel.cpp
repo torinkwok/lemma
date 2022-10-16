@@ -121,17 +121,19 @@ void TermEvalKernel::FastShowdownEval(const double *opp_full_belief,
             if (io_my_full_belief[v_idx] == kBeliefPrunedFlag) {
                 continue;
             }
-            // NOTE(kwok): the total net of all possible `c` ranked as `rank_id` by pairing with another card
-            double my_total_drift = 0.0;
+            // NOTE(kwok): the total net of all possible `c` ranked as `rank_id` after paired with another card
+            double drift_for_priv_hand = 0.0;
             for (auto &c: sorted_infosets_by_rank[i]->GetHandPair()) {
+                // NOTE(kwok): card `c` will be repeatly picked, hence the recent lookup
                 auto combo = ComboIdx(recent_skipping_ranks_for_card[c], c);
-                if (skipping_ranks_of_combo[combo] != rank_id) {
+                if (rank_id != skipping_ranks_of_combo[combo]) {
+                    // NOTE(kwok): this is effectively equivalent to `rank_id != recent_skipping_ranks_for_card[c]`
                     recent_skipping_ranks_for_card[c]++;
                     recent_nets_for_card[c] = opp_nets_by_combo[ComboIdx(recent_skipping_ranks_for_card[c], c)];
                 }
-                my_total_drift += recent_nets_for_card[c]; // no need to delete double count [high, low] as it must be the same value
+                drift_for_priv_hand += recent_nets_for_card[c]; // no need to delete double count [high, low] as it must be the same value
             }
-            double my_net = opp_rank_net - my_total_drift;
+            double my_net = opp_rank_net - drift_for_priv_hand;
             io_my_full_belief[v_idx] = my_net * spent;
         }
     }
