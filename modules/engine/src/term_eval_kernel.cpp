@@ -127,7 +127,6 @@ void TermEvalKernel::FastShowdownEval(const double *opp_full_belief,
                 // NOTE(kwok): card `c` will be repeatly picked, hence the recent lookup
                 auto combo = ComboIdx(recent_skipping_ranks_for_card[c], c);
                 if (rank_id != skipping_ranks_of_combo[combo]) {
-                    // NOTE(kwok): this is effectively equivalent to `rank_id != recent_skipping_ranks_for_card[c]`
                     recent_skipping_ranks_for_card[c]++;
                     recent_nets_for_card[c] = opp_nets_by_combo[ComboIdx(recent_skipping_ranks_for_card[c], c)];
                 }
