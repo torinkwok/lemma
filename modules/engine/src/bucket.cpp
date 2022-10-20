@@ -17,21 +17,38 @@ extern "C" {
 #include <bulldog/game.h>
 }
 
-void Bucket::LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r)
-{
-    assert(r >=0 && r < 4);
+void Bucket::LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r) {
+    assert(r >= 0 && r < 4);
     type_ = WAUGH_BUCKET;
 
     // TODO(kwok): Justify it.
     uint_fast32_t rounds = 0;
-    uint8_t* cards_per_round = nullptr;
-    hand_indexer_t* out_indexer = nullptr;
+    uint8_t *cards_per_round = nullptr;
+    hand_indexer_t *out_indexer = nullptr;
     switch (r) {
-        case 0: rounds = 1; cards_per_round = (uint8_t[]){2}; out_indexer = &_preflop_indexer; break;
-        case 1: rounds = 2; cards_per_round = (uint8_t[]){2, 3}; out_indexer = &_flop_indexer; break;
-        case 2: rounds = 2; cards_per_round = (uint8_t[]){2, 4}; out_indexer = &_turn_indexer; break;
-        case 3: rounds = 2; cards_per_round = (uint8_t[]){2, 5}; out_indexer = &_river_indexer; break;
-        default: throw std::runtime_error("Invalid round number " + std::to_string(r));
+        case 0: {
+            rounds = 1;
+            cards_per_round = new uint8_t[]{2};
+            out_indexer = &_preflop_indexer;
+            break;
+        }
+        case 1:
+            rounds = 2;
+            cards_per_round = new uint8_t[]{2, 3};
+            out_indexer = &_flop_indexer;
+            break;
+        case 2:
+            rounds = 2;
+            cards_per_round = new uint8_t[]{2, 4};
+            out_indexer = &_turn_indexer;
+            break;
+        case 3:
+            rounds = 2;
+            cards_per_round = new uint8_t[]{2, 5};
+            out_indexer = &_river_indexer;
+            break;
+        default:
+            throw std::runtime_error("Invalid round number " + std::to_string(r));
     }
 
     assert(hand_indexer_init(rounds, cards_per_round, out_indexer));
@@ -42,10 +59,11 @@ void Bucket::LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r)
            (r == 1 && num_loaded == 1286792) ||
            (r == 2 && num_loaded == 13960050) ||
            (r == 3 && num_loaded == 123156254));
+
+    delete[] cards_per_round;
 }
 
-size_t Bucket::_LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r)
-{
+size_t Bucket::_LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r) {
     assert(type_ == WAUGH_BUCKET);
 
     std::filesystem::path fxb_chunks_dir_path(dir);
@@ -84,8 +102,7 @@ size_t Bucket::_LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r)
     return processed_count;
 }
 
-void Bucket::LoadClassicFromFile(const std::string &ofile)
-{
+void Bucket::LoadClassicFromFile(const std::string &ofile) {
     type_ = CLASSIC_BUCKET;
 
     std::filesystem::path full_path(ofile);
@@ -110,11 +127,10 @@ void Bucket::LoadClassicFromFile(const std::string &ofile)
     is.close();
 }
 
-void Bucket::LoadRangeColex(Board_t *board, int round)
-{
+void Bucket::LoadRangeColex(Board_t *board, int round) {
     type_ = COLEX_BUCKET;
 
-    std::set < Colex > colex_set;
+    std::set<Colex> colex_set;
     int bucket_index = 0;
     //for each hand, compute the colex value.
     for (Card_t low = 0; low < HOLDEM_MAX_DECK - 1; low++) {
@@ -136,8 +152,7 @@ void Bucket::LoadRangeColex(Board_t *board, int round)
                   round, colex_set.size(), bucket_index);
 }
 
-void Bucket::LoadHierarchicalPublic()
-{
+void Bucket::LoadHierarchicalPublic() {
     //find public bucket for flop
     std::filesystem::path dir(BULLDOG_DIR_DATA_ABS);
     std::filesystem::path pub_file("hierarchical_pubcolex_60_2_3.txt");
@@ -157,8 +172,7 @@ void Bucket::LoadHierarchicalPublic()
     pub_is.close();
 }
 
-void Bucket::LoadHierarchical(std::string name)
-{
+void Bucket::LoadHierarchical(std::string name) {
     //name: hierarchical_60_500_1
     std::vector<std::string> parsed_str;
     split_string(std::move(name), "_", parsed_str);
@@ -219,16 +233,14 @@ void Bucket::LoadHierarchical(std::string name)
 #endif
 }
 
-unsigned int Bucket::GetPublicBucket(unsigned int pub_colex)
-{
+unsigned int Bucket::GetPublicBucket(unsigned int pub_colex) {
     return pub_colex_bucket_[pub_colex];
 }
 
 /*
  * it should be board + 2, e.g. 3+2 for flop
  */
-void Bucket::LoadHierarchicalColex(Board_t *board, uint8_t r)
-{
+void Bucket::LoadHierarchicalColex(Board_t *board, uint8_t r) {
     if (r > HOLDEM_ROUND_RIVER) {
         logger::critical("round %d does not exist in holdem", r);
     }
@@ -272,8 +284,7 @@ void Bucket::LoadHierarchicalColex(Board_t *board, uint8_t r)
     //  logger::debug("total [%d board colex] [%d hier colex] buckets", iso_board_cursor, bucket_idx_cursor);
 }
 
-void Bucket::LoadSubgameColex(Board_t *board, int round)
-{
+void Bucket::LoadSubgameColex(Board_t *board, int round) {
     if (round != HOLDEM_ROUND_RIVER) {
         logger::critical("subgame colex only support river. "
                          "other rounds would be too big. "
@@ -313,8 +324,7 @@ void Bucket::LoadSubgameColex(Board_t *board, int round)
     //  logger::debug("generate subgame colex takes %d ms", cmd_time);
 }
 
-void Bucket::Save(std::map<unsigned int, unsigned short> &entries, const std::string &ofile)
-{
+void Bucket::Save(std::map<unsigned int, unsigned short> &entries, const std::string &ofile) {
     std::ofstream os(ofile, std::ios::binary | std::ios::trunc);
     if (os.is_open()) {
         cereal::BinaryOutputArchive archive(os);
@@ -327,8 +337,7 @@ void Bucket::Save(std::map<unsigned int, unsigned short> &entries, const std::st
 
 //todo: all these can be handled on the outside, at the bucket reader level
 // TODO(kwok): `board_colex` will be ignored for classic and colex bucket. Make it explicit.
-uint32_t Bucket::Get(unsigned long all_colex, unsigned long board_colex)
-{
+uint32_t Bucket::Get(unsigned long all_colex, unsigned long board_colex) {
     if (type_ == WAUGH_BUCKET) {
         throw std::runtime_error("For Waugh bucket, invoke `uint32_t Bucket::Get(Cardset*, Cardset*)`");
     }
@@ -381,23 +390,35 @@ uint32_t Bucket::Get(unsigned long all_colex, unsigned long board_colex)
 }
 
 
-uint32_t Bucket::Get(Cardset *all_cards, Cardset *board_cards)
-{
+uint32_t Bucket::Get(Cardset *all_cards, Cardset *board_cards) {
     if (type_ == WAUGH_BUCKET) {
         std::set<WaughCard_t> waugh_cards_set = CardsToWaughCards(all_cards->cards);
         // TODO(kwok): Assert the two are identical.
         // logger::debug("☄️%s - %s", WaughCardsToString(waugh_cards_set), CardsToString(all_cards->cards));
         auto waugh_cards_vec = std::vector(waugh_cards_set.begin(), waugh_cards_set.end());
-        WaughCard_t* c_arr = &waugh_cards_vec[0];
+        WaughCard_t *c_arr = &waugh_cards_vec[0];
         uint8_t r = 0;
         hand_index_t index = 0;
         // TODO(kwok): Refactor these deliberately redundant code.
         switch (waugh_cards_vec.size()) {
-            case 2: r = 0; index = hand_index_last(&_preflop_indexer, c_arr); break;
-            case 5: r = 1; index = hand_index_last(&_flop_indexer, c_arr); break;
-            case 6: r = 2; index = hand_index_last(&_turn_indexer, c_arr); break;
-            case 7: r = 3; index = hand_index_last(&_river_indexer, c_arr); break;
-            default: throw std::runtime_error("Invalid size of Waugh cards");
+            case 2:
+                r = 0;
+                index = hand_index_last(&_preflop_indexer, c_arr);
+                break;
+            case 5:
+                r = 1;
+                index = hand_index_last(&_flop_indexer, c_arr);
+                break;
+            case 6:
+                r = 2;
+                index = hand_index_last(&_turn_indexer, c_arr);
+                break;
+            case 7:
+                r = 3;
+                index = hand_index_last(&_river_indexer, c_arr);
+                break;
+            default:
+                throw std::runtime_error("Invalid size of Waugh cards");
         }
         // TODO(kwok): Validate the bucket to return.
         auto bucket = master_map_[r][index];
@@ -407,8 +428,7 @@ uint32_t Bucket::Get(Cardset *all_cards, Cardset *board_cards)
                ComputeColex(Canonize(board_cards->cards)));
 }
 
-uint32_t Bucket::Size()
-{
+uint32_t Bucket::Size() {
     if (type_ == HIERARCHICAL_COLEX) {
         //it is alright, because we never use this for subgame solving for flop
         int sum = 0;
@@ -422,7 +442,6 @@ uint32_t Bucket::Size()
     return master_map_[0].size();
 }
 
-std::unordered_map<unsigned int, uint32_t> Bucket::ExtractMap()
-{
+std::unordered_map<unsigned int, uint32_t> Bucket::ExtractMap() {
     return master_map_[0];
 }
