@@ -1,5 +1,6 @@
 #include <bulldog/card_util.h>
 #include <pokerstove/peval/CardSetGenerators.h>
+#include <bitset>
 
 int nCk_card(int m, int n)
 {
