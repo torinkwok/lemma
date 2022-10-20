@@ -45,7 +45,7 @@ Cardset CardsetFromString(const std::string &str)
 
 std::string CardsToString(uint64_t cardmask)
 {
-    std::string out = "";
+    std::string out;
     uint8_t card;
     while (cardmask) {
         card = __builtin_ctzll(cardmask);
@@ -137,7 +137,7 @@ uint64_t Canonize(uint64_t cardmask)
                   static_cast<uint64_t>(smasks[1]) << num_rank * 2 |
                   static_cast<uint64_t>(smasks[0]) << num_rank * 3;
 
-    std::string out = "";
+    std::string out;
     static const std::string cardstrings = "2c3c4c5c6c7c8c9cTcJcQcKcAc"
                                            "2d3d4d5d6d7d8d9dTdJdQdKdAd"
                                            "2h3h4h5h6h7h8h9hThJhQhKhAh"
