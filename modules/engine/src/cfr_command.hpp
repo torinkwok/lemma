@@ -50,7 +50,7 @@ struct CfrCommandWrapper
 
     void Print() const
     {
-        logger::debug("triggering iter = %d || steps = %d || command = %s", trigger_iter_, steps_,
+        logger::info("triggering iter = %d || steps = %d || command = %s", trigger_iter_, steps_,
                       CfrCommandName[type_]);
     }
 

@@ -29,7 +29,7 @@ public:
         float sum_avg = 0.0;
         for (auto a = 0; a < a_max; a++)
             sum_avg += rnb_avg[a];
-        //if it happens, it may be a error in training
+        //if it happens, it may be an error in training
         if (sum_avg == 0) {
             logger::warn("    [ACTION CHOOSER] : sum avg of valid actions is zero, returning fold");
             r_action.type = a_fold;

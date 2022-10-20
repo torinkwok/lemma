@@ -88,7 +88,8 @@ double ScalarCfrWorker::EvalTermNode(int trainee, Node *this_node, sPrivateHands
 {
     if (this_node->IsShowdown()) {
         int stake = this_node->GetStake(trainee);
-        stake *= hand_info.payoff_[trainee]; // tie 0, win 1, lose -1
+        int payoff = hand_info.payoff_[trainee];
+        stake *= payoff; // tie 0, win 1, lose -1
         return (double) stake;
     } else {
         // fold
@@ -161,6 +162,8 @@ double ScalarCfrWorker::EvalInterNode(int trainee, Node *this_node, sPrivateHand
     auto n = this_node->GetN();
     auto b = hand_info.buckets_[acting_player][r];
     auto rnb0 = strategy_->ag_->kernel_->hash_rnba(r, n, b, 0);
+    // RNBA debug_copy = rnb0;
+    // printf("debug copy = %llu", debug_copy);
 
     if (is_trainee_turn) {
         double children_cfus[a_max];

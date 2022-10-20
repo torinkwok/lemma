@@ -161,6 +161,9 @@ VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivate
             auto b = priv_hand_kernel->GetBucket(this_node->GetRound(), i);
             strategy_->ComputeStrategy(this_node, b, all_belief_distr_1dim + offset, cfr_param_->strategy_cal_mode_);
         }
+    } else {
+        // FIXME(kwok): `all_belief_distr_1dim` may point to deallocated memory.
+        printf("all_belief_distr_1dim = %p\n", all_belief_distr_1dim);
     }
 
     // NOTE(kwok): A utility of +1 is given for a win, and −1 for a loss.
@@ -168,6 +171,7 @@ VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivate
     CFU_COMPUTE_MODE compute_mode = is_my_turn
                                     ? cfr_param_->cfu_compute_acting_playing
                                     : cfr_param_->cfu_compute_opponent;
+    // FIXME(kwok): `all_belief_distr_1dim` may point to deallocated memory.
     ComputeCfu(this_node, child_reach_ranges, children_cfus, this_node_cfu, compute_mode, all_belief_distr_1dim);
 
     /*
@@ -446,7 +450,7 @@ void VectorCfrWorker::ComputeCfu(Node *this_node,
                                  std::vector<sPrivateHandBelief *> child_cfus,
                                  sPrivateHandBelief *this_node_cfu,
                                  CFU_COMPUTE_MODE cfu_compute_mode,
-                                 const float *all_belief_distr_1dim)
+                                 const float *all_belief_distr_1dim) const
 {
     int a_max = this_node->GetAmax();
     // auto r = this_node->GetRound();
@@ -471,6 +475,7 @@ void VectorCfrWorker::ComputeCfu(Node *this_node,
                 for (int a = 0; a < a_max; a++) {
                     // do it only when it is not pruned.
                     if (!child_reach_ranges[a]->IsPruned(i)) {
+                        // FIXME(kwok): `all_belief_distr_1dim` may point to deallocated memory.
                         float weight = all_belief_distr_1dim[offset + a];
                         if (weight > 0.0) {
                             final_value += child_cfus[a]->belief_[i] * weight;

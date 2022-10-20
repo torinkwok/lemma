@@ -37,10 +37,8 @@ public:
         z = std::abs(distr(gen));
     }
 
-    virtual ~CfrWorker()
-    {
-        // no need to delete anything. these pointers are owned by other classes.
-    }
+    // no need to delete anything. these pointers are owned by other classes.
+    virtual ~CfrWorker() = default;
 
     Strategy *blueprint_;
     Strategy *strategy_;
@@ -99,9 +97,7 @@ struct sPrivateHandsInfo
         z = std::abs(distr(ran_gen));
     }
 
-    virtual ~sPrivateHandsInfo()
-    {
-    }
+    virtual ~sPrivateHandsInfo() = default;
 
     void SetBucketAndPayoff(AbstractGame *ag)
     {
@@ -159,7 +155,8 @@ struct sPrivateHandsInfo
         // ensure that nothing crashes with board
         for (unsigned short i: internal_sampled_priv_hands_) {
             auto high_low = FromVectorIndex(i);
-            if (external_sampled_board_.CardCrash(high_low.first) || external_sampled_board_.CardCrash(high_low.second)) {
+            if (external_sampled_board_.CardCrash(high_low.first) ||
+                external_sampled_board_.CardCrash(high_low.second)) {
                 logger::critical("error in hand sampling");
             }
         }
@@ -198,11 +195,13 @@ public:
 
     void WavgUpdateSideWalk(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info);
 
-    double RolloutWalkLeafTreeWithBiasFavor(int trainee, Node *this_node, sPrivateHandsInfo &hand_info, int *bias_favors_for_all);
+    double RolloutWalkLeafTreeWithBiasFavor(int trainee, Node *this_node, sPrivateHandsInfo &hand_info,
+                                            int *bias_favors_for_all);
 
     double RolloutLeafRootNode(Node *leaf_root_node, sPrivateHandsInfo &hand_info);
 
-    double RolloutLeafInterNodeWithBiasFavor(int trainee, Node *this_node, sPrivateHandsInfo &hand_info, int *bias_favors_for_all);
+    double RolloutLeafInterNodeWithBiasFavor(int trainee, Node *this_node, sPrivateHandsInfo &hand_info,
+                                             int *bias_favors_for_all);
 };
 
 class VectorCfrWorker : public CfrWorker
@@ -219,7 +218,7 @@ public:
     {
     }
 
-    virtual ~VectorCfrWorker()
+    ~VectorCfrWorker() override
     {
         delete priv_hand_kernel;
     };
@@ -238,7 +237,7 @@ public:
                     std::vector<sPrivateHandBelief *> child_cfus,
                     sPrivateHandBelief *this_node_cfu,
                     CFU_COMPUTE_MODE cfu_compute_mode,
-                    const float *all_belief_distr_1dim);
+                    const float *all_belief_distr_1dim) const;
 
     void
     RangeRollout(Node *this_node, sPrivateHandBelief *belief_distr, std::vector<sPrivateHandBelief *> &child_ranges);

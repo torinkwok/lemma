@@ -4,7 +4,7 @@
 #include "action_abs.h"
 
 /*
- * the last_action is random and does not matter for a empty state.
+ * the last_action is random and does not matter for an empty state.
  */
 Node *CompositeActionAbs::BuildBettingTreeInner(Game *game,
                                                 int root_round,
@@ -133,7 +133,7 @@ Node *CompositeActionAbs::BuildBettingTree(Game *game, State current_state, Stat
     //  current_state.holeCards[1][0] = 2;
     //  current_state.holeCards[1][1] = 3;
 
-    //the root note has a random generate last_action. But it is not important, as we wont use it.  a hack
+    //the root note has a random generate last_action. But it is not important, as we won't use it.  a hack
     auto *root_node = BuildBettingTreeInner(
             game,
             current_state.round,
