@@ -33,14 +33,14 @@ bool IsAvgUniform(float *avg, int size);
 void NormalizePolicy(float *avg, int size);
 
 template<typename T>
-int GetPolicy(float *inout_distr, int size, T *regrets)
+int GetPolicy(float *inout_distr, int size, T *regrets, size_t offset = 0)
 {
     // bool integral = std::is_integral<T>::value;
     T positive_v[size];
     T sum_pos_v = 0;
 
     for (int a = 0; a < size; a++) {
-        positive_v[a] = std::max<T>(0, regrets[a]);
+        positive_v[a] = std::max<T>(0, regrets[offset + a]);
         //    T v = regrets[a];
         //    positive_v[a] = v > 0 ? v : 0;;
         //      new_pos_reg[a] = regret_[rnba] > 0.0 ? regret_[rnba] : 0.0;

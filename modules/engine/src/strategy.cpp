@@ -575,21 +575,21 @@ int Strategy::ComputeStrategy(Round_t r,
     switch (mode) {
         case STRATEGY_WAVG: {
             if (ulong_wavg_ != nullptr) {
-                return GetPolicy<ULONG_WAVG>(rnb_avg, a_max, ulong_wavg_ + rnb0);
+                return GetPolicy<ULONG_WAVG>(rnb_avg, a_max, ulong_wavg_, rnb0);
             } else {
-                return GetPolicy<UINT_WAVG>(rnb_avg, a_max, uint_wavg_ + rnb0);
+                return GetPolicy<UINT_WAVG>(rnb_avg, a_max, uint_wavg_, rnb0);
             }
         }
         case STRATEGY_REG: {
             if (double_regret_ != nullptr) {
-                return GetPolicy<DOUBLE_REGRET>(rnb_avg, a_max, double_regret_ + rnb0);
+                return GetPolicy<DOUBLE_REGRET>(rnb_avg, a_max, double_regret_, rnb0);
             } else {
-                return GetPolicy<INT_REGRET>(rnb_avg, a_max, int_regret_ + rnb0);
+                return GetPolicy<INT_REGRET>(rnb_avg, a_max, int_regret_, rnb0);
             }
         }
         case STRATEGY_ZIPAVG: {
             if (zipavg_ != nullptr) {
-                return GetPolicy<ZIPAVG>(rnb_avg, a_max, zipavg_ + rnb0);
+                return GetPolicy<ZIPAVG>(rnb_avg, a_max, zipavg_, rnb0);
             } else {
                 char v[a_max];
                 file_ptr->seekg(rnb0);
