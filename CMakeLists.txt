@@ -17,9 +17,6 @@ if (NOT CMAKE_BUILD_TYPE)
 endif ()
 message("CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
 
-# Set c++ flags
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -O0")
-
 # The outcome of indiscriminating build types is endless confusion. I spend a couple hours on fixing a bug caused
 # by the different build types alternatively put their artifacts into the same build directory.
 if (CMAKE_BUILD_TYPE MATCHES Debug)
@@ -97,8 +94,6 @@ find_package(Threads REQUIRED)
 set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_USE_MULTITHREADED ON)
 find_package(Boost REQUIRED system thread date_time regex serialization)
-include_directories(${Boost_INCLUDE_DIR})
-link_directories(${Boost_LIBRARY_DIRS})
 message(STATUS "Boost Include:      ${Boost_INCLUDE_DIR}")
 message(STATUS "Boost Library Dirs: ${Boost_LIBRARY_DIRS}")
 message(STATUS "Boost Libraries:    ${Boost_LIBRARIES}")
