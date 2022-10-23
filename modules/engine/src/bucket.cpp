@@ -51,7 +51,9 @@ void Bucket::LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r) {
             throw std::runtime_error("Invalid round number " + std::to_string(r));
     }
 
-    assert(hand_indexer_init(rounds, cards_per_round, out_indexer));
+    if (!hand_indexer_init(rounds, cards_per_round, out_indexer)) {
+        throw std::runtime_error("hand indexer init failed for rounds " + std::to_string(rounds));
+    }
 
     auto num_loaded = _LoadClassicFromFlexbuffers(std::filesystem::path(dir), r);
     logger::info("🪣%lu Waugh-indexed buckets loaded for round %u", num_loaded, r);
