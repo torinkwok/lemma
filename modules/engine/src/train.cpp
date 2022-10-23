@@ -73,6 +73,7 @@ void train(const cxxopts::ParseResult &result)
     }
 
     auto cfr = CFR(cfr_conf.c_str());
+
     //config logger. Supports only 4 log_level right now.
     if (result.count("log_file")) {
         std::filesystem::path dir(BULLDOG_DIR_LOG);
@@ -83,11 +84,13 @@ void train(const cxxopts::ParseResult &result)
     } else {
         logger::init_logger(result["log_level"].as<std::string>());
     }
-    if (cfr.cfr_param_.depth_limited)
+
+    if (cfr.cfr_param_.depth_limited) {
         logger::debug("depth limit cfr [%d][reps %d]",
                       cfr.cfr_param_.depth_limited,
                       cfr.cfr_param_.depth_limited_rollout_reps_
         );
+    }
 
     cfr.BuildCMDPipeline();
 

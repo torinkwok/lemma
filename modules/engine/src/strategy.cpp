@@ -6,39 +6,45 @@ void Strategy::InitMemory(STRATEGY_TYPE type, CFR_MODE mode)
     auto size = ag_->kernel_->MaxIndex();
     AllocateMemory(type, mode);
     switch (type) {
-        case STRATEGY_REG:
+        case STRATEGY_REG: {
             if (double_regret_ != nullptr) {
                 // cfr_mode == CFR_VECTOR_ALTERNATE_SOLVE || cfr_mode == CFR_VECTOR_PAIRWISE_SOLVE
                 // For CFR vector.
-                for (RNBA i = 0; i < size; i++)
+                for (RNBA i = 0; i < size; i++) {
                     double_regret_[i] = 0.0;
+                }
             } else {
                 // cfr_mode == CFR_SCALAR_SOLVE
                 // For Monte Carlo CFR.
-                for (RNBA i = 0; i < size; i++)
+                for (RNBA i = 0; i < size; i++) {
                     int_regret_[i] = 0;
+                }
             }
             break;
-        case STRATEGY_WAVG:
+        }
+        case STRATEGY_WAVG: {
             if (ulong_wavg_ != nullptr) {
                 // cfr_mode == CFR_VECTOR_ALTERNATE_SOLVE || cfr_mode == CFR_VECTOR_PAIRWISE_SOLVE
-                // For CFR vector.
-                for (RNBA i = 0; i < size; i++)
+                for (RNBA i = 0; i < size; i++) {
                     ulong_wavg_[i] = 0;
+                }
             } else {
                 // cfr_mode == CFR_SCALAR_SOLVE
-                // For Monte Carlo CFR.
-                for (RNBA i = 0; i < size; i++)
+                for (RNBA i = 0; i < size; i++) {
                     uint_wavg_[i] = 0;
+                }
             }
             break;
-        case STRATEGY_ZIPAVG:
+        }
+        case STRATEGY_ZIPAVG: {
             for (RNBA i = 0; i < size; i++) {
                 zipavg_[i] = 0;
             }
             break;
-        default:
+        }
+        default: {
             logger::critical("unsupported strategy type %s", StrategyToNameMap[type]);
+        }
     }
     logger::trace("%d init to 0 | size = %d", type, size);
 }
@@ -99,7 +105,8 @@ bool Strategy::EstimateNewAgReach(AbstractGame *new_ag, MatchState *new_match_st
     int hero_pos = new_match_state->viewingPlayer;
     int opp_pos = 1 - hero_pos;
     auto my_hand_vector_idx = ToVectorIndex(new_match_state->state.holeCards[hero_pos][0],
-                                            new_match_state->state.holeCards[hero_pos][1]);
+                                            new_match_state->state.holeCards[hero_pos][1]
+    );
     new_base_reach[opp_pos].CleanCrashHands(my_hand_vector_idx);
 
     //this should never happen, as we will check the reach of newly solved strategy.
@@ -108,7 +115,8 @@ bool Strategy::EstimateNewAgReach(AbstractGame *new_ag, MatchState *new_match_st
                      hero_pos,
                      my_hand_vector_idx,
                      VectorIdxToString(my_hand_vector_idx),
-                     new_base_reach[hero_pos].belief_[my_hand_vector_idx]);
+                     new_base_reach[hero_pos].belief_[my_hand_vector_idx]
+        );
     }
 
     auto candidate_match = FindSortedMatchedNodes(new_ag->root_state_);
@@ -140,7 +148,8 @@ bool Strategy::EstimateNewAgReach(AbstractGame *new_ag, MatchState *new_match_st
                                                             match.matched_node_,
                                                             local_base_reach,
                                                             type,
-                                                            DEFAULT_BAYESIAN_TRANSITION_FILTER);
+                                                            DEFAULT_BAYESIAN_TRANSITION_FILTER
+        );
         // NOTE(kwok): If the `new_ag` sub-game can be reached from any other part of the game tree.
         if (estimate_return_code == RANGE_ESTIMATE_SUCCESS) {
             //direct copy first. then normalize it.
@@ -158,7 +167,8 @@ bool Strategy::EstimateNewAgReach(AbstractGame *new_ag, MatchState *new_match_st
             logger::warn("   reach estimate %d -> failed [ %s ] at [ %s ] at [round %d]. try next",
                          attempt_cursor,
                          RangeEstimateCodeMap[estimate_return_code],
-                         is_street_root ? "street_root" : "non_street_root", new_round);
+                         is_street_root ? "street_root" : "non_street_root", new_round
+            );
             attempt_cursor++;
         }
     }
@@ -363,7 +373,8 @@ int Strategy::EstimateReachProbAtNode(MatchState *last_match_state,
     int hero_pos = last_match_state->viewingPlayer;
     auto my_hand_vector_idx = ToVectorIndex(
             last_match_state->state.holeCards[hero_pos][0],
-            last_match_state->state.holeCards[hero_pos][1]);
+            last_match_state->state.holeCards[hero_pos][1]
+    );
 
     //find the travel path from ag.root to matched node;
     std::stack<int> node_path = target_node->GetPathFromRoot();
@@ -394,7 +405,8 @@ int Strategy::EstimateReachProbAtNode(MatchState *last_match_state,
 
             auto high_low = FromVectorIndex(i);
             auto b = ag_->bucket_reader_.GetBucket_HighLowPair_Board_Round(
-                    high_low.first, high_low.second, &reach_board, step_node_round);
+                    high_low.first, high_low.second, &reach_board, step_node_round
+            );
             auto a_max = stepping_node->children.size();
 
             //use only zipavg/wavg in transition.
@@ -408,7 +420,8 @@ int Strategy::EstimateReachProbAtNode(MatchState *last_match_state,
             } else {
                 //what?
                 logger::warn(
-                        "🚨weird uniform strategy in transition. the reach should be 0 already and filtered at start.");
+                        "🚨weird uniform strategy in transition. the reach should be 0 already and filtered at start."
+                );
             }
 
             //perform heuristically pruning in bayesian estimation. incomplete convergence.
@@ -417,7 +430,8 @@ int Strategy::EstimateReachProbAtNode(MatchState *last_match_state,
                 if (hero_pos == acting_player && i == my_hand_vector_idx) {
                     logger::debug("✂️[player %d] [real hand %d %s] was pruned [%f < %f]",
                                   hero_pos, my_hand_vector_idx, VectorIdxToString(my_hand_vector_idx), action_prob,
-                                  min_filter);
+                                  min_filter
+                    );
                     PrintNodeStrategy(stepping_node, b, calc_mode);
                     return REAL_HAND_PRUNED_IN_TRANSITION;
                 }
@@ -436,7 +450,8 @@ int Strategy::EstimateReachProbAtNode(MatchState *last_match_state,
                 acting_player,
                 action_code,
                 step_node_round,
-                prune_count);
+                prune_count
+        );
 
         if (new_ag_reach[acting_player].BeliefSum() == 0.0) {
             logger::debug(
@@ -520,7 +535,8 @@ void Strategy::AllocateMemory(STRATEGY_TYPE type, CFR_MODE cfr_mode)
     logger::debug("allocated heap memory for %s || length = %d || size = %f (mb)",
                   StrategyToNameMap[type],
                   size,
-                  mem_size);
+                  mem_size
+    );
 }
 
 void Strategy::DiscountStrategy(STRATEGY_TYPE type, double factor) const
@@ -699,7 +715,7 @@ void *Strategy::ThreadedZipAvgConvert(void *thread_args)
  */
 void Strategy::InspectPreflopBets(const std::string &print_name, STRATEGY_TYPE calc_mode)
 {
-//the classic, open_3bet_4bet
+    //the classic, open_3bet_4bet
     InspectNode(ag_->root_node_, print_name + "_open", calc_mode);
     Node *three_bet_node = nullptr;
     for (auto c: ag_->root_node_->children) {
@@ -832,7 +848,8 @@ bool Strategy::FreezePriorAction(Strategy *old_strategy, MatchState *real_match_
         auto new_b = GetBucketFromMatchState(real_match_state);
         new_match_node->frozen_b = new_b;
         auto hand = ToVectorIndex(real_match_state->state.holeCards[viewing_player][0],
-                                  real_match_state->state.holeCards[viewing_player][1]);
+                                  real_match_state->state.holeCards[viewing_player][1]
+        );
         logger::debug("freeze [b %d] [hand %s] at :", new_b, VectorIdxToString(hand));
         new_match_node->PrintState("frozen state : ");
         auto old_b = old_strategy->GetBucketFromMatchState(real_match_state);
@@ -886,7 +903,8 @@ void Strategy::CheckFrozenStrategyConsistency(Strategy *old_strategy, MatchState
         State step_back_state;
         logger::require_critical(
                 StepBackAction(&ag_->game_, &real_match_state->state, &step_back_state, steps_to_reverse) == -1,
-                "stepping too many steps. u may have an empty state or invalid state. return false");
+                "stepping too many steps. u may have an empty state or invalid state. return false"
+        );
         //match to both tree
         NodeMatchResult old_match_condition;
         old_strategy->ag_->MapStateToNode(step_back_state, old_match_condition);
@@ -895,7 +913,8 @@ void Strategy::CheckFrozenStrategyConsistency(Strategy *old_strategy, MatchState
         ag_->MapStateToNode(step_back_state, new_match_condition);
         auto new_match_node = new_match_condition.matched_node_;
         logger::require_critical(old_match_node->GetAmax() != new_match_node->GetAmax(),
-                                 "tough to map strategy over with diff actions size");
+                                 "tough to map strategy over with diff actions size"
+        );
 
         if (!StateBettingEqual(&old_match_node->state_, &new_match_node->state_)) {
             old_match_node->PrintState("old_strategy node = ");
@@ -905,11 +924,13 @@ void Strategy::CheckFrozenStrategyConsistency(Strategy *old_strategy, MatchState
 
         //copy the wavg over, assuming we only use cfr+ for solving for simplicity
         logger::require_critical(ulong_wavg_ == nullptr || old_strategy->ulong_wavg_ == nullptr,
-                                 "freezing strategy only support cfr+ based");
+                                 "freezing strategy only support cfr+ based"
+        );
 
         auto new_b = GetBucketFromMatchState(real_match_state);
         auto hand = ToVectorIndex(real_match_state->state.holeCards[viewing_player][0],
-                                  real_match_state->state.holeCards[viewing_player][1]);
+                                  real_match_state->state.holeCards[viewing_player][1]
+        );
         logger::debug("freeze [b %d] [hand %s] at :", new_b, VectorIdxToString(hand));
         new_match_node->PrintState("frozen state : ");
         auto old_b = old_strategy->GetBucketFromMatchState(real_match_state);
