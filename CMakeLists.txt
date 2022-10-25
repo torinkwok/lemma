@@ -15,6 +15,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif ()
+
 message("CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
 
 # The outcome of indiscriminating build types is endless confusion. I spend a couple hours on fixing a bug caused
