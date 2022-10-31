@@ -137,11 +137,11 @@ TEST_CASE("validate bucket files", "[abstraction]") {
   }
 }
 
-TEST_CASE("validate flexbuffers files", "[abstraction]") {
-    Bucket bucket;
-    bucket.LoadClassicFromFlexbuffers();
-    bucket.Get(6225, 0);
-}
+// TEST_CASE("validate flexbuffers files", "[abstraction]") {
+//     Bucket bucket;
+//     bucket.LoadClassicFromFlexbuffers();
+//     bucket.Get(6225, 0);
+// }
 
 //TEST_CASE("construct pubcolex") {
 //  //read public clusters
