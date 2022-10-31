@@ -1,8 +1,7 @@
 #define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
 #include <future>
-#include "../src/cfr.h"
-#include "../src/ag_builder.hpp"
+#include <bulldog/engine.h>
 
 TEST_CASE("cfr async termination") {
   logger::init_logger("debug");
