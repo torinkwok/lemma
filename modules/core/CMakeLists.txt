@@ -15,7 +15,7 @@ add_library(peval src/lib/pokerstove/peval/Card.cpp
         src/lib/pokerstove/peval/Rank.cpp
         src/lib/pokerstove/peval/Suit.cpp
         src/lib/pokerstove/peval/PokerHandEvaluator.cpp)
-target_include_directories(peval PUBLIC ${CMAKE_CURRENT_LIST_DIR}/src/lib)
+target_include_directories(peval PUBLIC ${CMAKE_CURRENT_LIST_DIR}/src/lib ${Boost_INCLUDE_DIR})
 
 add_library(hand_indexer src/lib/hand_indexer/src/hand_index.c src/lib/hand_indexer/src/deck.c)
 target_include_directories(hand_indexer PUBLIC ${CMAKE_CURRENT_LIST_DIR}/src/lib/hand_indexer)
