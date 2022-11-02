@@ -163,7 +163,7 @@ VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivate
         }
     } else {
         // FIXME(kwok): `all_belief_distr_1dim` may point to deallocated memory.
-        printf("all_belief_distr_1dim = %p\n", all_belief_distr_1dim);
+//        printf("all_belief_distr_1dim = %p\n", all_belief_distr_1dim);
     }
 
     // NOTE(kwok): A utility of +1 is given for a win, and −1 for a loss.

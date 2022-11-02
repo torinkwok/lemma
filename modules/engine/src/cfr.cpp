@@ -295,7 +295,7 @@ void *CFR::CfrSolve(void *thread_args)
 
     auto cur_flop_idx = 0;
     while (remaining_iter-- && !args->cancelled_token_) {
-        logger::info("[🧵thread %s] remaining iter = %d", thread_id, remaining_iter);
+//        logger::info("[🧵thread %s] remaining iter = %d", thread_id, remaining_iter);
         Board_t board{};
         // NOTE(kwok): Here we're sampling the public chance events, i.e. the public cards. Required
         // private chance events will be sampled within ScalaraCfrWorker::Solve in the case of the
