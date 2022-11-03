@@ -31,7 +31,7 @@ static inline long int actionTranslate_bsbr2bsbg(Action *action, State *state, c
         //                         v       v         v
         //         $300 added to the pot   |         |
         //                                 v         |
-        //                    $900 added to the pot  |
+        //            another $900 added to the pot  |
         //                                           v
         //                                    To be determined
         return action->size + state->sum_round_spent[state->round - 1][currentPlayer(game, state)];
