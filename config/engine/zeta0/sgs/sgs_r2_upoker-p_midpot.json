@@ -1,6 +1,6 @@
 {
   "builder_file": "builder_r2_upoker-p_nlh2_200bb_midpot.json",
-  "cfr_file": "cfrv_r2_upoker-p_midpot.json",
+  "cfr_file": "cfrs_r2_upoker-p_midpot.json",
   "playing_strategy" : "wavg",
   "trigger": {
     "active_round": 2,
