@@ -27,7 +27,7 @@ Engine::Engine(const char *engine_conf_file, Game *game) {
         data = web::json::value::parse(buffer);
         file.close();
     } else {
-        logger::error("    [ENGINE %s] : unable to open file %s", engine_name_, dir / filename);
+        logger::critical("    [ENGINE %s] : unable to open file %s", engine_name_, dir / filename);
     }
 
     // Solver meta.
@@ -143,7 +143,7 @@ Engine::Engine(const char *engine_conf_file, Game *game, BucketPool *bucket_pool
         data = web::json::value::parse(buffer);
         file.close();
     } else {
-        logger::error("    [ENGINE %s] : unable to open file %s", engine_name_, dir / filename);
+        logger::critical("    [ENGINE %s] : unable to open file %s", engine_name_, dir / filename);
     }
     //solver meta
     auto engine_conf_str = std::string(engine_conf_file);
