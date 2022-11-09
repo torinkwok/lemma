@@ -1,10 +1,11 @@
 {
   "cfr": {
     "name": "cfrs100m_r0_nt72",
-    "num_threads": 72,
+    "num_threads": 4,
     "algo": "scalar",
     "convergence": {
-      "max_iter": 100000000
+//      "max_iter": 100000000
+      "max_iter": 1
     },
     "checkpoint": {
       "strategy_checkpoint": 10000000,

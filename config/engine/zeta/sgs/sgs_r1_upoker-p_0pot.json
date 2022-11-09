@@ -1,15 +1,15 @@
 {
-  "builder_file": "builder_r1_upoker-p_nlh2_200bb_bigpot.json",
-  "cfr_file": "cfrv_r1_upoker-p_bigpot.json",
-  "playing_strategy" : "wavg",
+  "builder_file": "zeta/builder/builder_r1_upoker-p_nlh2_200bb_bigpot.json",
+  "cfr_file": "zeta/cfr/cfrs_r1_upoker-p_0pot.json",
+  "playing_strategy": "wavg",
   "trigger": {
     "active_round": 1,
-    "active_sumpot_min": 400,
+    "active_sumpot_min": 0,
     "active_offtree_min": 1000000,
     "active_bet_seq_min": 1000000,
     "resolve_sumpot_min": 400,
     "resolve_offtree_min": 200,
-    "resolve_last_root_sumpot_min" : 1000000
+    "resolve_last_root_sumpot_min": 1000000
   },
   "action_chooser": {
     "purification": false,

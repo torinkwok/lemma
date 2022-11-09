@@ -32,12 +32,7 @@
         ],
         "high_filter" : 1.0
       }],
-//    "card_abs": ["null", "null", "colex", "subgame_colex"]
     "card_abs": [
-      //      "waugh_emd_0_d50_buckets_100_chunks1",
-      //      "waugh_emd_1_d50_buckets_100_chunks1",
-      //      "waugh_emd_2_d50_buckets_100_chunks1",
-      //      "waugh_ochs_3_d8_buckets_100_chunks8"
       "waugh_emd_0_d50_buckets_169_chunks1",
       "waugh_emd_1_d50_buckets_9000_chunks1",
       "waugh_emd_2_d50_buckets_9000_chunks1",

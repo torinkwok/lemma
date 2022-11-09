@@ -1,0 +1,28 @@
+{
+  "blueprint": {
+    "disk" : true,
+    "strategy_prefix": [
+      "IR-169-9000-9000-900_cfrs10m"
+    ],
+    "action_chooser": {
+      "purification": false,
+      "fold_threshold": 0.80,
+      "pot_allin_threshold": 0.4,
+      "prune_threshold": 0.05
+    }
+  },
+  "daemon": false,
+  "subgame_solvers": [
+    "zeta/sgs/sgs_r1_upoker-p_bigpot.json",
+    "zeta/sgs/sgs_r1_upoker-p_midpot.json",
+    "zeta/sgs/sgs_r1_upoker-p_0pot.json",
+
+    "zeta/sgs/sgs_r2_upoker-p_bigpot.json",
+    "zeta/sgs/sgs_r2_upoker-p_midpot.json",
+    "zeta/sgs/sgs_r2_upoker-p_0pot.json",
+
+    "zeta/sgs/sgs_r3_upoker-p_bigpot.json",
+    "zeta/sgs/sgs_r3_upoker-p_midpot.json",
+    "zeta/sgs/sgs_r3_upoker-p_0pot.json"
+  ]
+}
