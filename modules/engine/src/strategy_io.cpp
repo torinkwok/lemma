@@ -133,7 +133,7 @@ void SaveStrategy(Strategy *target, STRATEGY_TYPE type, const std::string &prefi
         }
         auto end = std::chrono::steady_clock::now();
         auto lapse_milli_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
-        logger::info("%s %s avg saving takes = %d ms", full_name, StrategyToNameMap[type], lapse_milli_seconds);
+        logger::info("%s %s avg saving took = %d ms", full_name, StrategyToNameMap[type], lapse_milli_seconds);
         os_reg.close();
     }
     switch (type) {
@@ -205,7 +205,7 @@ void LoadStrategy(Strategy *target, STRATEGY_TYPE type, const std::string &prefi
         is.close();
         auto end = std::chrono::steady_clock::now();
         auto lapse_milli_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
-        logger::debug("%s loading takes = %d ms", StrategyToNameMap[type], lapse_milli_seconds);
+        logger::debug("%s loading took %d ms", StrategyToNameMap[type], lapse_milli_seconds);
     }
     switch (type) {
         //only support MCCFR large strategy IO

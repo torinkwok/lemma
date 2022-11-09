@@ -22,7 +22,7 @@ struct SimpleTimer
     void Checkpoint(const std::string &ckp_name)
     {
         auto now_ = std::chrono::steady_clock::now();
-        logger::debug("⏱️TIME SPENT [%s takes %d ms]",
+        logger::debug("⏱️TIME SPENT [%s took %d ms]",
                       ckp_name,
                       std::chrono::duration_cast<std::chrono::milliseconds>(
                               now_ - ckp_.at(0)).count());
@@ -38,7 +38,7 @@ struct SimpleTimer
 
     //  void PrintAllCheckpoint() {
     //    for (unsigned int i = 1; i < ckp_.size(), i++;) {
-    //      logger::debug("TIME SPENT [%s takes %d ms]",
+    //      logger::debug("TIME SPENT [%s took %d ms]",
     //                    names_.at(i),
     //                    std::chrono::duration_cast<std::chrono::milliseconds>(
     //                        ckp_.at(i) - ckp_.at(0)).count());

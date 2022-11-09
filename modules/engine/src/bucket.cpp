@@ -323,7 +323,7 @@ void Bucket::LoadSubgameColex(Board_t *board, int round) {
     //  auto cmd_time =
     //      std::chrono::duration_cast<std::chrono::milliseconds>(
     //          std::chrono::steady_clock::now() - cmd_begin).count();
-    //  logger::debug("generate subgame colex takes %d ms", cmd_time);
+    //  logger::debug("generate subgame colex took %d ms", cmd_time);
 }
 
 void Bucket::Save(std::map<unsigned int, unsigned short> &entries, const std::string &ofile) {
