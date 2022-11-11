@@ -133,7 +133,7 @@ struct SubgameSolver {
             logger::debug("    [SGS %s] : built subgame [step back 0] for new round for [round = %d] [action_kth = %d]",
                           name_, round,
                           action_kth);
-            ag_builder_->Build(ag_out, &ref_state);
+            ag_builder_->Build(ag_out, &ref_state, nullptr, cfr_->cfr_param_.depth_limited);
             return SOLVE_ON_NEW_ROUND_HERO_FIRST;
         }
 
