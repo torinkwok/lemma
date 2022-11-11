@@ -24,7 +24,7 @@ int CFR::Solve(Strategy *blueprint,
         if (strategy->ag_->root_hand_beliefs_for_all_[0].NonZeroBeliefCount() <= 30
             || strategy->ag_->root_hand_beliefs_for_all_[1].NonZeroBeliefCount() <= 30) {
             logger::warn(
-                    "the new ag is not at river and the range width is too small. It may all become 0 in cfr solving"
+                    "🚨the new ag is not at river and the range width is too small. It may all become 0 in cfr solving"
             );
         }
     }
@@ -452,7 +452,7 @@ void CFR::ThreadedCfrSolve(Strategy *blueprint,
     if (steps < num_threads) {
         effective_thread = 1;
         if (cfr_param.cfu_compute_acting_playing == WEIGHTED_RESPONSE) {
-            logger::warn("running single thread");
+            logger::warn("🚨running single thread");
         }
     }
 

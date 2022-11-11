@@ -398,6 +398,7 @@ int Strategy::EstimateReachProbAtNode(MatchState *last_match_state,
         int prune_count = 0;
 
         //do bayesian estimate on each ligit hand
+        logger::info("doing bayesian estimation on each legit hand of %d", FULL_HAND_BELIEF_SIZE);
         for (auto i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {
             if (new_ag_reach[acting_player].IsZero(i) || new_ag_reach[acting_player].IsPruned(i)) {
                 continue;
@@ -414,13 +415,15 @@ int Strategy::EstimateReachProbAtNode(MatchState *last_match_state,
             ComputeStrategy(step_node_round, n, b, a_max, rnb_avg, calc_mode);
             float action_prob = 0.0;
 
-            //a uniform strategy means likely the reach of a node of the same acting player (either at root or other step nodes) is 0. So it should not happen much
+            // a uniform strategy means likely the reach of a node of the same acting player (either at root or other
+            // step nodes) is 0. So it should not happen much
             if (!IsAvgUniform(rnb_avg, a_max)) {
                 action_prob = rnb_avg[action_idx];
             } else {
                 //what?
                 logger::warn(
-                        "🚨weird uniform strategy in transition. the reach should be 0 already and filtered at start."
+                        "🚨Weirdly uniform strategy for %d during the transition. The reach should already be 0 and filtered at start.",
+                        i
                 );
             }
 
@@ -1001,6 +1004,9 @@ std::vector<NodeMatchResult> Strategy::FindSortedMatchedNodes(State &ref_state) 
     timer.Checkpoint("selecting match node candidates");
 
     // For extreme case where we got no matched nodes.
-    logger::require_critical(!candidates.empty(), "none node matched. terrible tree");
+    if (candidates.empty()) {
+        logger::critical("none node matched. terrible tree");
+    }
+
     return candidates;
 }

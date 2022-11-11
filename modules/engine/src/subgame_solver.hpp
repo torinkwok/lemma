@@ -68,18 +68,27 @@ struct SubgameSolver {
     bool CheckTriggerCondition(NodeMatchResult &condition) const {
         if (condition.matched_node_->GetRound() == active_round) {
             if (condition.matched_node_->GetSumPot() >= active_sumpot_min) {
-                logger::debug("    [SGS %s] : triggers by sumpot %d", name_, condition.matched_node_->GetSumPot());
+                logger::info("    [SGS %s] : triggered by sumpot %d", name_, condition.matched_node_->GetSumPot());
                 return true;
-            } else if (condition.bet_similarity_dist_ >= active_bet_seq_min) {
-                logger::debug("    [SGS %s] : triggers by bet sequence pattern distance %d", name_,
-                              condition.bet_similarity_dist_);
-                return true;
-            } else if (condition.off_tree_dist_ >= active_offtree_min) {
-                logger::debug("    [SGS %s] : triggers by offtree distance %f", name_, condition.off_tree_dist_);
-                return true;
+            } else {
+                logger::info("        [SGS %s] : node_sum_pot=%d, sgs_conf_active_sumpot_min=%d", name_, condition.matched_node_->GetSumPot(), active_sumpot_min);
             }
+            if (condition.bet_similarity_dist_ >= active_bet_seq_min) {
+                logger::info("    [SGS %s] : triggered by bet sequence pattern distance %d", name_, condition.bet_similarity_dist_);
+                return true;
+            } else {
+                logger::info("        [SGS %s] : node_bet_similarity_dist_=%d, sgs_conf_active_bet_seq_min=%d", name_, condition.bet_similarity_dist_, active_bet_seq_min);
+            }
+            if (condition.off_tree_dist_ >= active_offtree_min) {
+                logger::info("    [SGS %s] : triggered by offtree distance %f", name_, condition.off_tree_dist_);
+                return true;
+            } else {
+                logger::info("        [SGS %s] : node_off_tree_dist_=%f, sgs_active_offtree_min=%f", name_, condition.off_tree_dist_, active_offtree_min);
+            }
+        } else {
+            logger::info("        [SGS %s] : node_round=%d, sgs_active_round=%d", name_, condition.matched_node_->GetRound(), active_round);
         }
-        logger::debug("    [SGS %s] : not triggered.", name_);
+        logger::info("    [SGS %s] : not triggered.", name_);
         return false;
     }
 
@@ -93,7 +102,7 @@ struct SubgameSolver {
      * Specifically,
      *  - CheckNewRound()
      *  - resolving if needed
-     *  - kth_action = 1, do step back, it is equivalent to the street root
+     *  - kth_action = 1, do step back, which is equivalent to the street root
      *  - > 1, step back to the root.
      */
     int BuildSubgame(AbstractGame *ag_out,
@@ -107,8 +116,7 @@ struct SubgameSolver {
         if (round == HOLDEM_ROUND_PREFLOP) {
             // TODO(kwok): If we don't panic here, an `EXC_BAD_ACCESS` exception would be thrown by `Node::GetRound()` anyway.
             // TODO(kwok): Recover from it elegantly.
-            // TODO(kwok): Is there any necessity to support sub-game solving at pre-flop rounds?
-            logger::critical("    [SGS %s] : subgame solving at preflop is not yet supported. build subgame fails", name_);
+            logger::critical("    [SGS %s] : according to 10.1126/science.aay2400 (https://www.science.org/doi/10.1126/science.aay2400), we don't do sub-game solve in pre-flop", name_);
             return UNSUPPORTED_SUBGAME;
         }
 

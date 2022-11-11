@@ -161,7 +161,7 @@ int main(int argc, char *argv[]) {
                 // TODO: 2p hack.
                 std::string players[2];
                 // FIXME(kwok): The number of players is not supposed to be fixed to 2.
-                players[match_state.viewingPlayer] = "Bulldog";
+                players[match_state.viewingPlayer] = "Lemma"; // TODO(kwok): Add engine number
                 players[match_state.viewingPlayer ? 0 : 1] = "Slumbot";
 
                 char line[MAX_LINE_LEN];

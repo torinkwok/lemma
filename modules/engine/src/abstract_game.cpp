@@ -59,7 +59,7 @@ void AbstractGame::MapStateToNode(State &real_state, NodeMatchResult &match_resu
 
     // For extreme case where we got nothing matched.
     if (best_match_result.bet_similarity_dist_ == 100) {
-        logger::warn("none node matched. terrible tree");
+        logger::warn("🚨none node matched. terrible tree");
         best_match_result.matched_node_ = range.first->second;
     }
 

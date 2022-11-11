@@ -278,6 +278,14 @@ int Engine::GetAction(MatchState *current_acpc_match_state, Action &r_action, do
         playbook_stack_.emplace_back(blueprint, default_action_chooser_, STRATEGY_ZIPAVG);
     }
 
+    for (auto& pb: playbook_stack_) {
+        logger::info("🌲%s, [%s], dls=%d, root_state_round=%d",
+                     pb.strategy_->name_,
+                     StrategyToNameMap[pb.strategy_type],
+                     pb.strategy_->ag_->depth_limited_,
+                     pb.strategy_->ag_->root_state_.round);
+    }
+
     /* ASSEMBLE online strategies. */
     SubgameSolver *selected_sgs = nullptr;
     int cfr_return_code = -1;
@@ -348,7 +356,8 @@ int Engine::GetAction(MatchState *current_acpc_match_state, Action &r_action, do
         if (remaining_ms > 0) {
             logger::debug("⏳remaining ms = %g", remaining_ms);
         } else {
-            logger::debug("🚨malformed ⏳remaining ms = %g", remaining_ms);
+            logger::debug("🚨malformed ⏳remaining ms = %g. rounding it into zero", remaining_ms);
+            remaining_ms = 0;
         }
 
         logger::debug("⏳remaining ms = %g", remaining_ms);
@@ -830,6 +839,7 @@ int Engine::AsynStartCFRSolving(SubgameSolver *selected_sgs, Strategy *&new_stra
     while (cfr_result_future.wait_for(span) == std::future_status::timeout) {
         count++;
         // FIXME(kwok): If `remaining_ms` is negative, it would not be useful.
+        // FIXME(kwok): count == async_span_count won't be respected.
         if (count == async_span_count) {
             AsynStopCFRSolving();
         }
