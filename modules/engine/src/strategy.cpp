@@ -1,5 +1,8 @@
 #include <bulldog/game_util.h>
+#include <thread>
 #include "strategy.h"
+
+static std::mutex mx1;
 
 void Strategy::InitMemory(STRATEGY_TYPE type, CFR_MODE mode)
 {
@@ -610,9 +613,11 @@ int Strategy::ComputeStrategy(Round_t r,
             if (zipavg_ != nullptr) {
                 return GetPolicy<ZIPAVG>(rnb_avg, a_max, zipavg_, rnb0);
             } else {
-                char v[a_max];
-                file_ptr->seekg(rnb0);
-                file_ptr->read(v, a_max);
+                char v[a_max]; {
+                    std::scoped_lock lk(mx1);
+                    file_ptr->seekg(rnb0);
+                    file_ptr->read(v, a_max);
+                }
                 ZIPAVG zip_v[a_max];
                 for (auto i = 0; i < a_max; i++) {
                     zip_v[i] = v[i];

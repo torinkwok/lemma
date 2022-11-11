@@ -51,6 +51,7 @@ public:
         if (file_ptr != nullptr) {
             file_ptr->close();
             delete file_ptr;
+            file_ptr = nullptr;
         }
         delete ag_;
         delete[] double_regret_;
