@@ -36,10 +36,17 @@ Node *CompositeActionAbs::BuildBettingTreeInner(Game *game,
      * just a flag.
      */
     if (depth_limited) {
-        if (new_node->FollowingChanceNode() && new_node->GetRound() > root_round) {
+        if (/*new_node->FollowingChanceNode() &&*/ new_node->GetRound() > root_round) {
+            int kth_action = new_node->GetKthAction();
             new_node->is_leaf_node = true;
-            return new_node;
+            if (kth_action == 1) {
+                return new_node;
+            }
         }
+        // if (new_node->FollowingChanceNode() && new_node->GetRound() > root_round) {
+        //     new_node->is_leaf_node = true;
+        //     return new_node;
+        // }
     }
 
     /*
