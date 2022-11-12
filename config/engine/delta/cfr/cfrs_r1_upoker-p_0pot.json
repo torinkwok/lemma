@@ -1,0 +1,30 @@
+{
+  "cfr": {
+    "num_threads": 4,
+    "algo": "scalar",
+    "depth_limited": {
+      "on": true,
+      "reps": 1,
+      "cache": true
+    },
+    "rollout": {
+      "pruning": {
+        "regret_thres": 0.95,
+        "prob": 0.95,
+        "first_iter": 3000
+      }
+    },
+    "regret_matching": {
+      "floor": 0.0,
+      "avg_update_on": 0,
+      "discounting": {
+        "first_iter": 50000,
+        "iterations": 10,
+        "interval": 50
+      }
+    },
+    "convergence": {
+      "max_iter": 100000
+    }
+  }
+}

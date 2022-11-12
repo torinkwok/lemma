@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="delta/0" type="CMakeRunConfiguration" factoryName="Application" folderName="battleground" singleton="false" PROGRAM_PARAMS="--engine_params=delta/0.json --game=nlh2_200bb.game --connector=1 --connector_params=lemma,ckp3t4kkbccHZFmosBZVsGibxz6MnaQ4Heof3uu3nkXtLwn7GVoMDhNrj6qe8ZCU,1000 --log_level=trace --proxy=http://localhost:6152 --slumbot_session=1e784d1f-3de6-4865-ba7b-2ebd6f9d7a52" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" WORKING_DIR="file://$CMakeProjectDir$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="bulldog" TARGET_NAME="agent" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="bulldog" RUN_TARGET_NAME="agent">
+    <method v="2">
+      <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+    </method>
+  </configuration>
+</component>
