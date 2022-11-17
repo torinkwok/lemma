@@ -34,7 +34,9 @@ public:
 
     void LoadClassicFromFile(const std::string &ofile);
 
-    void LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r);
+    void LoadClassFromLossWaughIndex(int8_t r);
+
+    size_t LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r, bool lossless = false);
 
     /*
      * bucket type
@@ -73,7 +75,7 @@ private:
         ar(cluster_map_);
     }
 
-    size_t _LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r);
+    size_t _LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r, bool lossless = false);
 
     hand_indexer_t _preflop_indexer;
     hand_indexer_t _flop_indexer;

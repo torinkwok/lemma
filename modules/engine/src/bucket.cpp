@@ -17,7 +17,7 @@ extern "C" {
 #include <bulldog/game.h>
 }
 
-void Bucket::LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r) {
+size_t Bucket::LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r, bool lossless) {
     assert(r >= 0 && r < 4);
     type_ = WAUGH_BUCKET;
 
@@ -26,12 +26,11 @@ void Bucket::LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r) {
     uint8_t *cards_per_round = nullptr;
     hand_indexer_t *out_indexer = nullptr;
     switch (r) {
-        case 0: {
+        case 0:
             rounds = 1;
             cards_per_round = new uint8_t[]{2};
             out_indexer = &_preflop_indexer;
             break;
-        }
         case 1:
             rounds = 2;
             cards_per_round = new uint8_t[]{2, 3};
@@ -55,17 +54,18 @@ void Bucket::LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r) {
         throw std::runtime_error("hand indexer init failed for rounds " + std::to_string(rounds));
     }
 
-    auto num_loaded = _LoadClassicFromFlexbuffers(std::filesystem::path(dir), r);
+    auto num_loaded = _LoadClassicFromFlexbuffers(std::filesystem::path(dir), r, lossless);
     logger::info("🪣%lu Waugh-indexed buckets loaded for round %u", num_loaded, r);
-    assert((r == 0 && num_loaded == 169) ||
-           (r == 1 && num_loaded == 1286792) ||
-           (r == 2 && num_loaded == 13960050) ||
-           (r == 3 && num_loaded == 123156254));
+    // assert((r == 0 && num_loaded == 169) ||
+    //        (r == 1 && num_loaded == 1286792) ||
+    //        (r == 2 && num_loaded == 13960050) ||
+    //        (r == 3 && num_loaded == 123156254));
 
     delete[] cards_per_round;
+    return num_loaded;
 }
 
-size_t Bucket::_LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r) {
+size_t Bucket::_LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r, bool lossless) {
     assert(type_ == WAUGH_BUCKET);
 
     std::filesystem::path fxb_chunks_dir_path(dir);
@@ -75,6 +75,7 @@ size_t Bucket::_LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r) {
     using std::filesystem::directory_iterator;
     size_t fxb_num_chunks = std::distance(directory_iterator(fxb_chunks_dir_path), directory_iterator{});
     size_t processed_count = 0;
+    size_t max_bucket = 0;
     for (size_t chunk_id = 0; chunk_id < fxb_num_chunks; chunk_id++) {
         auto fxb_chunk_path = fxb_chunks_dir_path / ("chunk_" + std::to_string(chunk_id) + ".fxb");
         std::ifstream fxb_chunk_file(fxb_chunk_path, std::ios::binary | std::ios::ate);
@@ -92,7 +93,14 @@ size_t Bucket::_LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r) {
             auto vec = fxb_tmp.Values()[0].AsTypedVector();
             for (size_t local_index = 0; local_index < vec.size(); local_index++) {
                 auto isomorphic_index = local_index + global_offset;
-                master_map_[r][isomorphic_index] = vec[local_index].AsUInt32();
+                if (lossless) {
+                    master_map_[r][isomorphic_index] = isomorphic_index;
+                } else {
+                    master_map_[r][isomorphic_index] = vec[local_index].AsUInt32();
+                }
+                if (master_map_[r][isomorphic_index] > max_bucket) {
+                    max_bucket = master_map_[r][isomorphic_index];
+                }
             }
             processed_count += vec.size();
         } else {
@@ -101,7 +109,8 @@ size_t Bucket::_LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r) {
         }
         fxb_chunk_file.close();
     }
-    return processed_count;
+    // return processed_count;
+    return max_bucket + 1;
 }
 
 void Bucket::LoadClassicFromFile(const std::string &ofile) {

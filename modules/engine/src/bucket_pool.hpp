@@ -20,28 +20,30 @@ public:
     virtual ~BucketPool()
     {
         for (auto &it: bucket_pool_) {
-            for (auto &[key, val]: it) {
-                delete val;
+            for (auto &lossless_it: it) {
+                for (auto &[key, val]: lossless_it) {
+                    delete val;
+                }
             }
         }
     }
 
-    BucketMeta *Get(const std::string &name, int round)
+    BucketMeta *Get(const std::string &name, int round, bool lossless = false)
     {
-        if (!Has(name, round)) {
+        if (!Has(name, round, lossless)) {
             // Loading bucket lazily.
-            bucket_pool_[round][name] = LoadBucket(name);
+            bucket_pool_[round][lossless][name] = LoadBucket(name, lossless);
         }
-        return bucket_pool_[round][name];
+        return bucket_pool_[round][lossless][name];
     }
 
-    bool Has(const std::string &name, int round)
+    bool Has(const std::string &name, int round, bool lossless)
     {
-        auto it = bucket_pool_[round].find(name);
-        return it != bucket_pool_[round].end();
+        auto it = bucket_pool_[round][lossless].find(name);
+        return it != bucket_pool_[round][lossless].end();
     }
 
-    static BucketMeta *LoadBucket(const std::string &name)
+    static BucketMeta *LoadBucket(const std::string &name, bool lossless = false)
     {
         auto meta = new BucketMeta();
         std::filesystem::path dir(BULLDOG_DIR_DATA_ABS);
@@ -56,10 +58,10 @@ public:
             std::filesystem::path bucket_dir(name);
             std::vector<std::string> parsed_str;
             split_string(name, "_", parsed_str);
-            int num_buckets = std::stoi(parsed_str[5]);
+            // int num_buckets = std::stoi(parsed_str[5]);
             uint8_t r = std::stoul(parsed_str[2]);
-            logger::info("number of buckets %d; round %u", num_buckets, r);
-            meta->bucket_.LoadClassicFromFlexbuffers(dir / bucket_dir, r);
+            size_t num_buckets = meta->bucket_.LoadClassicFromFlexbuffers(dir / bucket_dir, r, lossless);
+            logger::info("number of buckets %lu; round %u", num_buckets, r);
             meta->bucket_count_ = num_buckets;
         } else {
             std::filesystem::path bucket_file(name + ".bin");
@@ -73,14 +75,17 @@ public:
         return meta;
     }
 
-    void InsertBucket(BucketMeta *meta, std::string name, int r)
+    void InsertBucket(BucketMeta *meta, std::string name, int r, bool lossless)
     {
-        bucket_pool_[r][name] = meta;
+        bucket_pool_[r][lossless][name] = meta;
     }
 
 private:
     std::array<
-            std::map<std::string /* name */, BucketMeta *>,
+            std::array<
+                    std::map<std::string /* name */, BucketMeta *>,
+                    2
+            >,
             4 /* round */
     > bucket_pool_;
 };

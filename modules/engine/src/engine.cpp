@@ -356,8 +356,8 @@ int Engine::GetAction(MatchState *current_acpc_match_state, Action &r_action, do
         if (remaining_ms > 0) {
             logger::debug("⏳remaining ms = %g", remaining_ms);
         } else {
-            logger::debug("🚨malformed ⏳remaining ms = %g. rounding it into zero", remaining_ms);
-            remaining_ms = 0;
+            logger::debug("🚨malformed ⏳remaining ms = %g. rounding it into 12000", remaining_ms);
+            remaining_ms = 12000;
         }
 
         logger::debug("⏳remaining ms = %g", remaining_ms);
@@ -521,7 +521,8 @@ void Engine::EvalShowdown(MatchState &match_state) {
                 opp_c1,
                 opp_c2,
                 &board,
-                strategy_root_round);
+                strategy_root_round
+        );
 
         double real_b_canon_sum = 0.0;
         std::set<Bucket_t> seen_bucket;
@@ -536,7 +537,8 @@ void Engine::EvalShowdown(MatchState &match_state) {
                     high_low_pair.first,
                     high_low_pair.second,
                     &board,
-                    strategy_root_round);
+                    strategy_root_round
+            );
             if (b == real_bucket) {
                 real_b_canon_sum += belief;
             }
