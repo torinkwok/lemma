@@ -101,7 +101,7 @@ struct sCfrParam
     bool pruning_on = false;
     //dls
     bool depth_limited = false;
-    int depth_limited_rollout_reps_ = 3;
+    int depth_limited_rollout_reps_ = 1;
     bool depth_limited_cache_ = false;
 
     /*
