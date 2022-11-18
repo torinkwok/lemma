@@ -33,9 +33,9 @@ public:
         if (!Has(name, round, lossless)) {
             // Loading bucket lazily.
             _bucket_meta_pool[round][lossless][name] = LoadBucket(name, lossless);
-            logger::info("🚚cache lazily loaded for name=%s, round=%d, lossless=%d", name, round, lossless);
+            logger::info("🚛cache lazily loaded for name=%s, round=%d, lossless=%d", name, round, lossless);
         } else {
-            logger::info("✅cache hit for name=%s, round=%d, lossless=%d", name, round, lossless);
+            logger::info("🎯cache hit for name=%s, round=%d, lossless=%d", name, round, lossless);
         }
         return _bucket_meta_pool[round][lossless][name];
     }

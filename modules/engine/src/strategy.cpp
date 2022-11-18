@@ -70,7 +70,7 @@ bool Strategy::EstimateNewAgReach(AbstractGame *new_ag, MatchState *new_match_st
     new_base_reach[1].CopyValue(&ag_->root_hand_beliefs_for_all_[1]);
 
     if (StateBettingEqual(&ag_->root_node_->state_, &new_ag->root_state_)) {
-        logger::debug("the new strategy having the same root node. it happens when step back to last root");
+        logger::info("the new strategy having the same root node. it happens when step back to last root");
         // FIXME(kwok): The number of players is not supposed to be fixed to 2.
         new_ag->root_hand_beliefs_for_all_[0].CopyValue(&new_base_reach[0]);
         new_ag->root_hand_beliefs_for_all_[1].CopyValue(&new_base_reach[1]);
@@ -324,7 +324,7 @@ void Strategy::PrintNodeStrategy(Node *node, Bucket_t b, STRATEGY_TYPE calc_mode
         print_string += "%";
         print_string += " | ";
     }
-    logger::debug("%s | for r = %d | n = %d | b = %d", print_string, r, n, b);
+    logger::info("%s | for r = %d | n = %d | b = %d", print_string, r, n, b);
 }
 
 void Strategy::InspectStrategyByMatchState(MatchState *match_state, STRATEGY_TYPE calc_mode)
@@ -363,12 +363,11 @@ int Strategy::EstimateReachProbAtNode(MatchState *last_match_state,
     target_node->PrintState("[range estimate] to state --> 🎯");
     SimpleTimer timer;
 
-    //common value
     auto root_round = ag_->root_node_->GetRound();
     Board_t reach_board{};
     BoardFromState(&ag_->game_, &last_match_state->state, &reach_board);
 
-    //refine reach that crashes with board. do it once here.
+    // refine reach that crashes with board. do it once here.
     // FIXME(kwok): Normalization?
     new_ag_reach[0].ExcludeBoard(reach_board);
     new_ag_reach[1].ExcludeBoard(reach_board);
@@ -379,11 +378,12 @@ int Strategy::EstimateReachProbAtNode(MatchState *last_match_state,
             last_match_state->state.holeCards[hero_pos][1]
     );
 
-    //find the travel path from ag.root to matched node;
+    // find the travel path from ag.root to matched node;
     std::stack<int> node_path = target_node->GetPathFromRoot();
     if (node_path.empty()) {
         logger::warn("🚨no step nodes to the root. already at root");
     }
+
     Node *stepping_node = ag_->root_node_;
     int step_size = node_path.size();
     int done_step_count = 0;
@@ -393,15 +393,22 @@ int Strategy::EstimateReachProbAtNode(MatchState *last_match_state,
             logger::warn("🚨node path wrong. cannot find the matched node. matched to terminal node");
             return false;
         }
+
         auto action_code = stepping_node->children[action_idx]->GetLastActionCode();
         auto n = stepping_node->GetN();
         int acting_player = stepping_node->GetActingPlayer();
         auto step_node_round = stepping_node->GetRound();
-        //tallying parameters
+        // tallying parameters
         int prune_count = 0;
 
-        //do bayesian estimate on each ligit hand
-        logger::info("doing bayesian estimation on each legit hand of %d", FULL_HAND_BELIEF_SIZE);
+        logger::info(
+                "🌋bayesian estimation on all %d legit hands [n_waugh_buckets %llu]",
+                FULL_HAND_BELIEF_SIZE,
+                ag_->bucket_reader_.buckets_[step_node_round]->get_n_waugh_buckets(),
+                step_node_round
+        );
+
+        // do bayesian estimate on each ligit hand
         for (auto i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {
             if (new_ag_reach[acting_player].IsZero(i) || new_ag_reach[acting_player].IsPruned(i)) {
                 continue;
@@ -411,6 +418,7 @@ int Strategy::EstimateReachProbAtNode(MatchState *last_match_state,
             auto b = ag_->bucket_reader_.GetBucket_HighLowPair_Board_Round(
                     high_low.first, high_low.second, &reach_board, step_node_round
             );
+
             auto a_max = stepping_node->children.size();
 
             //use only zipavg/wavg in transition.
@@ -434,9 +442,9 @@ int Strategy::EstimateReachProbAtNode(MatchState *last_match_state,
             if (action_prob < min_filter) {
                 //safe check
                 if (hero_pos == acting_player && i == my_hand_vector_idx) {
-                    logger::debug("✂️[player %d] [real hand %d %s] was pruned [%f < %f]",
-                                  hero_pos, my_hand_vector_idx, VectorIdxToString(my_hand_vector_idx), action_prob,
-                                  min_filter
+                    logger::info("✂️[player %d] [real hand %d %s] was pruned [%f < %f]",
+                                 hero_pos, my_hand_vector_idx, VectorIdxToString(my_hand_vector_idx), action_prob,
+                                 min_filter
                     );
                     PrintNodeStrategy(stepping_node, b, calc_mode);
                     return REAL_HAND_PRUNED_IN_TRANSITION;
@@ -450,7 +458,7 @@ int Strategy::EstimateReachProbAtNode(MatchState *last_match_state,
             new_ag_reach[acting_player].belief_[i] *= action_prob;
         }
 
-        logger::debug(
+        logger::info(
                 "    step %d -> [player %d] [action_code %d] [at round %d] [%d hands pruned]",
                 done_step_count + 1,
                 acting_player,
@@ -460,7 +468,7 @@ int Strategy::EstimateReachProbAtNode(MatchState *last_match_state,
         );
 
         if (new_ag_reach[acting_player].BeliefSum() == 0.0) {
-            logger::debug(
+            logger::info(
                     "    range estimate failed --> [player %d] [fails at %d/%d steps (action %d) from round %d to %d]",
                     acting_player,
                     done_step_count + 1,
@@ -480,11 +488,13 @@ int Strategy::EstimateReachProbAtNode(MatchState *last_match_state,
         logger::warn("🚨the transition path is not legal. Check it.");
     }
 
-    logger::debug("range estimate success [path size %d] [round %d to %d]",
-                  step_size,
-                  root_round,
-                  target_node->GetRound());
+    logger::info("range estimate success [path size %d] [round %d to %d]",
+                 step_size,
+                 root_round,
+                 target_node->GetRound());
+
     timer.Checkpoint("reach estimate");
+
     return RANGE_ESTIMATE_SUCCESS;
 }
 
@@ -538,10 +548,10 @@ void Strategy::AllocateMemory(STRATEGY_TYPE type, CFR_MODE cfr_mode)
             logger::critical("unsupported strategy type %s", StrategyToNameMap[type]);
     }
     double mem_size = (double) size * bytesize / (1024.0 * 1024.0);
-    logger::debug("allocated heap memory for %s || length = %d || size = %f (mb)",
-                  StrategyToNameMap[type],
-                  size,
-                  mem_size
+    logger::info("allocated heap memory for %s || length = %d || size = %f (mb)",
+                 StrategyToNameMap[type],
+                 size,
+                 mem_size
     );
 }
 
@@ -613,7 +623,8 @@ int Strategy::ComputeStrategy(Round_t r,
             if (zipavg_ != nullptr) {
                 return GetPolicy<ZIPAVG>(rnb_avg, a_max, zipavg_, rnb0);
             } else {
-                char v[a_max]; {
+                char v[a_max];
+                {
                     std::scoped_lock lk(mx1);
                     file_ptr->seekg(rnb0);
                     file_ptr->read(v, a_max);
@@ -644,7 +655,7 @@ void Strategy::ClearZipAvgMemory()
 
 void Strategy::ConvertWavgToZipAvg(pthread_t *thread_pool, unsigned int num_threads) const
 {
-    logger::debug("converting wavg to zipavg with %d threads", num_threads);
+    logger::info("converting wavg to zipavg with %d threads", num_threads);
     for (auto r = 0; r < HOLDEM_MAX_ROUNDS; r++) {
         auto b_max = ag_->kernel_->bmax_by_r_[r];
         if (b_max < num_threads) {
@@ -661,7 +672,7 @@ void Strategy::ConvertWavgToZipAvg(pthread_t *thread_pool, unsigned int num_thre
             //force the last to be b_max. so the last may solve with more
             Bucket_t b_end = (i == num_threads - 1) ? b_max : (i + 1) * batch_size;
             auto thread_input = new sThreadInputZipavgConvert(this, b_begin, b_end, r);
-            logger::debug("thread %d converting from %d to %d", i, b_begin, b_end);
+            logger::info("thread %d converting from %d to %d", i, b_begin, b_end);
             if (pthread_create(&thread_pool[i], nullptr, Strategy::ThreadedZipAvgConvert, thread_input)) {
                 logger::critical("failed to launch threads.");
             }
@@ -858,7 +869,7 @@ bool Strategy::FreezePriorAction(Strategy *old_strategy, MatchState *real_match_
         auto hand = ToVectorIndex(real_match_state->state.holeCards[viewing_player][0],
                                   real_match_state->state.holeCards[viewing_player][1]
         );
-        logger::debug("freeze [b %d] [hand %s] at :", new_b, VectorIdxToString(hand));
+        logger::info("freeze [b %d] [hand %s] at :", new_b, VectorIdxToString(hand));
         new_match_node->PrintState("frozen state : ");
         auto old_b = old_strategy->GetBucketFromMatchState(real_match_state);
         auto new_n = new_match_node->GetN();
@@ -939,7 +950,7 @@ void Strategy::CheckFrozenStrategyConsistency(Strategy *old_strategy, MatchState
         auto hand = ToVectorIndex(real_match_state->state.holeCards[viewing_player][0],
                                   real_match_state->state.holeCards[viewing_player][1]
         );
-        logger::debug("freeze [b %d] [hand %s] at :", new_b, VectorIdxToString(hand));
+        logger::info("freeze [b %d] [hand %s] at :", new_b, VectorIdxToString(hand));
         new_match_node->PrintState("frozen state : ");
         auto old_b = old_strategy->GetBucketFromMatchState(real_match_state);
         auto a_max = new_match_node->GetAmax();
