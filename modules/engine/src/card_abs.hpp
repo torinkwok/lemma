@@ -19,7 +19,7 @@ public:
         reader->starting_round_ = state->round;
         auto reader_names = config_.as_array();
         for (int r = state->round; r < HOLDEM_MAX_ROUNDS; r++) {
-            bool lossless = r == reader->starting_round_ && r < 3;
+            bool lossless = r == reader->starting_round_ && r > 0 && r < 3;
             auto name = reader_names[r].as_string();
             if (name == "null") {
                 logger::error("bucket abstraction is null for round %d, should not be querying it", r);
