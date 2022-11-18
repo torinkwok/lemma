@@ -482,7 +482,7 @@ void CFR::ThreadedCfrSolve(Strategy *blueprint,
                                                  std::random_device()());
             if (quota != last_distinct_quota) {
                 logger::info("[🧵thread %d] assigned %d iterations", i, quota);
-                logger::info("\t\tthreads being assigned with the same quota of %d are omitted here ...", quota);
+                logger::info("\t\tthreads being assigned with the same quota of %d were omitted here ...", quota);
                 last_distinct_quota = quota;
             }
             if (pthread_create(&thread_pool[i], nullptr, CFR::CfrSolve, thread_input)) {
@@ -501,7 +501,7 @@ void CFR::ThreadedCfrSolve(Strategy *blueprint,
             int unfinished_quota = thread_output[i].remaining_iter;
             if (unfinished_quota != last_distinct_unfinished_quota) {
                 logger::info("[🧵thread %d] remaining iter = %d", i, unfinished_quota);
-                logger::info("\t\tthreads ending with the same unfinished quota of %d are omitted here ...", unfinished_quota);
+                logger::info("\t\tthreads ending with the same unfinished quota of %d were omitted here ...", unfinished_quota);
                 last_distinct_unfinished_quota = unfinished_quota;
             }
         }
