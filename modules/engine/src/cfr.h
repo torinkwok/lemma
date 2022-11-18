@@ -32,6 +32,7 @@ struct sThreadOutput
     double *array_ = nullptr;
     int size_;
     int cursor_ = 0;
+    int remaining_iter{size_};
 
     void AddIterResult(double local_util)
     {

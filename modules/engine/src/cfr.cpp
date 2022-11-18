@@ -254,7 +254,7 @@ void *CFR::CfrSolve(void *thread_args)
             my_flops.insert(my_flops.end(), v.begin(), v.end());
         }
 
-        logger::trace("thread %d has been assigned %d flops", args->thread_idx_, my_flops.size());
+        logger::info("[🧵thread %d] has been assigned %d flops", args->thread_idx_, my_flops.size());
 
         // Shuffle the flop order, as the original order is according to public bucket
         auto rd = std::random_device{};
@@ -309,8 +309,7 @@ void *CFR::CfrSolve(void *thread_args)
         args->output_->AddIterResult(local_util);
     }
 
-    logger::info("[🧵thread %s] remaining iter = %d", thread_id, remaining_iter);
-
+    args->output_->remaining_iter = remaining_iter;
     args->output_->Process();
 
     // threads clean-up
@@ -460,6 +459,10 @@ void CFR::ThreadedCfrSolve(Strategy *blueprint,
     sThreadOutput thread_output[effective_thread];
     if (effective_thread > 1) {
         int iter_avg = steps / effective_thread;
+
+        /* Deal with inputs to the threads and firing them */
+
+        int last_different_quota = -1;
         // NOTE(kwok): fire threads
         for (auto i = 0; i < effective_thread; i++) {
             int num_iter = iter_avg;
@@ -477,16 +480,32 @@ void CFR::ThreadedCfrSolve(Strategy *blueprint,
                                                  num_iter,
                                                  cancelled,
                                                  std::random_device()());
-
-            logger::trace("thread %d assigned %d iterations", i, num_iter);
+            if (last_different_quota != num_iter) {
+                if (last_different_quota != -1) {
+                    logger::info("\t\tthreads being assigned to same quota of %d are omitted here ...", last_different_quota);
+                }
+                last_different_quota = num_iter;
+                logger::info("[🧵thread %d] assigned %d iterations", i, last_different_quota);
+            }
             if (pthread_create(&thread_pool[i], nullptr, CFR::CfrSolve, thread_input)) {
                 logger::critical("failed to launch threads.");
             }
         }
+
+        /* Deal with joining the threads and outputs from them */
+
+        int last_different_remaining_iter = -1;
         // NOTE(kwok): block the spawning thread while waiting for all the spawned threads to finish
         for (int i = 0; i < effective_thread; ++i) {
             if (pthread_join(thread_pool[i], nullptr)) {
                 logger::error("Couldn't join to thread %d", i);
+            }
+            if (last_different_remaining_iter != thread_output[i].remaining_iter) {
+                if (last_different_remaining_iter != -1) {
+                    logger::info("\t\tthreads ending with the same progress of %d are omitted here ...", last_different_remaining_iter);
+                }
+                last_different_remaining_iter = thread_output[i].remaining_iter;
+                logger::info("[🧵thread %d] remaining iter = %d", i, last_different_remaining_iter);
             }
         }
     } else {
