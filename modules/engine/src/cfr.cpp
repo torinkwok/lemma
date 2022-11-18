@@ -500,7 +500,7 @@ void CFR::ThreadedCfrSolve(Strategy *blueprint,
             }
             int unfinished_quota = thread_output[i].remaining_iter;
             if (unfinished_quota != last_distinct_unfinished_quota) {
-                logger::info("[🧵thread %d] remaining iter = %d", i, unfinished_quota);
+                logger::info("[🧵thread %d] unfinished quota = %d", i, unfinished_quota);
                 logger::info("\t\tthreads ending with the same unfinished quota of %d were omitted here ...", unfinished_quota);
                 last_distinct_unfinished_quota = unfinished_quota;
             }
