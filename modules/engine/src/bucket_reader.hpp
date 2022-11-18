@@ -34,7 +34,7 @@ public:
         }
     };
 
-    Bucket_t GetBucket_HighLowPair_Board_Round(Card_t c1, Card_t c2, Board_t *board, int round, bool lossless = false)
+    Bucket_t GetBucket_HighLowPair_Board_Round(Card_t c1, Card_t c2, Board_t *board, int round)
     {
         auto all_cards = emptyCardset();
         EnrichCardSetToRound(&all_cards, c1, c2, board, round);
