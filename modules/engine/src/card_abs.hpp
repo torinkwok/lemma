@@ -38,15 +38,15 @@ public:
                     //build it
                     Board_t board{};
                     BoardFromState(game, state, &board);
-                    BucketMeta *meta = new BucketMeta;
-                    meta->bucket_.LoadHierarchicalColex(&board, r);
-                    meta->bucket_count_ = meta->bucket_.Size();
+                    sBucketMeta *meta = new sBucketMeta;
+                    meta->bucket.LoadHierarchicalColex(&board, r);
+                    meta->bucket_count = meta->bucket.Size();
                     bucket_pool_->InsertBucket(meta, final_name, r, lossless);
                 }
-                auto meta = bucket_pool_->Get(final_name, r, lossless);
+                auto meta = bucket_pool_->LazyLoadBucketMeta(final_name, r, lossless);
                 reader->buckets_[r] = new Bucket(); // FIXME(kwok): Redundancy?
-                reader->buckets_[r] = &meta->bucket_; // FIXME(kwok): Overriding the effect above. Accidentally or consciously?
-                reader->bucket_count_[r] = meta->bucket_count_;
+                reader->buckets_[r] = &meta->bucket; // FIXME(kwok): Overriding the effect above. Accidentally or consciously?
+                reader->bucket_count_[r] = meta->bucket_count;
 
             } else if (name == "subgame_colex") {
                 Board_t board{};
@@ -58,10 +58,10 @@ public:
             } else {
                 //hierarchical bucket.
                 // todo: also preload the colex and hier_colex on flop to file. but it is too small. in file form helps backward compatibility
-                auto meta = bucket_pool_->Get(name, r, lossless);
-                reader->buckets_[r] = &meta->bucket_;
-                reader->bucket_count_[r] = meta->bucket_count_;
-                reader->post_flop_bucket_count_[r] = meta->post_flop_bucket_count_;
+                sBucketMeta* meta = bucket_pool_->LazyLoadBucketMeta(name, r, lossless);
+                reader->buckets_[r] = &meta->bucket;
+                reader->bucket_count_[r] = meta->bucket_count;
+                reader->post_flop_bucket_count_[r] = meta->post_flop_bucket_count;
             }
         }
     }

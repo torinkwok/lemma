@@ -217,22 +217,22 @@ TEST_CASE("hierarchical bucket unit", "[abstraction]") {
 
   //flop abstraction
   auto bucket_pool = BucketPool();
-  auto bucket_meta_1 = bucket_pool.Get("hierarchical_60_500_1", 1);
+  auto bucket_meta_1 = bucket_pool.LazyLoadBucketMeta("hierarchical_60_500_1", 1);
 
   flop = CardsetFromString("6h7h8h");
   cardset1 = CardsetFromString("6h7h8hKc2c");
   cardset2 = CardsetFromString("6h7h8hKc3c");
-  REQUIRE(bucket_meta_1->bucket_.Get(&cardset1, &flop) == bucket_meta_1->bucket_.Get(&cardset2, &flop));
+  REQUIRE(bucket_meta_1->bucket.Get(&cardset1, &flop) == bucket_meta_1->bucket.Get(&cardset2, &flop));
 
   flop = CardsetFromString("Kh2h3h");
   cardset1 = CardsetFromString("Kh2h3hKc2c");
   cardset2 = CardsetFromString("Kh2h3hKc3c");
-  REQUIRE(bucket_meta_1->bucket_.Get(&cardset1, &flop) == bucket_meta_1->bucket_.Get(&cardset2, &flop));
+  REQUIRE(bucket_meta_1->bucket.Get(&cardset1, &flop) == bucket_meta_1->bucket.Get(&cardset2, &flop));
 
   flop = CardsetFromString("2h3h4h");
   cardset1 = CardsetFromString("2h3h4hAc2d");
   cardset2 = CardsetFromString("2h3h4hAd2c");
-  REQUIRE(bucket_meta_1->bucket_.Get(&cardset1, &flop) == bucket_meta_1->bucket_.Get(&cardset2, &flop));
+  REQUIRE(bucket_meta_1->bucket.Get(&cardset1, &flop) == bucket_meta_1->bucket.Get(&cardset2, &flop));
 }
 
 //TEST_CASE("bucket speed", "[abstraction]") {
