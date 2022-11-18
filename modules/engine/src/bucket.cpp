@@ -65,6 +65,10 @@ size_t Bucket::LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r, boo
     return num_loaded;
 }
 
+size_t Bucket::get_n_waugh_buckets() const {
+    return _max_waugh_bucket + 1;
+}
+
 size_t Bucket::_LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r, bool lossless) {
     assert(type_ == WAUGH_BUCKET);
 
@@ -75,7 +79,6 @@ size_t Bucket::_LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r, bo
     using std::filesystem::directory_iterator;
     size_t fxb_num_chunks = std::distance(directory_iterator(fxb_chunks_dir_path), directory_iterator{});
     size_t processed_count = 0;
-    size_t max_bucket = 0;
     for (size_t chunk_id = 0; chunk_id < fxb_num_chunks; chunk_id++) {
         auto fxb_chunk_path = fxb_chunks_dir_path / ("chunk_" + std::to_string(chunk_id) + ".fxb");
         std::ifstream fxb_chunk_file(fxb_chunk_path, std::ios::binary | std::ios::ate);
@@ -98,8 +101,8 @@ size_t Bucket::_LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r, bo
                 } else {
                     master_map_[r][isomorphic_index] = vec[local_index].AsUInt32();
                 }
-                if (master_map_[r][isomorphic_index] > max_bucket) {
-                    max_bucket = master_map_[r][isomorphic_index];
+                if (master_map_[r][isomorphic_index] > _max_waugh_bucket) {
+                    _max_waugh_bucket = master_map_[r][isomorphic_index];
                 }
             }
             processed_count += vec.size();
@@ -109,8 +112,8 @@ size_t Bucket::_LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r, bo
         }
         fxb_chunk_file.close();
     }
-    // return processed_count;
-    return max_bucket + 1;
+
+    return get_n_waugh_buckets();
 }
 
 void Bucket::LoadClassicFromFile(const std::string &ofile) {
@@ -439,6 +442,7 @@ uint32_t Bucket::Get(Cardset *all_cards, Cardset *board_cards) {
                ComputeColex(Canonize(board_cards->cards)));
 }
 
+// NOTE(kwok): Not useful for WAUGH_BUCKET.
 uint32_t Bucket::Size() {
     if (type_ == HIERARCHICAL_COLEX) {
         //it is alright, because we never use this for subgame solving for flop

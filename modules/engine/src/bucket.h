@@ -36,6 +36,8 @@ public:
     
     size_t LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r, bool lossless = false);
 
+    size_t get_n_waugh_buckets() const;
+
     /*
      * bucket type
      */
@@ -74,6 +76,8 @@ private:
     }
 
     size_t _LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r, bool lossless = false);
+
+    size_t _max_waugh_bucket{0};
 
     hand_indexer_t _preflop_indexer;
     hand_indexer_t _flop_indexer;
