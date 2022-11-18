@@ -741,7 +741,7 @@ bool Engine::IsNestedSgsStarted() {
 //if the last sgs solves to the ALL_COMMAND_FINISH,then sgs_cancel token would be true.
 void Engine::AsynStopCFRSolving() {
     if (!sgs_cancel_token_) {
-        logger::debug("Asyn stopping CFR");
+        logger::debug("🛑stopping async MCCFR");
         sgs_cancel_token_ = true;
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }

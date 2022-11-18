@@ -73,7 +73,6 @@ int CFR::Solve(Strategy *blueprint,
             if (strategy->ag_->root_node_->GetRound() == HOLDEM_ROUND_PREFLOP) {
                 cmd.Print();
             }
-
             switch (cmd.type_) {
                 case CMD_SCALAR_SOLVE :
                 case CMD_VECTOR_ALTERNATE_SOLVE :
@@ -295,7 +294,7 @@ void *CFR::CfrSolve(void *thread_args)
 
     auto cur_flop_idx = 0;
     while (remaining_iter-- && !args->cancelled_token_) {
-//        logger::info("[🧵thread %s] remaining iter = %d", thread_id, remaining_iter);
+
         Board_t board{};
         // NOTE(kwok): Here we're sampling the public chance events, i.e. the public cards. Required
         // private chance events will be sampled within ScalaraCfrWorker::Solve in the case of the
@@ -309,6 +308,8 @@ void *CFR::CfrSolve(void *thread_args)
         double local_util = worker->Solve(board);
         args->output_->AddIterResult(local_util);
     }
+
+    logger::info("[🧵thread %s] remaining iter = %d", thread_id, remaining_iter);
 
     args->output_->Process();
 
@@ -514,7 +515,7 @@ int CFR::AsyncCfrSolving(CFR *cfr,
                          const std::atomic_bool &cancelled,
                          int cfr_checkpoint)
 {
-    logger::debug("Asyn CFR solving on.");
+    logger::debug("🟢starting async MCCFR solving");
     return cfr->Solve(blueprint,
                       new_strategy,
                       *convergence_state,
