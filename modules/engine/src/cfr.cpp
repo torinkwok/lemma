@@ -462,13 +462,13 @@ void CFR::ThreadedCfrSolve(Strategy *blueprint,
 
         /* Deal with inputs to the threads and firing them */
 
-        int last_different_quota = -1;
+        int last_distinct_quota = -1;
         // NOTE(kwok): fire threads
         for (auto i = 0; i < effective_thread; i++) {
-            int num_iter = iter_avg;
+            int quota = iter_avg;
             if (i == effective_thread - 1) {
                 auto remain = steps - (iter_avg * (effective_thread - 1));
-                num_iter = remain;
+                quota = remain;
             }
             auto thread_input = new sThreadInput(blueprint,
                                                  strategy,
@@ -477,15 +477,13 @@ void CFR::ThreadedCfrSolve(Strategy *blueprint,
                                                  cfr_param,
                                                  thread_board[i],
                                                  &thread_output[i],
-                                                 num_iter,
+                                                 quota,
                                                  cancelled,
                                                  std::random_device()());
-            if (last_different_quota != num_iter) {
-                if (last_different_quota != -1) {
-                    logger::info("\t\tthreads being assigned to same quota of %d are omitted here ...", last_different_quota);
-                }
-                last_different_quota = num_iter;
-                logger::info("[🧵thread %d] assigned %d iterations", i, last_different_quota);
+            if (quota != last_distinct_quota) {
+                logger::info("[🧵thread %d] assigned %d iterations", i, quota);
+                logger::info("\t\tthreads being assigned with the same quota of %d are omitted here ...", quota);
+                last_distinct_quota = quota;
             }
             if (pthread_create(&thread_pool[i], nullptr, CFR::CfrSolve, thread_input)) {
                 logger::critical("failed to launch threads.");
@@ -494,18 +492,17 @@ void CFR::ThreadedCfrSolve(Strategy *blueprint,
 
         /* Deal with joining the threads and outputs from them */
 
-        int last_different_remaining_iter = -1;
+        int last_distinct_unfinished_quota = -1;
         // NOTE(kwok): block the spawning thread while waiting for all the spawned threads to finish
         for (int i = 0; i < effective_thread; ++i) {
             if (pthread_join(thread_pool[i], nullptr)) {
                 logger::error("Couldn't join to thread %d", i);
             }
-            if (last_different_remaining_iter != thread_output[i].remaining_iter) {
-                if (last_different_remaining_iter != -1) {
-                    logger::info("\t\tthreads ending with the same progress of %d are omitted here ...", last_different_remaining_iter);
-                }
-                last_different_remaining_iter = thread_output[i].remaining_iter;
-                logger::info("[🧵thread %d] remaining iter = %d", i, last_different_remaining_iter);
+            int unfinished_quota = thread_output[i].remaining_iter;
+            if (unfinished_quota != last_distinct_unfinished_quota) {
+                logger::info("[🧵thread %d] remaining iter = %d", i, unfinished_quota);
+                logger::info("\t\tthreads ending with the same unfinished quota of %d are omitted here ...", unfinished_quota);
+                last_distinct_unfinished_quota = unfinished_quota;
             }
         }
     } else {
