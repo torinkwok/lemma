@@ -355,7 +355,7 @@ void Strategy::InspectStrategyByMatchState(MatchState *match_state, STRATEGY_TYP
 
 int Strategy::EstimateReachProbAtNode(MatchState *last_match_state,
                                       Node *target_node,
-                                      std::array<sPrivateHandBelief, 2> &new_ag_reach,
+                                      std::array<sPrivateHandBelief, 2> &new_ag_reach, // FIXME(kwok): The number of players is not supposed to be fixed to 2.
                                       STRATEGY_TYPE calc_mode,
                                       double min_filter) const
 {

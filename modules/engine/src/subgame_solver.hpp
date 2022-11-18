@@ -128,7 +128,7 @@ struct SubgameSolver {
 
         auto action_kth = ref_state.numActions[round];
 
-        // New round: Kong I-Chi acts first.
+        // New round: Lemma acts first.
         if (action_kth == 0) {
             logger::debug("    [SGS %s] : built subgame [step back 0] for new round for [round = %d] [action_kth = %d]",
                           name_, round,

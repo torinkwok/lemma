@@ -326,6 +326,7 @@ int Engine::GetAction(MatchState *current_acpc_match_state, Action &r_action, do
         /* Step 2: Nested range estimation. */
         bool estimate_success;
 
+        // TODO(kwok): std::reverse(playbook_stack_.begin(), playbook_stack_.end())
         for (int i = playbook_stack_.size() - 1; i >= 0; i--) {
             auto *cursor_strategy = playbook_stack_.at(i).strategy_;
             STRATEGY_TYPE avg_type = playbook_stack_.at(i).strategy_type;

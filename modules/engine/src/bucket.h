@@ -33,9 +33,7 @@ public:
     static void Save(std::map<unsigned int, unsigned short> &entries, const std::string &ofile);
 
     void LoadClassicFromFile(const std::string &ofile);
-
-    void LoadClassFromLossWaughIndex(int8_t r);
-
+    
     size_t LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r, bool lossless = false);
 
     /*
