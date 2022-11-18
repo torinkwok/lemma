@@ -18,8 +18,8 @@ public:
 
     int starting_round_ = 5; // a hack to prevetn bucket reader destructor problem
     std::array<Bucket *, 4> buckets_{};
-    std::array<int, 4> bucket_count_{0, 0, 0, 0};
-    std::array<int, 4> post_flop_bucket_count_{0, 0, 0, 0};
+    std::array<size_t, 4> bucket_count_{0, 0, 0, 0};
+    std::array<size_t, 4> post_flop_bucket_count_{0, 0, 0, 0};
 
     void GetBucketCounts(uint32_t *bucket_count)
     {
