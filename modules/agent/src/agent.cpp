@@ -8,7 +8,8 @@
 #include <cstdlib>
 #include <cstdio>
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     // argument parser
     // ./agent engine=acpc params=localhost,51000
     cxxopts::Options options("Game Agent", "Manages connection with Poker Sites and executes Engine actions");
@@ -23,7 +24,8 @@ int main(int argc, char *argv[]) {
              " order specific comma seperated list of parameters for connector",
              cxxopts::value<std::vector<std::string>>())
             ("l,log_level", "log level", cxxopts::value<std::string>()->default_value("info"),
-             "[debug, info, warn, err]")
+             "[debug, info, warn, err]"
+            )
             ("o,log_output", "console/file?", cxxopts::value<std::string>(), "default logs output to console")
             ("proxy", "proxy server", cxxopts::value<std::string>(), "proxy server")
             ("slumbot_session", "Slumbot session key", cxxopts::value<std::string>(), "")
@@ -124,7 +126,8 @@ int main(int argc, char *argv[]) {
                     auto http_config = web::http::client::http_client_config();
                     http_config.set_proxy(web::web_proxy(validated_proxy_uri));
                     connector = new SlumbotConnector(result["connector_params"].as<std::vector<std::string>>(),
-                                                     http_config);
+                                                     http_config
+                    );
                 } else {
                     connector = new SlumbotConnector(result["connector_params"].as<std::vector<std::string>>());
                 }
@@ -133,7 +136,7 @@ int main(int argc, char *argv[]) {
                         logger::critical(" [AGENT] : failed to login on Slumbot");
                     }
                 } else {
-                    ((SlumbotConnector*)connector)->connectWithSession(slumbot_session_key);
+                    ((SlumbotConnector *) connector)->connectWithSession(slumbot_session_key);
                 }
                 break;
             }
