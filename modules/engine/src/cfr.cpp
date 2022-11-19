@@ -268,33 +268,19 @@ void *CFR::CfrSolve(void *thread_args)
     CfrWorker *worker;
     switch (args->cfr_param_.cfr_mode_) {
         case CFR_VECTOR_PAIRWISE_SOLVE:
-        case CFR_VECTOR_ALTERNATE_SOLVE: {
-            worker = new VectorCfrWorker(args->blueprint_,
-                                         args->strategy_,
-                                         &args->cfr_param_,
-                                         my_flops,
-                                         args->seed_
-            );
+        case CFR_VECTOR_ALTERNATE_SOLVE:
+            worker = new VectorCfrWorker(args->blueprint_, args->strategy_, &args->cfr_param_, my_flops, args->seed_);
             worker->SetWalkingMode(args->cfr_param_.cfr_mode_);
             break;
-        }
-        case CFR_SCALAR_SOLVE: {
-            worker = new ScalarCfrWorker(args->blueprint_,
-                                         args->strategy_,
-                                         &args->cfr_param_,
-                                         my_flops,
-                                         args->seed_
-            );
+        case CFR_SCALAR_SOLVE:
+            worker = new ScalarCfrWorker(args->blueprint_, args->strategy_, &args->cfr_param_, my_flops, args->seed_);
             break;
-        }
-        default: {
+        default:
             logger::critical("unsupported cfr type");
-        }
     }
 
     auto cur_flop_idx = 0;
     while (remaining_iter-- && !args->cancelled_token_) {
-
         Board_t board{};
         // NOTE(kwok): Here we're sampling the public chance events, i.e. the public cards. Required
         // private chance events will be sampled within ScalaraCfrWorker::Solve in the case of the
@@ -501,7 +487,9 @@ void CFR::ThreadedCfrSolve(Strategy *blueprint,
             int unfinished_quota = thread_output[i].remaining_iter;
             if (unfinished_quota != last_distinct_unfinished_quota) {
                 logger::info("[🧵thread %d] unfinished quota = %d", i, unfinished_quota);
-                logger::info("\t\tthreads ending with the same unfinished quota of %d were omitted here ...", unfinished_quota);
+                logger::info("\t\tthreads ending with the same unfinished quota of %d were omitted here ...",
+                             unfinished_quota
+                );
                 last_distinct_unfinished_quota = unfinished_quota;
             }
         }
