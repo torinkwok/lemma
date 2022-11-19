@@ -58,7 +58,7 @@ public:
             } else {
                 //hierarchical bucket.
                 // todo: also preload the colex and hier_colex on flop to file. but it is too small. in file form helps backward compatibility
-                sBucketMeta* meta = bucket_pool_->LazyLoadBucketMeta(name, r, lossless);
+                sBucketMeta *meta = bucket_pool_->LazyLoadBucketMeta(name, r, lossless);
                 reader->buckets_[r] = &meta->bucket;
                 reader->bucket_count_[r] = meta->bucket_count;
                 reader->post_flop_bucket_count_[r] = meta->post_flop_bucket_count;
