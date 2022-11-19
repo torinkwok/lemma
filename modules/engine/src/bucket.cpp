@@ -17,7 +17,8 @@ extern "C" {
 #include <bulldog/game.h>
 }
 
-size_t Bucket::LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r, bool lossless) {
+size_t Bucket::LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r, bool lossless)
+{
     assert(r >= 0 && r < 4);
     type_ = WAUGH_BUCKET;
 
@@ -65,11 +66,13 @@ size_t Bucket::LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r, boo
     return num_loaded;
 }
 
-size_t Bucket::get_n_waugh_buckets() const {
+size_t Bucket::get_n_waugh_buckets() const
+{
     return _max_waugh_bucket + 1;
 }
 
-size_t Bucket::_LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r, bool lossless) {
+size_t Bucket::_LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r, bool lossless)
+{
     assert(type_ == WAUGH_BUCKET);
 
     std::filesystem::path fxb_chunks_dir_path(dir);
@@ -116,7 +119,8 @@ size_t Bucket::_LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r, bo
     return get_n_waugh_buckets();
 }
 
-void Bucket::LoadClassicFromFile(const std::string &ofile) {
+void Bucket::LoadClassicFromFile(const std::string &ofile)
+{
     type_ = CLASSIC_BUCKET;
 
     std::filesystem::path full_path(ofile);
@@ -141,7 +145,8 @@ void Bucket::LoadClassicFromFile(const std::string &ofile) {
     is.close();
 }
 
-void Bucket::LoadRangeColex(Board_t *board, int round) {
+void Bucket::LoadRangeColex(Board_t *board, int round)
+{
     type_ = COLEX_BUCKET;
 
     std::set<Colex> colex_set;
@@ -163,10 +168,12 @@ void Bucket::LoadRangeColex(Board_t *board, int round) {
         }
     }
     logger::trace("colex bucket at round = %d || num of unique colexes = %d || bucket count = %d",
-                  round, colex_set.size(), bucket_index);
+                  round, colex_set.size(), bucket_index
+    );
 }
 
-void Bucket::LoadHierarchicalPublic() {
+void Bucket::LoadHierarchicalPublic()
+{
     //find public bucket for flop
     std::filesystem::path dir(BULLDOG_DIR_DATA_ABS);
     std::filesystem::path pub_file("hierarchical_pubcolex_60_2_3.txt");
@@ -186,7 +193,8 @@ void Bucket::LoadHierarchicalPublic() {
     pub_is.close();
 }
 
-void Bucket::LoadHierarchical(std::string name) {
+void Bucket::LoadHierarchical(std::string name)
+{
     //name: hierarchical_60_500_1
     std::vector<std::string> parsed_str;
     split_string(std::move(name), "_", parsed_str);
@@ -215,7 +223,8 @@ void Bucket::LoadHierarchical(std::string name) {
         // FIXME(kwok): Does the hard-coded number 2 denote the number of players?
         std::filesystem::path
                 priv_file("buckets_" + parsed_str[1] + "_" + parsed_str[2] + "_2_" + std::to_string(round + 2) + "_" +
-                          std::to_string(pub_bucket) + ".bin");
+                          std::to_string(pub_bucket) + ".bin"
+        );
         std::ifstream priv_is(dir / priv_file, std::ios::binary);
         if (priv_is.is_open()) {
             cereal::BinaryInputArchive load(priv_is);
@@ -247,14 +256,16 @@ void Bucket::LoadHierarchical(std::string name) {
 #endif
 }
 
-unsigned int Bucket::GetPublicBucket(unsigned int pub_colex) {
+unsigned int Bucket::GetPublicBucket(unsigned int pub_colex)
+{
     return pub_colex_bucket_[pub_colex];
 }
 
 /*
  * it should be board + 2, e.g. 3+2 for flop
  */
-void Bucket::LoadHierarchicalColex(Board_t *board, uint8_t r) {
+void Bucket::LoadHierarchicalColex(Board_t *board, uint8_t r)
+{
     if (r > HOLDEM_ROUND_RIVER) {
         logger::critical("round %d does not exist in holdem", r);
     }
@@ -298,11 +309,13 @@ void Bucket::LoadHierarchicalColex(Board_t *board, uint8_t r) {
     //  logger::debug("total [%d board colex] [%d hier colex] buckets", iso_board_cursor, bucket_idx_cursor);
 }
 
-void Bucket::LoadSubgameColex(Board_t *board, int round) {
+void Bucket::LoadSubgameColex(Board_t *board, int round)
+{
     if (round != HOLDEM_ROUND_RIVER) {
         logger::critical("subgame colex only support river. "
                          "other rounds would be too big. "
-                         "use other abstraction algorithms instead.");
+                         "use other abstraction algorithms instead."
+        );
     }
     type_ = HIERARCHICAL_COLEX;
     //  auto cmd_begin = std::chrono::steady_clock::now();
@@ -338,7 +351,8 @@ void Bucket::LoadSubgameColex(Board_t *board, int round) {
     //  logger::debug("generate subgame colex took %d ms", cmd_time);
 }
 
-void Bucket::Save(std::map<unsigned int, unsigned short> &entries, const std::string &ofile) {
+void Bucket::Save(std::map<unsigned int, unsigned short> &entries, const std::string &ofile)
+{
     std::ofstream os(ofile, std::ios::binary | std::ios::trunc);
     if (os.is_open()) {
         cereal::BinaryOutputArchive archive(os);
@@ -351,7 +365,8 @@ void Bucket::Save(std::map<unsigned int, unsigned short> &entries, const std::st
 
 //todo: all these can be handled on the outside, at the bucket reader level
 // TODO(kwok): `board_colex` will be ignored for classic and colex bucket. Make it explicit.
-uint32_t Bucket::Get(unsigned long all_colex, unsigned long board_colex) {
+uint32_t Bucket::Get(unsigned long all_colex, unsigned long board_colex)
+{
     if (type_ == WAUGH_BUCKET) {
         throw std::runtime_error("For Waugh bucket, invoke `uint32_t Bucket::Get(Cardset*, Cardset*)`");
     }
@@ -387,7 +402,8 @@ uint32_t Bucket::Get(unsigned long all_colex, unsigned long board_colex) {
             auto it = priv_buckets->second.find(all_colex);
             if (it == priv_buckets->second.end()) {
                 logger::error("could not find private bucket for [board colex %d] [all colex %d]", board_colex,
-                              all_colex);
+                              all_colex
+                );
                 return INVALID_BUCKET;
             }
             return it->second;
@@ -404,7 +420,8 @@ uint32_t Bucket::Get(unsigned long all_colex, unsigned long board_colex) {
 }
 
 
-uint32_t Bucket::Get(Cardset *all_cards, Cardset *board_cards) {
+uint32_t Bucket::Get(Cardset *all_cards, Cardset *board_cards)
+{
     if (type_ == WAUGH_BUCKET) {
         std::set<WaughCard_t> waugh_cards_set = CardsToWaughCards(all_cards->cards);
         // TODO(kwok): Assert the two are identical.
@@ -443,7 +460,8 @@ uint32_t Bucket::Get(Cardset *all_cards, Cardset *board_cards) {
 }
 
 // NOTE(kwok): Not useful for WAUGH_BUCKET.
-uint32_t Bucket::Size() {
+uint32_t Bucket::Size()
+{
     if (type_ == HIERARCHICAL_COLEX) {
         //it is alright, because we never use this for subgame solving for flop
         int sum = 0;
@@ -457,6 +475,7 @@ uint32_t Bucket::Size() {
     return master_map_[0].size();
 }
 
-std::unordered_map<unsigned int, uint32_t> Bucket::ExtractMap() {
+std::unordered_map<unsigned int, uint32_t> Bucket::ExtractMap()
+{
     return master_map_[0];
 }
