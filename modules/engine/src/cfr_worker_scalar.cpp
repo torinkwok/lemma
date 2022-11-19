@@ -16,9 +16,9 @@ double ScalarCfrWorker::Solve(Board_t board)
         local_root_beliefs[p]->NormalizeExcludeBoard(board);
     }
 
-    static const int n_iters = 1000;
     double sum_cfus = 0.0;
-    for (int i = 0; i < n_iters; i++) {
+    static const int n_priv_hand_samples = 1;
+    for (int i = 0; i < n_priv_hand_samples; i++) {
         // NOTE(kwok): On each iteration, we start by sampling all of chance’s actions: the public chance
         // events visible to each player, as well as the private chance events that are visible to only a
         // subset of the players. In poker, this corresponds to randomly choosing the public cards revealed
@@ -61,7 +61,7 @@ double ScalarCfrWorker::Solve(Board_t board)
         }
     }
 
-    sum_cfus /= (n_iters * 2 * ag->GetBigBlind());
+    sum_cfus /= (n_priv_hand_samples * 2 * ag->GetBigBlind());
 
     for (auto b: local_root_beliefs) {
         delete b;

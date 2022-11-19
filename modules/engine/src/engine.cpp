@@ -358,7 +358,7 @@ int Engine::GetAction(MatchState *current_acpc_match_state, Action &r_action, do
             logger::debug("⏳remaining ms = %g", remaining_ms);
         } else {
             logger::debug("🚨malformed ⏳remaining ms = %g. rounding it into 12000", remaining_ms);
-            remaining_ms = 20000;
+            remaining_ms = 30000;
         }
 
         logger::debug("⏳remaining ms = %g", remaining_ms);
