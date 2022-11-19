@@ -174,7 +174,8 @@ double ScalarCfrWorker::EvalInterNode(int trainee, Node *this_node, sPrivateHand
             // NOTE(kwok): Do pruning if the flag is set. Skip river nodes and nodes leading to terminal.
             if (iter_prune_flag && !next_node->IsTerminal() && next_node->GetRound() != HOLDEM_ROUND_RIVER) {
                 // if (iter_prune_flag && !next_node->IsTerminal()) {
-                if (strategy_->int_regret_[rnb0 + a] <= cfr_param_->rollout_prune_thres) {
+                // if (strategy_->int_regret_[rnb0 + a] <= cfr_param_->rollout_prune_thres) {
+                if (strategy_->int_regret_->try_emplace(rnb0 + a).first->second <= cfr_param_->rollout_prune_thres) {
                     prune_flag[a] = true;
                     continue;
                 }
@@ -206,7 +207,8 @@ double ScalarCfrWorker::EvalInterNode(int trainee, Node *this_node, sPrivateHand
                 continue;
             }
             int diff = (int) round(children_cfus[a] - this_node_cfu); // NOTE(kwok): The regret value
-            double temp_reg = strategy_->int_regret_[rnb0 + a] + diff; // NOTE(kwok): Accumulate regret values
+            // double temp_reg = strategy_->int_regret_[rnb0 + a] + diff; // NOTE(kwok): Accumulate regret values
+            double temp_reg = strategy_->int_regret_->try_emplace(rnb0 + a).first->second + diff; // NOTE(kwok): Accumulate regret values
             // clamp it
             int new_reg = (int) std::fmax(temp_reg, cfr_param_->rm_floor);
             // total regret should have a ceiling
@@ -220,7 +222,8 @@ double ScalarCfrWorker::EvalInterNode(int trainee, Node *this_node, sPrivateHand
                         this_node_cfu
                 );
             }
-            strategy_->int_regret_[rnb0 + a] = new_reg;
+            // strategy_->int_regret_[rnb0 + a] = new_reg;
+            strategy_->int_regret_->operator[](rnb0 + a) = new_reg;
         }
 
         return this_node_cfu;
@@ -239,7 +242,8 @@ double ScalarCfrWorker::EvalInterNode(int trainee, Node *this_node, sPrivateHand
             //    for (auto a = 0; a < a_max; a++) {
             //      strategy_->uint_wavg_[rnb0 + a] += distr_rnb[a] * 1000;
             //    }
-            strategy_->uint_wavg_[rnb0 + sampled_a] += 1;
+            // strategy_->uint_wavg_[rnb0 + sampled_a] += 1;
+            strategy_->uint_wavg_->try_emplace(rnb0 + sampled_a).first->second += 1;
         }
 
         return WalkTree(trainee, this_node->children[sampled_a], hand_info);
@@ -483,7 +487,8 @@ void ScalarCfrWorker::WavgUpdateSideWalk(int trainee_pos, Node *this_node, sPriv
             strategy_->PrintNodeStrategy(this_node, b, cfr_param_->strategy_cal_mode_);
         }
         auto rnba = strategy_->ag_->kernel_->hash_rnba(r, n, b, sampled_a);
-        strategy_->uint_wavg_[rnba] += 1;
+        // strategy_->uint_wavg_[rnba] += 1;
+        strategy_->uint_wavg_->try_emplace(rnba).first->second += 1;
         WavgUpdateSideWalk(trainee_pos, this_node->children[sampled_a], hand_info);
     } else {
         // NOTE(kwok): The opponent's turn.

@@ -235,10 +235,11 @@ void SaveAssertMap(Strategy *target, STRATEGY_TYPE type, const std::string &pref
         auto rnd_1 = GenRndNumber(0, max_index - 1);
         switch (type) {
             case STRATEGY_REG:
-                assert_map[rnd_1] = target->int_regret_[rnd_1];
+                // assert_map[rnd_1] = target->int_regret_[rnd_1];
+                assert_map[rnd_1] = target->int_regret_->operator[](rnd_1);
                 break;
             case STRATEGY_WAVG:
-                assert_map[rnd_1] = target->uint_wavg_[rnd_1];
+                assert_map[rnd_1] = target->uint_wavg_->operator[](rnd_1);
                 break;
             case STRATEGY_ZIPAVG:
                 assert_map[rnd_1] = target->zipavg_[rnd_1];
@@ -287,12 +288,12 @@ void LoadAssertMap(Strategy *target, STRATEGY_TYPE type, const std::string &pref
     for (auto const &[key, val]: assert_map) {
         switch (type) {
             case STRATEGY_REG:
-                if (target->int_regret_[key] != (INT_REGRET) val) {
+                if (target->int_regret_->operator[](key) != (INT_REGRET) val) {
                     logger::critical("%s assert value error [%d] != %f", StrategyToNameMap[type], key, val);
                 }
                 break;
             case STRATEGY_WAVG:
-                if (target->uint_wavg_[key] != (UINT_WAVG) val) {
+                if (target->uint_wavg_->operator[](key) != (UINT_WAVG) val) {
                     logger::critical("%s assert value error [%d] != %d", StrategyToNameMap[type], key, val);
                 }
                 break;

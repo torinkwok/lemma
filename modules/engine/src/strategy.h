@@ -1,6 +1,8 @@
 #ifndef BULLDOG_MODULES_ENGINE_SRC_STRATEGY_H_
 #define BULLDOG_MODULES_ENGINE_SRC_STRATEGY_H_
 
+#include <map>
+
 #include "abstract_game.h"
 #include "cfr_param.h"
 #include "action_chooser.hpp"
@@ -31,12 +33,22 @@ public:
     std::string name_ = "default";
     AbstractGame *ag_ = nullptr;
     ZIPAVG *zipavg_ = nullptr;
-    //for cfr vecor
-    DOUBLE_REGRET *double_regret_ = nullptr;
-    ULONG_WAVG *ulong_wavg_ = nullptr;
-    //for mccfr
-    INT_REGRET *int_regret_ = nullptr;
-    UINT_WAVG *uint_wavg_ = nullptr;
+
+    // for cfr vecor
+
+    // DOUBLE_REGRET *double_regret_ = nullptr;
+    std::map<size_t, DOUBLE_REGRET>* double_regret_ = nullptr;
+
+    // ULONG_WAVG *ulong_wavg_ = nullptr;
+    std::map<size_t, ULONG_WAVG>* ulong_wavg_ = nullptr;
+
+    // for mccfr
+    // INT_REGRET *int_regret_ = nullptr;
+    std::map<size_t, INT_REGRET>* int_regret_ = nullptr;
+
+    // UINT_WAVG *uint_wavg_ = nullptr;
+    std::map<size_t, UINT_WAVG>* uint_wavg_ = nullptr;
+
     std::ifstream *file_ptr = nullptr;
 
     //constructor and dest
@@ -54,11 +66,16 @@ public:
             file_ptr = nullptr;
         }
         delete ag_;
-        delete[] double_regret_;
-        delete[] int_regret_;
-        delete[] ulong_wavg_;
-        delete[] uint_wavg_;
-        delete[] zipavg_;
+        // delete[] double_regret_;
+        // delete[] int_regret_;
+        // delete[] ulong_wavg_;
+        // delete[] uint_wavg_;
+        // delete[] zipavg_;
+        delete double_regret_;
+        delete int_regret_;
+        delete ulong_wavg_;
+        delete uint_wavg_;
+        delete zipavg_;
         logger::debug("strategy [%s] object gracefully shutting down", name_);
     }
 

@@ -163,7 +163,7 @@ VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivate
         }
     } else {
         // FIXME(kwok): `all_belief_distr_1dim` may point to deallocated memory.
-//        printf("all_belief_distr_1dim = %p\n", all_belief_distr_1dim);
+        //        printf("all_belief_distr_1dim = %p\n", all_belief_distr_1dim);
     }
 
     // NOTE(kwok): A utility of +1 is given for a win, and −1 for a loss.
@@ -352,7 +352,8 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sPrivateHandBelief *belief_d
                     this_node->reach_adjustment[b] += 1;
                     reach_i *= 10;
                     for (int a = 0; a < a_max; a++) {
-                        strategy_->ulong_wavg_[rnb0 + a] *= 10;
+                        // strategy_->ulong_wavg_[rnb0 + a] *= 10;
+                        strategy_->ulong_wavg_->try_emplace(rnb0 + a).first->second *= 10;
                         // this_node->ulong_wavg_[this_node->HashBa(b, a)] *= 10;
                     }
                 }
@@ -371,7 +372,8 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sPrivateHandBelief *belief_d
                     this_node->reach_adjustment[b] -= 2;
                     reach_i *= 0.01;
                     for (int a = 0; a < a_max; a++) {
-                        strategy_->ulong_wavg_[rnb0 + a] *= 0.01;
+                        // strategy_->ulong_wavg_[rnb0 + a] *= 0.01;
+                        strategy_->ulong_wavg_->try_emplace(rnb0 + a).first->second *= 0.01;
                     }
                 }
                 pthread_mutex_unlock(&this_node->mutex_);
@@ -391,8 +393,9 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sPrivateHandBelief *belief_d
             }
 
             for (int a = 0; a < a_max; a++) {
-                double new_wavg = strategy_->ulong_wavg_[rnb0 + a] + (reach_i * distr_rnb[a]);
-                strategy_->ulong_wavg_[rnb0 + a] = (ULONG_WAVG) new_wavg;
+                double new_wavg =
+                        strategy_->ulong_wavg_->try_emplace(rnb0 + a).first->second + (reach_i * distr_rnb[a]);
+                strategy_->ulong_wavg_->operator[](rnb0 + a) = (ULONG_WAVG) new_wavg;
             }
         }
 
@@ -407,7 +410,7 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sPrivateHandBelief *belief_d
                 && action_prob == 0.0
                 && !this_node->children[a]->IsTerminal()
                 && this_node->children[a]->GetRound() != HOLDEM_ROUND_RIVER) {
-                auto regret = strategy_->double_regret_[rnb0 + a];
+                auto regret = strategy_->double_regret_->try_emplace(rnb0 + a).first->second;
                 if (regret <= cfr_param_->rollout_prune_thres) {
                     // prune it and continue
                     child_ranges[a]->Prune(combo_index);
@@ -565,7 +568,7 @@ VectorCfrWorker::CollectRegrets(Node *this_node,
             }
             double cfu_child_a = child_cfus[a]->belief_[combo_index];
             double diff = cfu_child_a - cfu_combo_index; // the immediate regret
-            double old_reg = strategy_->double_regret_[rnb0 + a];
+            double old_reg = strategy_->double_regret_->try_emplace(rnb0 + a).first->second;
             double new_reg = ClampRegret(old_reg, diff, cfr_param_->rm_floor);
             if (old_reg > pow(10, 15) || new_reg > pow(10, 15)) {
                 logger::critical(
@@ -578,7 +581,7 @@ VectorCfrWorker::CollectRegrets(Node *this_node,
                         this_node_cfu
                 );
             }
-            strategy_->double_regret_[rnb0 + a] = new_reg;
+            strategy_->double_regret_->operator[](rnb0 + a) = new_reg;
         }
     }
 }

@@ -13,29 +13,29 @@ void Strategy::InitMemory(STRATEGY_TYPE type, CFR_MODE mode)
             if (double_regret_ != nullptr) {
                 // cfr_mode == CFR_VECTOR_ALTERNATE_SOLVE || cfr_mode == CFR_VECTOR_PAIRWISE_SOLVE
                 // For CFR vector.
-                for (RNBA i = 0; i < size; i++) {
-                    double_regret_[i] = 0.0;
-                }
+                // for (RNBA i = 0; i < size; i++) {
+                //     double_regret_[i] = 0.0;
+                // }
             } else {
                 // cfr_mode == CFR_SCALAR_SOLVE
                 // For Monte Carlo CFR.
-                for (RNBA i = 0; i < size; i++) {
-                    int_regret_[i] = 0;
-                }
+                // for (RNBA i = 0; i < size; i++) {
+                //     int_regret_[i] = 0;
+                // }
             }
             break;
         }
         case STRATEGY_WAVG: {
             if (ulong_wavg_ != nullptr) {
                 // cfr_mode == CFR_VECTOR_ALTERNATE_SOLVE || cfr_mode == CFR_VECTOR_PAIRWISE_SOLVE
-                for (RNBA i = 0; i < size; i++) {
-                    ulong_wavg_[i] = 0;
-                }
+                // for (RNBA i = 0; i < size; i++) {
+                //     ulong_wavg_[i] = 0;
+                // }
             } else {
                 // cfr_mode == CFR_SCALAR_SOLVE
-                for (RNBA i = 0; i < size; i++) {
-                    uint_wavg_[i] = 0;
-                }
+                // for (RNBA i = 0; i < size; i++) {
+                //     uint_wavg_[i] = 0;
+                // }
             }
             break;
         }
@@ -96,7 +96,8 @@ bool Strategy::EstimateNewAgReach(AbstractGame *new_ag, MatchState *new_match_st
                             "🚨root reach prob estimate failed.. beliefs of player [%d] at board cards [round %d] is not pruned [%f]",
                             p,
                             new_round,
-                            ag_->root_hand_beliefs_for_all_[p].belief_[i]);
+                            ag_->root_hand_beliefs_for_all_[p].belief_[i]
+                    );
             }
         }
     }
@@ -251,7 +252,7 @@ void Strategy::InspectNode(Node *inspect_node, const std::string &prefix, STRATE
         }
         fprintf(file, ",raise_sum");
         fprintf(file, "\n");
-        std::set < Colex > seen_colex;
+        std::set<Colex> seen_colex;
         int counter = 0;
         for (auto i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {
             auto high_low = FromVectorIndex(i);
@@ -517,11 +518,13 @@ void Strategy::AllocateMemory(STRATEGY_TYPE type, CFR_MODE cfr_mode)
         case STRATEGY_REG:
             if (cfr_mode == CFR_VECTOR_ALTERNATE_SOLVE || cfr_mode == CFR_VECTOR_PAIRWISE_SOLVE) {
                 // NOTE(kwok): for vetor CFR.
-                double_regret_ = new double[size];
+                // double_regret_ = new double[size];
+                double_regret_ = new std::map<size_t, DOUBLE_REGRET>;
                 bytesize = 8;
             } else if (cfr_mode == CFR_SCALAR_SOLVE) {
                 // scalar. NOTE(kwok): for Monte Carlo CFR.
-                int_regret_ = new int[size];
+                // int_regret_ = new int[size];
+                int_regret_ = new std::map<size_t, INT_REGRET>;
                 bytesize = 4;
             } else {
                 logger::critical("unsupported cfr type now %d", cfr_mode);
@@ -530,11 +533,13 @@ void Strategy::AllocateMemory(STRATEGY_TYPE type, CFR_MODE cfr_mode)
         case STRATEGY_WAVG:
             if (cfr_mode == CFR_VECTOR_ALTERNATE_SOLVE || cfr_mode == CFR_VECTOR_PAIRWISE_SOLVE) {
                 // NOTE(kwok): for vector CFR.
-                ulong_wavg_ = new uint64_t[size];
+                // ulong_wavg_ = new uint64_t[size];
+                ulong_wavg_ = new std::map<size_t, ULONG_WAVG>;
                 bytesize = 8;
             } else if (cfr_mode == CFR_SCALAR_SOLVE) {
                 // scalar. NOTE(kwok): for Monte Carlo CFR.
-                uint_wavg_ = new uint32_t[size];
+                // uint_wavg_ = new uint32_t[size];
+                uint_wavg_ = new std::map<size_t, UINT_WAVG>;
                 bytesize = 4;
             } else {
                 logger::critical("unsupported cfr type now %d", cfr_mode);
@@ -548,7 +553,7 @@ void Strategy::AllocateMemory(STRATEGY_TYPE type, CFR_MODE cfr_mode)
             logger::critical("unsupported strategy type %s", StrategyToNameMap[type]);
     }
     double mem_size = (double) size * bytesize / (1024.0 * 1024.0);
-    logger::info("allocated heap memory for %s || length = %d || size = %f (mb)",
+    logger::info("would have allocated heap memory for %s || length = %d || size = %f (mb)",
                  StrategyToNameMap[type],
                  size,
                  mem_size
@@ -561,27 +566,42 @@ void Strategy::DiscountStrategy(STRATEGY_TYPE type, double factor) const
         case STRATEGY_REG:
             if (double_regret_ != nullptr) {
                 for (RNBA i = 0; i < ag_->kernel_->MaxIndex(); i++) {
-                    double_regret_[i] *= factor;
+                    // double_regret_[i] *= factor;
+                    if (double_regret_->find(i) != double_regret_->end()) {
+                        double_regret_->operator[](i) *= factor;
+                    }
                 }
             } else {
                 // Must be INT_REGRET
                 for (RNBA i = 0; i < ag_->kernel_->MaxIndex(); i++) {
-                    INT_REGRET new_v = (int) (int_regret_[i] * factor);
-                    int_regret_[i] = new_v;
+                    // INT_REGRET new_v = (int) (int_regret_[i] * factor);
+                    // int_regret_[i] = new_v;
+                    if (int_regret_->find(i) != int_regret_->end()) {
+                        INT_REGRET new_v = (int) (int_regret_->operator[](i) * factor);
+                        int_regret_->operator[](i) = new_v;
+                    }
                 }
             }
             break;
         case STRATEGY_WAVG:
             if (ulong_wavg_ != nullptr) {
                 for (RNBA i = 0; i < ag_->kernel_->round_index_0_[1]; i++) {
-                    double new_weighted_avg = ulong_wavg_[i] * factor;
-                    ulong_wavg_[i] = (ULONG_WAVG) new_weighted_avg;
+                    // double new_weighted_avg = ulong_wavg_[i] * factor;
+                    // ulong_wavg_[i] = (ULONG_WAVG) new_weighted_avg;
+                    if (ulong_wavg_->find(i) != ulong_wavg_->end()) {
+                        double new_weighted_avg = ulong_wavg_->operator[](i) * factor;
+                        ulong_wavg_->operator[](i) = (ULONG_WAVG) new_weighted_avg;
+                    }
                 }
             } else {
                 // Must be UINT_WAVG
                 for (RNBA i = 0; i < ag_->kernel_->round_index_0_[1]; i++) {
-                    UINT_WAVG new_weighted_avg = uint_wavg_[i] * factor;
-                    uint_wavg_[i] = (UINT_WAVG) new_weighted_avg;
+                    // UINT_WAVG new_weighted_avg = uint_wavg_[i] * factor;
+                    // uint_wavg_[i] = (UINT_WAVG) new_weighted_avg;
+                    if (uint_wavg_->find(i) != uint_wavg_->end()) {
+                        UINT_WAVG new_weighted_avg = uint_wavg_->operator[](i) * factor;
+                        uint_wavg_->operator[](i) = (UINT_WAVG) new_weighted_avg;
+                    }
                 }
             }
             break;
