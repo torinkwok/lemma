@@ -17,7 +17,7 @@ double ScalarCfrWorker::Solve(Board_t board)
     }
 
     double sum_cfus = 0.0;
-    static const int n_priv_hand_samples = 1;
+    static const int n_priv_hand_samples = 1; // TODO(kwok): What about blueprint computing?
     for (int i = 0; i < n_priv_hand_samples; i++) {
         // NOTE(kwok): On each iteration, we start by sampling all of chance’s actions: the public chance
         // events visible to each player, as well as the private chance events that are visible to only a
@@ -25,12 +25,12 @@ double ScalarCfrWorker::Solve(Board_t board)
         // to the players, and the private cards that each player is dealt.
         //
         // NOTE(kwok): Here we're sampling all the private chance events, i.e. the private hands of each player.
-        // The public chance event, i.e. the public cards, has been sampled by the invoker of ScalaraCfrWorker::Solve.
+        // The public chance event, i.e. the public cards, has already been sampled by the outside invoker of
+        // ScalaraCfrWorker::Solve.
         private_hands_info.SamplePrivateHandsForAll(ag, local_root_beliefs);
         if (cfr_param_->pruning_on && cfr_param_->rm_floor < 0) {
             iter_prune_flag = GenRndNumber(1, 100) <= cfr_param_->rollout_prune_prob * 100;
         }
-
         // NOTE(kwok): Next, we recursively traverse the portion of the game tree that is reachable given
         // the sampled chance events, and explore all the players’ actions.
         //
