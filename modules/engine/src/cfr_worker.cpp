@@ -353,7 +353,9 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sPrivateHandBelief *belief_d
                     reach_i *= 10;
                     for (int a = 0; a < a_max; a++) {
                         // strategy_->ulong_wavg_[rnb0 + a] *= 10;
-                        strategy_->ulong_wavg_->try_emplace(rnb0 + a).first->second *= 10;
+                        // strategy_->ulong_wavg_->try_emplace(rnb0 + a).first->second *= 10;
+                        // TODO(kwok): ❓
+                        strategy_->ulong_wavg_->upsert(rnb0 + a, [](auto &n) { n *= 10; });
                         // this_node->ulong_wavg_[this_node->HashBa(b, a)] *= 10;
                     }
                 }
@@ -373,7 +375,9 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sPrivateHandBelief *belief_d
                     reach_i *= 0.01;
                     for (int a = 0; a < a_max; a++) {
                         // strategy_->ulong_wavg_[rnb0 + a] *= 0.01;
-                        strategy_->ulong_wavg_->try_emplace(rnb0 + a).first->second *= 0.01;
+                        // strategy_->ulong_wavg_->try_emplace(rnb0 + a).first->second *= 0.01;
+                        // TODO(kwok): ❓
+                        strategy_->ulong_wavg_->upsert(rnb0 + a, [](auto &n) { n *= 0.01; });
                     }
                 }
                 pthread_mutex_unlock(&this_node->mutex_);
@@ -393,9 +397,12 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sPrivateHandBelief *belief_d
             }
 
             for (int a = 0; a < a_max; a++) {
-                double new_wavg =
-                        strategy_->ulong_wavg_->try_emplace(rnb0 + a).first->second + (reach_i * distr_rnb[a]);
-                strategy_->ulong_wavg_->operator[](rnb0 + a) = (ULONG_WAVG) new_wavg;
+                // double new_wavg =
+                //         strategy_->ulong_wavg_->try_emplace(rnb0 + a).first->second + (reach_i * distr_rnb[a]);
+                // strategy_->ulong_wavg_->operator[](rnb0 + a) = (ULONG_WAVG) new_wavg;
+                auto accu = reach_i * distr_rnb[a];
+                // TODO(kwok): ❓
+                strategy_->ulong_wavg_->upsert(rnb0 + a, [&](auto &n) { n += accu; }, accu);
             }
         }
 
@@ -410,10 +417,25 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sPrivateHandBelief *belief_d
                 && action_prob == 0.0
                 && !this_node->children[a]->IsTerminal()
                 && this_node->children[a]->GetRound() != HOLDEM_ROUND_RIVER) {
-                auto regret = strategy_->double_regret_->try_emplace(rnb0 + a).first->second;
-                if (regret <= cfr_param_->rollout_prune_thres) {
-                    // prune it and continue
-                    child_ranges[a]->Prune(combo_index);
+                // auto regret = strategy_->double_regret_->try_emplace(rnb0 + a).first->second;
+                // if (regret <= cfr_param_->rollout_prune_thres) {
+                //     // prune it and continue
+                //     child_ranges[a]->Prune(combo_index);
+                //     continue;
+                // }
+                bool is_pruned = false;
+                strategy_->double_regret_->insert(rnb0 + a);
+                strategy_->double_regret_->find_fn(rnb0 + a, [&](const auto &regret)
+                                                   {
+                                                       if (regret <= cfr_param_->rollout_prune_thres) {
+                                                           // prune it and continue
+                                                           child_ranges[a]->Prune(combo_index);
+                                                           // TODO(kwok): ❓
+                                                           is_pruned = true;
+                                                       }
+                                                   }
+                );
+                if (is_pruned) {
                     continue;
                 }
             }
@@ -568,20 +590,41 @@ VectorCfrWorker::CollectRegrets(Node *this_node,
             }
             double cfu_child_a = child_cfus[a]->belief_[combo_index];
             double diff = cfu_child_a - cfu_combo_index; // the immediate regret
-            double old_reg = strategy_->double_regret_->try_emplace(rnb0 + a).first->second;
-            double new_reg = ClampRegret(old_reg, diff, cfr_param_->rm_floor);
-            if (old_reg > pow(10, 15) || new_reg > pow(10, 15)) {
-                logger::critical(
-                        "[old reg %.16f] too big![new reg %.16f] [%.16f] [diff %.16f] [u_action %.16f] [this_node_cfu %.16f]",
-                        old_reg,
-                        new_reg,
-                        cfr_param_->rm_floor,
-                        diff,
-                        cfu_child_a,
-                        this_node_cfu
-                );
-            }
-            strategy_->double_regret_->operator[](rnb0 + a) = new_reg;
+            // double old_reg = strategy_->double_regret_->try_emplace(rnb0 + a).first->second;
+            // double new_reg = ClampRegret(old_reg, diff, cfr_param_->rm_floor);
+            // if (old_reg > pow(10, 15) || new_reg > pow(10, 15)) {
+            //     logger::critical(
+            //             "[old reg %.16f] too big![new reg %.16f] [%.16f] [diff %.16f] [u_action %.16f] [this_node_cfu %.16f]",
+            //             old_reg,
+            //             new_reg,
+            //             cfr_param_->rm_floor,
+            //             diff,
+            //             cfu_child_a,
+            //             this_node_cfu
+            //     );
+            // }
+            // strategy_->double_regret_->operator[](rnb0 + a) = new_reg;
+            strategy_->double_regret_->insert(rnb0 + a);
+            // TODO(kwok): ❓
+            strategy_->double_regret_->update_fn(rnb0 + a, [&](auto &regret)
+                                                 {
+                                                     double old_reg = regret;
+                                                     double new_reg = ClampRegret(old_reg, diff, cfr_param_->rm_floor);
+                                                     // the total regret should have a ceiling
+                                                     if (old_reg > pow(10, 15) || new_reg > pow(10, 15)) {
+                                                         logger::critical(
+                                                                 "[old reg %.16f] too big![new reg %.16f] [%.16f] [diff %.16f] [u_action %.16f] [this_node_cfu %.16f]",
+                                                                 old_reg,
+                                                                 new_reg,
+                                                                 cfr_param_->rm_floor,
+                                                                 diff,
+                                                                 cfu_child_a,
+                                                                 this_node_cfu
+                                                         );
+                                                     }
+                                                     regret = new_reg;
+                                                 }
+            );
         }
     }
 }

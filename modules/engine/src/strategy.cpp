@@ -519,12 +519,12 @@ void Strategy::AllocateMemory(STRATEGY_TYPE type, CFR_MODE cfr_mode)
             if (cfr_mode == CFR_VECTOR_ALTERNATE_SOLVE || cfr_mode == CFR_VECTOR_PAIRWISE_SOLVE) {
                 // NOTE(kwok): for vetor CFR.
                 // double_regret_ = new double[size];
-                double_regret_ = new std::map<size_t, DOUBLE_REGRET>;
+                double_regret_ = new cuckoohash_map<size_t, DOUBLE_REGRET>;
                 bytesize = 8;
             } else if (cfr_mode == CFR_SCALAR_SOLVE) {
                 // scalar. NOTE(kwok): for Monte Carlo CFR.
                 // int_regret_ = new int[size];
-                int_regret_ = new std::map<size_t, INT_REGRET>;
+                int_regret_ = new cuckoohash_map<size_t, INT_REGRET>;
                 bytesize = 4;
             } else {
                 logger::critical("unsupported cfr type now %d", cfr_mode);
@@ -534,12 +534,12 @@ void Strategy::AllocateMemory(STRATEGY_TYPE type, CFR_MODE cfr_mode)
             if (cfr_mode == CFR_VECTOR_ALTERNATE_SOLVE || cfr_mode == CFR_VECTOR_PAIRWISE_SOLVE) {
                 // NOTE(kwok): for vector CFR.
                 // ulong_wavg_ = new uint64_t[size];
-                ulong_wavg_ = new std::map<size_t, ULONG_WAVG>;
+                ulong_wavg_ = new cuckoohash_map<size_t, ULONG_WAVG>;
                 bytesize = 8;
             } else if (cfr_mode == CFR_SCALAR_SOLVE) {
                 // scalar. NOTE(kwok): for Monte Carlo CFR.
                 // uint_wavg_ = new uint32_t[size];
-                uint_wavg_ = new std::map<size_t, UINT_WAVG>;
+                uint_wavg_ = new cuckoohash_map<size_t, UINT_WAVG>;
                 bytesize = 4;
             } else {
                 logger::critical("unsupported cfr type now %d", cfr_mode);
@@ -565,42 +565,68 @@ void Strategy::DiscountStrategy(STRATEGY_TYPE type, double factor) const
     switch (type) {
         case STRATEGY_REG:
             if (double_regret_ != nullptr) {
+                auto lt = double_regret_->lock_table();
                 for (RNBA i = 0; i < ag_->kernel_->MaxIndex(); i++) {
                     // double_regret_[i] *= factor;
-                    if (double_regret_->find(i) != double_regret_->end()) {
-                        double_regret_->operator[](i) *= factor;
+
+                    // if (double_regret_->find(i) != double_regret_->end()) {
+                    //     double_regret_->operator[](i) *= factor;
+                    // }
+                    if (lt.find(i) != lt.end()) {
+                        lt[i] *= factor;
                     }
                 }
             } else {
                 // Must be INT_REGRET
+                auto lt = int_regret_->lock_table();
                 for (RNBA i = 0; i < ag_->kernel_->MaxIndex(); i++) {
                     // INT_REGRET new_v = (int) (int_regret_[i] * factor);
                     // int_regret_[i] = new_v;
-                    if (int_regret_->find(i) != int_regret_->end()) {
-                        INT_REGRET new_v = (int) (int_regret_->operator[](i) * factor);
-                        int_regret_->operator[](i) = new_v;
+
+                    // if (int_regret_->find(i) != int_regret_->end()) {
+                    //     INT_REGRET new_v = (int) (int_regret_->operator[](i) * factor);
+                    //     int_regret_->operator[](i) = new_v;
+                    // }
+
+                    if (lt.find(i) != lt.end()) {
+                        INT_REGRET new_v = (int) (lt[i] * factor);
+                        lt[i] = new_v;
                     }
                 }
             }
             break;
         case STRATEGY_WAVG:
             if (ulong_wavg_ != nullptr) {
+                auto lt = ulong_wavg_->lock_table();
                 for (RNBA i = 0; i < ag_->kernel_->round_index_0_[1]; i++) {
                     // double new_weighted_avg = ulong_wavg_[i] * factor;
                     // ulong_wavg_[i] = (ULONG_WAVG) new_weighted_avg;
-                    if (ulong_wavg_->find(i) != ulong_wavg_->end()) {
-                        double new_weighted_avg = ulong_wavg_->operator[](i) * factor;
-                        ulong_wavg_->operator[](i) = (ULONG_WAVG) new_weighted_avg;
+
+                    // if (ulong_wavg_->find(i) != ulong_wavg_->end()) {
+                    //     double new_weighted_avg = ulong_wavg_->operator[](i) * factor;
+                    //     ulong_wavg_->operator[](i) = (ULONG_WAVG) new_weighted_avg;
+                    // }
+
+                    if (lt.find(i) != lt.end()) {
+                        double new_weighted_avg = lt[i] * factor;
+                        lt[i] = (ULONG_WAVG) new_weighted_avg;
                     }
                 }
             } else {
                 // Must be UINT_WAVG
+                auto lt = uint_wavg_->lock_table();
                 for (RNBA i = 0; i < ag_->kernel_->round_index_0_[1]; i++) {
                     // UINT_WAVG new_weighted_avg = uint_wavg_[i] * factor;
                     // uint_wavg_[i] = (UINT_WAVG) new_weighted_avg;
-                    if (uint_wavg_->find(i) != uint_wavg_->end()) {
-                        UINT_WAVG new_weighted_avg = uint_wavg_->operator[](i) * factor;
-                        uint_wavg_->operator[](i) = (UINT_WAVG) new_weighted_avg;
+
+                    // if (uint_wavg_->find(i) != uint_wavg_->end()) {
+                    //     UINT_WAVG new_weighted_avg = uint_wavg_->operator[](i) * factor;
+                    //     uint_wavg_->operator[](i) = (UINT_WAVG) new_weighted_avg;
+                    // }
+
+                    if (lt.find(i) != lt.end()) {
+                        UINT_WAVG new_weighted_avg = lt[i] * factor;
+                        lt[i] = (UINT_WAVG) new_weighted_avg;
                     }
                 }
             }

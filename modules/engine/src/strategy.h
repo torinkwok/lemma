@@ -8,6 +8,10 @@
 #include "action_chooser.hpp"
 #include "engine_util.h"
 
+#include <libcuckoo/cuckoohash_map.hh>
+
+using namespace libcuckoo;
+
 extern "C" {
 #include <bulldog/game.h>
 };
@@ -37,17 +41,21 @@ public:
     // for cfr vecor
 
     // DOUBLE_REGRET *double_regret_ = nullptr;
-    std::map<size_t, DOUBLE_REGRET>* double_regret_ = nullptr;
+    // std::map<size_t, DOUBLE_REGRET>* double_regret_ = nullptr;
+    cuckoohash_map<size_t, DOUBLE_REGRET>* double_regret_ = nullptr;
 
     // ULONG_WAVG *ulong_wavg_ = nullptr;
-    std::map<size_t, ULONG_WAVG>* ulong_wavg_ = nullptr;
+    // std::map<size_t, ULONG_WAVG>* ulong_wavg_ = nullptr;
+    cuckoohash_map<size_t, ULONG_WAVG>* ulong_wavg_ = nullptr;
 
     // for mccfr
     // INT_REGRET *int_regret_ = nullptr;
-    std::map<size_t, INT_REGRET>* int_regret_ = nullptr;
+    // std::map<size_t, INT_REGRET>* int_regret_ = nullptr;
+    cuckoohash_map<size_t, INT_REGRET>* int_regret_ = nullptr;
 
     // UINT_WAVG *uint_wavg_ = nullptr;
-    std::map<size_t, UINT_WAVG>* uint_wavg_ = nullptr;
+    // std::map<size_t, UINT_WAVG>* uint_wavg_ = nullptr;
+    cuckoohash_map<size_t, UINT_WAVG>* uint_wavg_ = nullptr;
 
     std::ifstream *file_ptr = nullptr;
 

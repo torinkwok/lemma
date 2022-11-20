@@ -3,6 +3,9 @@
 
 #include <cstdint>
 #include <algorithm>
+#include <libcuckoo/cuckoohash_map.hh>
+
+using namespace libcuckoo;
 
 extern "C" {
 #include "bulldog/game.h"
@@ -33,19 +36,22 @@ bool IsAvgUniform(float *avg, int size);
 void NormalizePolicy(float *avg, int size);
 
 template<typename T>
-int GetPolicy(float *inout_distr, int size, std::map<size_t, T> *regrets, size_t offset = 0)
+int GetPolicy(float *inout_distr, int size, cuckoohash_map<size_t, T> *regrets, size_t offset = 0)
 {
     // bool integral = std::is_integral<T>::value;
     T positive_v[size];
     T sum_pos_v = 0;
 
     for (int a = 0; a < size; a++) {
-        positive_v[a] = std::max<T>(0, regrets->template try_emplace(offset + a).first->second);
-        //    T v = regrets[a];
-        //    positive_v[a] = v > 0 ? v : 0;;
-        //      new_pos_reg[a] = regret_[rnba] > 0.0 ? regret_[rnba] : 0.0;
-        // in multithread setting this may have problem.
-        sum_pos_v += positive_v[a];
+        // positive_v[a] = std::max<T>(0, lt.try_emplace(offset + a).first->second);
+        // TODO(kwok): ❓
+        regrets->template insert(offset + a);
+        regrets->template find_fn(offset + a, [&](const auto &regret)
+                                  {
+                                      positive_v[a] = std::max<T>(0, regret);
+                                      sum_pos_v += positive_v[a];
+                                  }
+        );
     }
 
     // NOTE(kwok): normalization
