@@ -68,19 +68,19 @@ struct SubgameSolver {
     bool CheckTriggerCondition(NodeMatchResult &condition) const {
         if (condition.matched_node_->GetRound() == active_round) {
             if (condition.matched_node_->GetSumPot() >= active_sumpot_min) {
-                logger::info("    [SGS %s] : triggered by sumpot %d", name_, condition.matched_node_->GetSumPot());
+                logger::info("    [SGS %s] : 💥triggered by sumpot %d", name_, condition.matched_node_->GetSumPot());
                 return true;
             } else {
                 logger::info("        [SGS %s] : node_sum_pot=%d, sgs_conf_active_sumpot_min=%d", name_, condition.matched_node_->GetSumPot(), active_sumpot_min);
             }
             if (condition.bet_similarity_dist_ >= active_bet_seq_min) {
-                logger::info("    [SGS %s] : triggered by bet sequence pattern distance %d", name_, condition.bet_similarity_dist_);
+                logger::info("    [SGS %s] : 💥triggered by bet sequence pattern distance %d", name_, condition.bet_similarity_dist_);
                 return true;
             } else {
                 logger::info("        [SGS %s] : node_bet_similarity_dist_=%d, sgs_conf_active_bet_seq_min=%d", name_, condition.bet_similarity_dist_, active_bet_seq_min);
             }
             if (condition.off_tree_dist_ >= active_offtree_min) {
-                logger::info("    [SGS %s] : triggered by offtree distance %f", name_, condition.off_tree_dist_);
+                logger::info("    [SGS %s] : 💥triggered by offtree distance %f", name_, condition.off_tree_dist_);
                 return true;
             } else {
                 logger::info("        [SGS %s] : node_off_tree_dist_=%f, sgs_active_offtree_min=%f", name_, condition.off_tree_dist_, active_offtree_min);
