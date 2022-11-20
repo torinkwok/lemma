@@ -565,69 +565,55 @@ void Strategy::DiscountStrategy(STRATEGY_TYPE type, double factor) const
     switch (type) {
         case STRATEGY_REG:
             if (double_regret_ != nullptr) {
-                auto lt = double_regret_->lock_table();
                 for (RNBA i = 0; i < ag_->kernel_->MaxIndex(); i++) {
                     // double_regret_[i] *= factor;
 
-                    // if (double_regret_->find(i) != double_regret_->end()) {
-                    //     double_regret_->operator[](i) *= factor;
-                    // }
-                    if (lt.find(i) != lt.end()) {
-                        lt[i] *= factor;
-                    }
+                    // TODO(kwok): ❓
+                    double_regret_->update_fn(i, [&](auto &regret) { regret *= factor; });
                 }
             } else {
                 // Must be INT_REGRET
-                auto lt = int_regret_->lock_table();
                 for (RNBA i = 0; i < ag_->kernel_->MaxIndex(); i++) {
                     // INT_REGRET new_v = (int) (int_regret_[i] * factor);
                     // int_regret_[i] = new_v;
 
-                    // if (int_regret_->find(i) != int_regret_->end()) {
-                    //     INT_REGRET new_v = (int) (int_regret_->operator[](i) * factor);
-                    //     int_regret_->operator[](i) = new_v;
-                    // }
-
-                    if (lt.find(i) != lt.end()) {
-                        INT_REGRET new_v = (int) (lt[i] * factor);
-                        lt[i] = new_v;
-                    }
+                    // TODO(kwok): ❓
+                    int_regret_->update_fn(i, [&](auto &regret)
+                                           {
+                                               INT_REGRET new_v = (int) regret * factor;
+                                               regret = new_v;
+                                           }
+                    );
                 }
             }
             break;
         case STRATEGY_WAVG:
             if (ulong_wavg_ != nullptr) {
-                auto lt = ulong_wavg_->lock_table();
                 for (RNBA i = 0; i < ag_->kernel_->round_index_0_[1]; i++) {
                     // double new_weighted_avg = ulong_wavg_[i] * factor;
                     // ulong_wavg_[i] = (ULONG_WAVG) new_weighted_avg;
 
-                    // if (ulong_wavg_->find(i) != ulong_wavg_->end()) {
-                    //     double new_weighted_avg = ulong_wavg_->operator[](i) * factor;
-                    //     ulong_wavg_->operator[](i) = (ULONG_WAVG) new_weighted_avg;
-                    // }
-
-                    if (lt.find(i) != lt.end()) {
-                        double new_weighted_avg = lt[i] * factor;
-                        lt[i] = (ULONG_WAVG) new_weighted_avg;
-                    }
+                    // TODO(kwok): ❓
+                    ulong_wavg_->update_fn(i, [&](auto &wavg)
+                                           {
+                                               double new_weighted_avg = wavg * factor;
+                                               wavg = (ULONG_WAVG) new_weighted_avg;
+                                           }
+                    );
                 }
             } else {
                 // Must be UINT_WAVG
-                auto lt = uint_wavg_->lock_table();
                 for (RNBA i = 0; i < ag_->kernel_->round_index_0_[1]; i++) {
                     // UINT_WAVG new_weighted_avg = uint_wavg_[i] * factor;
                     // uint_wavg_[i] = (UINT_WAVG) new_weighted_avg;
 
-                    // if (uint_wavg_->find(i) != uint_wavg_->end()) {
-                    //     UINT_WAVG new_weighted_avg = uint_wavg_->operator[](i) * factor;
-                    //     uint_wavg_->operator[](i) = (UINT_WAVG) new_weighted_avg;
-                    // }
-
-                    if (lt.find(i) != lt.end()) {
-                        UINT_WAVG new_weighted_avg = lt[i] * factor;
-                        lt[i] = (UINT_WAVG) new_weighted_avg;
-                    }
+                    // TODO(kwok): ❓
+                    uint_wavg_->update_fn(i, [&](auto &wavg)
+                                          {
+                                              double new_weighted_avg = wavg * factor;
+                                              wavg = (UINT_WAVG) new_weighted_avg;
+                                          }
+                    );
                 }
             }
             break;
