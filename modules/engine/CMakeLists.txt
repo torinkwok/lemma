@@ -29,18 +29,20 @@ add_executable(build_buckets src/build_buckets.cpp
 #generic
 target_link_libraries(eval-h2h core engine cpprestsdk::cpprest hand_indexer)
 
+find_package(libcuckoo CONFIG REQUIRED)
+
 find_package(Flatbuffers CONFIG REQUIRED)
 find_package(NumCpp CONFIG REQUIRED)
 
 #platform specific
 if (UNIX AND NOT APPLE)
-    target_link_libraries(engine core stdc++fs cpprestsdk::cpprest flatbuffers::flatbuffers)
+    target_link_libraries(engine core stdc++fs cpprestsdk::cpprest flatbuffers::flatbuffers libcuckoo::libcuckoo)
     target_link_libraries(build_buckets PRIVATE stdc++fs core Threads::Threads peval ${Boost_SYSTEM_LIBRARY} hand_indexer)
     target_link_libraries(train PRIVATE engine Threads::Threads hand_indexer)
     target_link_libraries(check_strategy PRIVATE engine Threads::Threads hand_indexer)
     target_link_libraries(check_kernel PRIVATE engine Threads::Threads)
 else ()
-    target_link_libraries(engine core cpprestsdk::cpprest flatbuffers::flatbuffers)
+    target_link_libraries(engine core cpprestsdk::cpprest flatbuffers::flatbuffers libcuckoo::libcuckoo)
     target_link_libraries(build_buckets PRIVATE core Threads::Threads peval ${Boost_SYSTEM_LIBRARY} hand_indexer)
     target_link_libraries(train PRIVATE engine Threads::Threads hand_indexer)
     target_link_libraries(check_strategy PRIVATE engine Threads::Threads hand_indexer)

@@ -1,14 +1,12 @@
 #ifndef BULLDOG_MODULES_ENGINE_SRC_STRATEGY_H_
 #define BULLDOG_MODULES_ENGINE_SRC_STRATEGY_H_
 
-#include <map>
+#include <libcuckoo/cuckoohash_map.hh>
 
 #include "abstract_game.h"
 #include "cfr_param.h"
 #include "action_chooser.hpp"
 #include "engine_util.h"
-
-#include <libcuckoo/cuckoohash_map.hh>
 
 using namespace libcuckoo;
 
@@ -38,29 +36,26 @@ public:
     AbstractGame *ag_ = nullptr;
     ZIPAVG *zipavg_ = nullptr;
 
+#ifdef DEBUG_EAGER_LOOKUP
+    DOUBLE_REGRET *eager_double_regret_ = nullptr;
+    ULONG_WAVG *eager_ulong_wavg_ = nullptr;
+    INT_REGRET *eager_int_regret_ = nullptr;
+    UINT_WAVG *eager_uint_wavg_ = nullptr;
+#endif
+
     // for cfr vecor
-
-    // DOUBLE_REGRET *double_regret_ = nullptr;
-    // std::map<size_t, DOUBLE_REGRET>* double_regret_ = nullptr;
-    cuckoohash_map<size_t, DOUBLE_REGRET>* double_regret_ = nullptr;
-
-    // ULONG_WAVG *ulong_wavg_ = nullptr;
-    // std::map<size_t, ULONG_WAVG>* ulong_wavg_ = nullptr;
-    cuckoohash_map<size_t, ULONG_WAVG>* ulong_wavg_ = nullptr;
+    cuckoohash_map<size_t, DOUBLE_REGRET> *double_regret_ = nullptr;
+    cuckoohash_map<size_t, ULONG_WAVG> *ulong_wavg_ = nullptr;
 
     // for mccfr
-    // INT_REGRET *int_regret_ = nullptr;
-    // std::map<size_t, INT_REGRET>* int_regret_ = nullptr;
-    cuckoohash_map<size_t, INT_REGRET>* int_regret_ = nullptr;
-
-    // UINT_WAVG *uint_wavg_ = nullptr;
-    // std::map<size_t, UINT_WAVG>* uint_wavg_ = nullptr;
-    cuckoohash_map<size_t, UINT_WAVG>* uint_wavg_ = nullptr;
+    cuckoohash_map<size_t, INT_REGRET> *int_regret_ = nullptr;
+    cuckoohash_map<size_t, UINT_WAVG> *uint_wavg_ = nullptr;
 
     std::ifstream *file_ptr = nullptr;
 
     //constructor and dest
-    explicit Strategy(AbstractGame *ag) : ag_(ag)
+    explicit Strategy(AbstractGame *ag)
+            : ag_(ag)
     {
     }
 
@@ -73,17 +68,24 @@ public:
             delete file_ptr;
             file_ptr = nullptr;
         }
+
         delete ag_;
-        // delete[] double_regret_;
-        // delete[] int_regret_;
-        // delete[] ulong_wavg_;
-        // delete[] uint_wavg_;
-        // delete[] zipavg_;
+
+#ifdef DEBUG_EAGER_LOOKUP
+        // TODO(kwok): 🦊
+        delete[] eager_double_regret_;
+        delete[] eager_int_regret_;
+        delete[] eager_ulong_wavg_;
+        delete[] eager_uint_wavg_;
+#endif
+
         delete double_regret_;
         delete int_regret_;
         delete ulong_wavg_;
         delete uint_wavg_;
+
         delete zipavg_;
+
         logger::debug("strategy [%s] object gracefully shutting down", name_);
     }
 
@@ -95,6 +97,10 @@ public:
     /*
      * compute strategy
      */
+#ifdef DEBUG_EAGER_LOOKUP
+    int ComputeFoxStrategy(Round_t r, Node_t n, Bucket_t b, Action_t a_max, float *rnb_avg, STRATEGY_TYPE mode) const;
+#endif
+
     int ComputeStrategy(Round_t r, Node_t n, Bucket_t b, Action_t a_max, float *rnb_avg, STRATEGY_TYPE mode) const;
 
     int ComputeStrategy(Node *node, Bucket_t b, float *rnb_avg, STRATEGY_TYPE mode) const;

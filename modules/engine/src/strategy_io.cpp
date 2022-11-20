@@ -237,12 +237,12 @@ void SaveAssertMap(Strategy *target, STRATEGY_TYPE type, const std::string &pref
             case STRATEGY_REG:
                 // assert_map[rnd_1] = target->int_regret_[rnd_1];
                 // assert_map[rnd_1] = target->int_regret_->operator[](rnd_1);
-                // TODO(kwok): ❓
+                // TODO(kwok): 🐦
                 assert_map[rnd_1] = target->int_regret_->find(rnd_1);
                 break;
             case STRATEGY_WAVG:
                 // assert_map[rnd_1] = target->uint_wavg_->operator[](rnd_1);
-                // TODO(kwok): ❓
+                // TODO(kwok): 🐦
                 assert_map[rnd_1] = target->uint_wavg_->find(rnd_1);
                 break;
             case STRATEGY_ZIPAVG:
@@ -293,14 +293,14 @@ void LoadAssertMap(Strategy *target, STRATEGY_TYPE type, const std::string &pref
         switch (type) {
             case STRATEGY_REG:
                 // if (target->int_regret_->operator[](key) != (INT_REGRET) val) {
-                // TODO(kwok): ❓
+                // TODO(kwok): 🐦
                 if (target->int_regret_->find(key) != (INT_REGRET) val) {
                     logger::critical("%s assert value error [%d] != %f", StrategyToNameMap[type], key, val);
                 }
                 break;
             case STRATEGY_WAVG:
                 // if (target->uint_wavg_->operator[](key) != (UINT_WAVG) val) {
-                // TODO(kwok): ❓
+                // TODO(kwok): 🐦
                 if (target->uint_wavg_->find(key) != (UINT_WAVG) val) {
                     logger::critical("%s assert value error [%d] != %d", StrategyToNameMap[type], key, val);
                 }

@@ -1,5 +1,6 @@
 #include <bulldog/game_util.h>
 #include <thread>
+
 #include "strategy.h"
 
 static std::mutex mx1;
@@ -10,33 +11,37 @@ void Strategy::InitMemory(STRATEGY_TYPE type, CFR_MODE mode)
     AllocateMemory(type, mode);
     switch (type) {
         case STRATEGY_REG: {
-            if (double_regret_ != nullptr) {
+#ifdef DEBUG_EAGER_LOOKUP
+            if (eager_double_regret_ != nullptr) {
                 // cfr_mode == CFR_VECTOR_ALTERNATE_SOLVE || cfr_mode == CFR_VECTOR_PAIRWISE_SOLVE
                 // For CFR vector.
-                // for (RNBA i = 0; i < size; i++) {
-                //     double_regret_[i] = 0.0;
-                // }
+                for (RNBA i = 0; i < size; i++) {
+                    eager_double_regret_[i] = 0.0;
+                }
             } else {
                 // cfr_mode == CFR_SCALAR_SOLVE
                 // For Monte Carlo CFR.
-                // for (RNBA i = 0; i < size; i++) {
-                //     int_regret_[i] = 0;
-                // }
+                for (RNBA i = 0; i < size; i++) {
+                    eager_int_regret_[i] = 0;
+                }
             }
+#endif
             break;
         }
         case STRATEGY_WAVG: {
-            if (ulong_wavg_ != nullptr) {
+#ifdef DEBUG_EAGER_LOOKUP
+            if (eager_ulong_wavg_ != nullptr) {
                 // cfr_mode == CFR_VECTOR_ALTERNATE_SOLVE || cfr_mode == CFR_VECTOR_PAIRWISE_SOLVE
-                // for (RNBA i = 0; i < size; i++) {
-                //     ulong_wavg_[i] = 0;
-                // }
+                for (RNBA i = 0; i < size; i++) {
+                    eager_ulong_wavg_[i] = 0;
+                }
             } else {
                 // cfr_mode == CFR_SCALAR_SOLVE
-                // for (RNBA i = 0; i < size; i++) {
-                //     uint_wavg_[i] = 0;
-                // }
+                for (RNBA i = 0; i < size; i++) {
+                    eager_uint_wavg_[i] = 0;
+                }
             }
+#endif
             break;
         }
         case STRATEGY_ZIPAVG: {
@@ -312,20 +317,44 @@ void Strategy::InspectNode(Node *inspect_node, const std::string &prefix, STRATE
 
 void Strategy::PrintNodeStrategy(Node *node, Bucket_t b, STRATEGY_TYPE calc_mode) const
 {
-    auto r = node->GetRound();
-    auto n = node->GetN();
-    auto a_max = node->GetAmax();
-    float rnb_avg[a_max];
-    ComputeStrategy(r, n, b, a_max, rnb_avg, calc_mode);
-    std::string print_string = "strategy profile : ";
-    for (auto a_2 = 0; a_2 < a_max; a_2++) {
-        print_string += std::to_string(node->children[a_2]->GetLastActionCode());
-        print_string += ": ";
-        print_string += std::to_string(rnb_avg[a_2] * 100);
-        print_string += "%";
-        print_string += " | ";
+    {
+        auto r = node->GetRound();
+        auto n = node->GetN();
+        auto a_max = node->GetAmax();
+
+        float dove_rnb_avg[a_max];
+        ComputeStrategy(r, n, b, a_max, dove_rnb_avg, calc_mode);
+#ifdef DEBUG_EAGER_LOOKUP
+        float fox_rnb_avg[a_max];
+        ComputeFoxStrategy(r, n, b, a_max, fox_rnb_avg, calc_mode);
+#endif
+        std::string print_string = "[strategy profile] ";
+        for (auto a_2 = 0; a_2 < a_max; a_2++) {
+            double dove = dove_rnb_avg[a_2] * 100;
+#ifdef DEBUG_EAGER_LOOKUP
+            double fox = fox_rnb_avg[a_2] * 100;
+#endif
+            print_string += std::to_string(node->children[a_2]->GetLastActionCode());
+            print_string += ": ";
+#ifdef DEBUG_EAGER_LOOKUP
+            print_string += "🐦";
+#endif
+            print_string += std::to_string(dove);
+#ifdef DEBUG_EAGER_LOOKUP
+            print_string += "|";
+            print_string += "🦊";
+            print_string += std::to_string(fox);
+#endif
+            print_string += "%";
+            print_string += " | ";
+#ifdef DEBUG_EAGER_LOOKUP
+            if (dove != fox) {
+                logger::warn("🐦%g vs. 🦊%g", dove, fox);
+            }
+#endif
+        }
+        logger::info("%s | for r = %d | n = %d | b = %d", print_string, r, n, b);
     }
-    logger::info("%s | for r = %d | n = %d | b = %d", print_string, r, n, b);
 }
 
 void Strategy::InspectStrategyByMatchState(MatchState *match_state, STRATEGY_TYPE calc_mode)
@@ -518,12 +547,16 @@ void Strategy::AllocateMemory(STRATEGY_TYPE type, CFR_MODE cfr_mode)
         case STRATEGY_REG:
             if (cfr_mode == CFR_VECTOR_ALTERNATE_SOLVE || cfr_mode == CFR_VECTOR_PAIRWISE_SOLVE) {
                 // NOTE(kwok): for vetor CFR.
-                // double_regret_ = new double[size];
+#ifdef DEBUG_EAGER_LOOKUP
+                eager_double_regret_ = new double[size];
+#endif
                 double_regret_ = new cuckoohash_map<size_t, DOUBLE_REGRET>;
                 bytesize = 8;
             } else if (cfr_mode == CFR_SCALAR_SOLVE) {
                 // scalar. NOTE(kwok): for Monte Carlo CFR.
-                // int_regret_ = new int[size];
+#ifdef DEBUG_EAGER_LOOKUP
+                eager_int_regret_ = new int[size];
+#endif
                 int_regret_ = new cuckoohash_map<size_t, INT_REGRET>;
                 bytesize = 4;
             } else {
@@ -533,12 +566,16 @@ void Strategy::AllocateMemory(STRATEGY_TYPE type, CFR_MODE cfr_mode)
         case STRATEGY_WAVG:
             if (cfr_mode == CFR_VECTOR_ALTERNATE_SOLVE || cfr_mode == CFR_VECTOR_PAIRWISE_SOLVE) {
                 // NOTE(kwok): for vector CFR.
-                // ulong_wavg_ = new uint64_t[size];
+#ifdef DEBUG_EAGER_LOOKUP
+                eager_ulong_wavg_ = new uint64_t[size];
+#endif
                 ulong_wavg_ = new cuckoohash_map<size_t, ULONG_WAVG>;
                 bytesize = 8;
             } else if (cfr_mode == CFR_SCALAR_SOLVE) {
                 // scalar. NOTE(kwok): for Monte Carlo CFR.
-                // uint_wavg_ = new uint32_t[size];
+#ifdef DEBUG_EAGER_LOOKUP
+                eager_uint_wavg_ = new uint32_t[size];
+#endif
                 uint_wavg_ = new cuckoohash_map<size_t, UINT_WAVG>;
                 bytesize = 4;
             } else {
@@ -566,18 +603,22 @@ void Strategy::DiscountStrategy(STRATEGY_TYPE type, double factor) const
         case STRATEGY_REG:
             if (double_regret_ != nullptr) {
                 for (RNBA i = 0; i < ag_->kernel_->MaxIndex(); i++) {
-                    // double_regret_[i] *= factor;
-
-                    // TODO(kwok): ❓
+#ifdef DEBUG_EAGER_LOOKUP
+                    // TODO(kwok): 🦊
+                    eager_double_regret_[i] *= factor;
+#endif
+                    // TODO(kwok): 🐦
                     double_regret_->update_fn(i, [&](auto &regret) { regret *= factor; });
                 }
             } else {
                 // Must be INT_REGRET
                 for (RNBA i = 0; i < ag_->kernel_->MaxIndex(); i++) {
-                    // INT_REGRET new_v = (int) (int_regret_[i] * factor);
-                    // int_regret_[i] = new_v;
-
-                    // TODO(kwok): ❓
+#ifdef DEBUG_EAGER_LOOKUP
+                    // TODO(kwok): 🦊
+                    INT_REGRET new_v = (int) (eager_int_regret_[i] * factor);
+                    eager_int_regret_[i] = new_v;
+#endif
+                    // TODO(kwok): 🐦
                     int_regret_->update_fn(i, [&](auto &regret)
                                            {
                                                INT_REGRET new_v = (int) regret * factor;
@@ -590,10 +631,12 @@ void Strategy::DiscountStrategy(STRATEGY_TYPE type, double factor) const
         case STRATEGY_WAVG:
             if (ulong_wavg_ != nullptr) {
                 for (RNBA i = 0; i < ag_->kernel_->round_index_0_[1]; i++) {
-                    // double new_weighted_avg = ulong_wavg_[i] * factor;
-                    // ulong_wavg_[i] = (ULONG_WAVG) new_weighted_avg;
-
-                    // TODO(kwok): ❓
+#ifdef DEBUG_EAGER_LOOKUP
+                    // TODO(kwok): 🦊
+                    double new_weighted_avg = eager_ulong_wavg_[i] * factor;
+                    eager_ulong_wavg_[i] = (ULONG_WAVG) new_weighted_avg;
+#endif
+                    // TODO(kwok): 🐦
                     ulong_wavg_->update_fn(i, [&](auto &wavg)
                                            {
                                                double new_weighted_avg = wavg * factor;
@@ -604,10 +647,12 @@ void Strategy::DiscountStrategy(STRATEGY_TYPE type, double factor) const
             } else {
                 // Must be UINT_WAVG
                 for (RNBA i = 0; i < ag_->kernel_->round_index_0_[1]; i++) {
-                    // UINT_WAVG new_weighted_avg = uint_wavg_[i] * factor;
-                    // uint_wavg_[i] = (UINT_WAVG) new_weighted_avg;
-
-                    // TODO(kwok): ❓
+#ifdef DEBUG_EAGER_LOOKUP
+                    // TODO(kwok): 🦊
+                    UINT_WAVG new_weighted_avg = eager_uint_wavg_[i] * factor;
+                    eager_uint_wavg_[i] = (UINT_WAVG) new_weighted_avg;
+#endif
+                    // TODO(kwok): 🐦
                     uint_wavg_->update_fn(i, [&](auto &wavg)
                                           {
                                               double new_weighted_avg = wavg * factor;
@@ -627,6 +672,59 @@ int Strategy::ComputeStrategy(Node *node, Bucket_t b, float *rnb_avg, STRATEGY_T
 {
     return ComputeStrategy(node->GetRound(), node->GetN(), b, node->GetAmax(), rnb_avg, mode);
 }
+
+#ifdef DEBUG_EAGER_LOOKUP
+int Strategy::ComputeFoxStrategy(Round_t r,
+                                 Node_t n,
+                                 Bucket_t b,
+                                 Action_t a_max,
+                                 float *rnb_avg,
+                                 STRATEGY_TYPE mode) const
+{
+    auto rnb0 = ag_->kernel_->hash_rnba(r, n, b, 0);
+    switch (mode) {
+        case STRATEGY_WAVG: {
+            if (ulong_wavg_ != nullptr) {
+                return GetPolicy<ULONG_WAVG>(rnb_avg, a_max, eager_ulong_wavg_, rnb0);
+            } else {
+                return GetPolicy<UINT_WAVG>(rnb_avg, a_max, eager_uint_wavg_, rnb0);
+            }
+        }
+        case STRATEGY_REG: {
+            if (double_regret_ != nullptr) {
+                return GetPolicy<DOUBLE_REGRET>(rnb_avg, a_max, eager_double_regret_, rnb0);
+            } else {
+                return GetPolicy<INT_REGRET>(rnb_avg, a_max, eager_int_regret_, rnb0);
+            }
+        }
+        case STRATEGY_ZIPAVG: {
+            if (zipavg_ != nullptr) {
+                return GetPolicy<ZIPAVG>(rnb_avg, a_max, zipavg_, rnb0);
+            } else {
+                char v[a_max];
+                {
+                    std::scoped_lock lk(mx1);
+                    file_ptr->seekg(rnb0);
+                    file_ptr->read(v, a_max);
+                }
+                ZIPAVG zip_v[a_max];
+                for (auto i = 0; i < a_max; i++) {
+                    zip_v[i] = v[i];
+                }
+                return GetPolicy<ZIPAVG>(rnb_avg, a_max, zip_v);
+            }
+        }
+        default: {
+            logger::critical("does not support this cal stratey mode %s", StrategyToNameMap[mode]);
+            break;
+        }
+    }
+#if DEV > 1
+    CheckAvgSum(rnb_avg, a_max);
+#endif
+    return 0;
+}
+#endif
 
 int Strategy::ComputeStrategy(Round_t r,
                               Node_t n,

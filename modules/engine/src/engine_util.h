@@ -43,8 +43,7 @@ int GetPolicy(float *inout_distr, int size, cuckoohash_map<size_t, T> *regrets, 
     T sum_pos_v = 0;
 
     for (int a = 0; a < size; a++) {
-        // positive_v[a] = std::max<T>(0, lt.try_emplace(offset + a).first->second);
-        // TODO(kwok): ❓
+        // TODO(kwok): 🐦
         regrets->template insert(offset + a);
         regrets->template find_fn(offset + a, [&](const auto &regret)
                                   {

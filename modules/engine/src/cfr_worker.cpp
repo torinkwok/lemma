@@ -352,9 +352,11 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sPrivateHandBelief *belief_d
                     this_node->reach_adjustment[b] += 1;
                     reach_i *= 10;
                     for (int a = 0; a < a_max; a++) {
-                        // strategy_->ulong_wavg_[rnb0 + a] *= 10;
-                        // strategy_->ulong_wavg_->try_emplace(rnb0 + a).first->second *= 10;
-                        // TODO(kwok): ❓
+#ifdef DEBUG_EAGER_LOOKUP
+                        // TODO(kwok): 🦊
+                        strategy_->eager_ulong_wavg_[rnb0 + a] *= 10;
+#endif
+                        // TODO(kwok): 🐦
                         strategy_->ulong_wavg_->upsert(rnb0 + a, [](auto &n) { n *= 10; });
                         // this_node->ulong_wavg_[this_node->HashBa(b, a)] *= 10;
                     }
@@ -374,10 +376,20 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sPrivateHandBelief *belief_d
                     this_node->reach_adjustment[b] -= 2;
                     reach_i *= 0.01;
                     for (int a = 0; a < a_max; a++) {
-                        // strategy_->ulong_wavg_[rnb0 + a] *= 0.01;
-                        // strategy_->ulong_wavg_->try_emplace(rnb0 + a).first->second *= 0.01;
-                        // TODO(kwok): ❓
+#ifdef DEBUG_EAGER_LOOKUP
+                        // TODO(kwok): 🦊
+                        strategy_->eager_ulong_wavg_[rnb0 + a] *= 0.01;
+#endif
+                        // TODO(kwok): 🐦
                         strategy_->ulong_wavg_->upsert(rnb0 + a, [](auto &n) { n *= 0.01; });
+#ifdef DEBUG_EAGER_LOOKUP
+                        if (strategy_->eager_ulong_wavg_[rnb0 + a] != strategy_->ulong_wavg_->find(rnb0 + a)) {
+                            logger::warn("🦊%ul vs. 🐦%ul",
+                                             strategy_->eager_ulong_wavg_[rnb0 + a],
+                                             strategy_->ulong_wavg_->find(rnb0 + a)
+                            );
+                        }
+#endif
                     }
                 }
                 pthread_mutex_unlock(&this_node->mutex_);
@@ -397,12 +409,23 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sPrivateHandBelief *belief_d
             }
 
             for (int a = 0; a < a_max; a++) {
-                // double new_wavg =
-                //         strategy_->ulong_wavg_->try_emplace(rnb0 + a).first->second + (reach_i * distr_rnb[a]);
-                // strategy_->ulong_wavg_->operator[](rnb0 + a) = (ULONG_WAVG) new_wavg;
-                auto accu = reach_i * distr_rnb[a];
-                // TODO(kwok): ❓
+                double accu = reach_i * distr_rnb[a];
+#ifdef DEBUG_EAGER_LOOKUP
+                // TODO(kwok): 🦊
+                double new_wavg = strategy_->eager_ulong_wavg_[rnb0 + a] + accu;
+                strategy_->eager_ulong_wavg_[rnb0 + a] = (ULONG_WAVG) new_wavg;
+#endif
+                // TODO(kwok): 🐦
                 strategy_->ulong_wavg_->upsert(rnb0 + a, [&](auto &n) { n += accu; }, accu);
+#ifdef DEBUG_EAGER_LOOKUP
+                if (strategy_->eager_ulong_wavg_[rnb0 + a] != strategy_->ulong_wavg_->find(rnb0 + a)) {
+                    logger::warn("🦊%lu vs. 🐦%lu vs. %lu",
+                                 strategy_->eager_ulong_wavg_[rnb0 + a],
+                                 strategy_->ulong_wavg_->find(rnb0 + a),
+                                 (ULONG_WAVG) new_wavg
+                    );
+                }
+#endif
             }
         }
 
@@ -417,27 +440,41 @@ void VectorCfrWorker::RangeRollout(Node *this_node, sPrivateHandBelief *belief_d
                 && action_prob == 0.0
                 && !this_node->children[a]->IsTerminal()
                 && this_node->children[a]->GetRound() != HOLDEM_ROUND_RIVER) {
-                // auto regret = strategy_->double_regret_->try_emplace(rnb0 + a).first->second;
-                // if (regret <= cfr_param_->rollout_prune_thres) {
-                //     // prune it and continue
-                //     child_ranges[a]->Prune(combo_index);
-                //     continue;
-                // }
-                bool is_pruned = false;
+#ifdef DEBUG_EAGER_LOOKUP
+                // TODO(kwok): 🦊
+                bool is_fox_pruned = false;
+                auto regret = strategy_->eager_double_regret_[rnb0 + a];
+                if (regret <= cfr_param_->rollout_prune_thres) {
+                    // prune it and continue
+                    child_ranges[a]->Prune(combo_index);
+                    is_fox_pruned = true;
+                }
+#endif
+                // TODO(kwok): 🐦
+                bool is_dove_pruned = false;
                 strategy_->double_regret_->insert(rnb0 + a);
                 strategy_->double_regret_->find_fn(rnb0 + a, [&](const auto &regret)
                                                    {
                                                        if (regret <= cfr_param_->rollout_prune_thres) {
                                                            // prune it and continue
                                                            child_ranges[a]->Prune(combo_index);
-                                                           // TODO(kwok): ❓
-                                                           is_pruned = true;
+                                                           is_dove_pruned = true;
                                                        }
                                                    }
                 );
-                if (is_pruned) {
+
+                if (is_dove_pruned
+#ifdef DEBUG_EAGER_LOOKUP
+                    && is_fox_pruned
+#endif
+                        ) {
                     continue;
                 }
+#ifdef DEBUG_EAGER_LOOKUP
+                else if (is_dove_pruned ^ is_fox_pruned) {
+                    logger::critical("🐦%d vs. 🦊%d", is_dove_pruned, is_fox_pruned);
+                }
+#endif
             }
 
             // zero all extremelly small values which <0.03
@@ -590,22 +627,25 @@ VectorCfrWorker::CollectRegrets(Node *this_node,
             }
             double cfu_child_a = child_cfus[a]->belief_[combo_index];
             double diff = cfu_child_a - cfu_combo_index; // the immediate regret
-            // double old_reg = strategy_->double_regret_->try_emplace(rnb0 + a).first->second;
-            // double new_reg = ClampRegret(old_reg, diff, cfr_param_->rm_floor);
-            // if (old_reg > pow(10, 15) || new_reg > pow(10, 15)) {
-            //     logger::critical(
-            //             "[old reg %.16f] too big![new reg %.16f] [%.16f] [diff %.16f] [u_action %.16f] [this_node_cfu %.16f]",
-            //             old_reg,
-            //             new_reg,
-            //             cfr_param_->rm_floor,
-            //             diff,
-            //             cfu_child_a,
-            //             this_node_cfu
-            //     );
-            // }
-            // strategy_->double_regret_->operator[](rnb0 + a) = new_reg;
+#ifdef DEBUG_EAGER_LOOKUP
+            // TODO(kwok): 🦊
+            double old_reg = strategy_->eager_double_regret_[rnb0 + a];
+            double new_reg = ClampRegret(old_reg, diff, cfr_param_->rm_floor);
+            if (old_reg > pow(10, 15) || new_reg > pow(10, 15)) {
+                logger::critical(
+                        "[old reg %.16f] too big![new reg %.16f] [%.16f] [diff %.16f] [u_action %.16f] [this_node_cfu %.16f]",
+                        old_reg,
+                        new_reg,
+                        cfr_param_->rm_floor,
+                        diff,
+                        cfu_child_a,
+                        this_node_cfu
+                );
+            }
+            strategy_->eager_double_regret_[rnb0 + a] = new_reg;
+#endif
+            // TODO(kwok): 🐦
             strategy_->double_regret_->insert(rnb0 + a);
-            // TODO(kwok): ❓
             strategy_->double_regret_->update_fn(rnb0 + a, [&](auto &regret)
                                                  {
                                                      double old_reg = regret;
@@ -639,5 +679,3 @@ std::vector<sPrivateHandBelief *> VectorCfrWorker::ExtractBeliefs(std::vector<Ra
     }
     return beliefs;
 }
-
-
