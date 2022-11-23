@@ -15,7 +15,7 @@
       }
     },
     "regret_matching": {
-      "floor": 0.0,
+      "floor": -20000.0,
       "avg_update_on": 0,
       "discounting": {
         "first_iter": 50000,
