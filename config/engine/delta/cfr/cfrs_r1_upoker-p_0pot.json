@@ -24,7 +24,7 @@
       }
     },
     "convergence": {
-      "max_iter": 20000
+      "max_iter": 100000
     }
   }
 }
