@@ -4,7 +4,7 @@
     "algo": "scalar",
     "depth_limited": {
       "on": true,
-      "reps": 1,
+      "reps": 100,
       "cache": true
     },
     "rollout": {
