@@ -340,6 +340,8 @@ double ScalarCfrWorker::RolloutLeafRootNode(Node *leaf_root_node, sPrivateHandsI
 
     double rollout_final_cfus[2]; // FIXME(kwok): The number of players is not supposed to be fixed to 2.
 
+    // SimpleTimer timer;
+
     // NOTE(kwok): The fundamental structure of the following giant loop:
     //      3 rollout reps (assumed here)
     //          2 trainees (a.k.a. traversers) FIXME(kwok): The number of players is not supposed to be fixed to 2.
@@ -415,7 +417,11 @@ double ScalarCfrWorker::RolloutLeafRootNode(Node *leaf_root_node, sPrivateHandsI
                 }
             }
         }
+
+        // timer.Checkpoint("🎰rollout round " + std::to_string(rollout_i) + " finished");
     }
+
+    // timer.Checkpoint("🦃all " + std::to_string(n_rollout_iters) + " rollouts finished");
 
     return rollout_final_cfus[0]; // only for player 0
 }
