@@ -753,16 +753,39 @@ int Strategy::ComputeStrategy(Round_t r,
             if (zipavg_ != nullptr) {
                 return GetPolicy<ZIPAVG>(rnb_avg, a_max, zipavg_, rnb0);
             } else {
-                char v[a_max];
-                {
-                    std::scoped_lock lk(mx1);
-                    file_ptr->seekg(rnb0);
-                    file_ptr->read(v, a_max);
-                }
                 ZIPAVG zip_v[a_max];
-                for (auto i = 0; i < a_max; i++) {
-                    zip_v[i] = v[i];
+
+                // char v[a_max];
+                // {
+                //     std::scoped_lock lk(mx1);
+                //     file_ptr->seekg(rnb0);
+                //     file_ptr->read(v, a_max);
+                // }
+                // for (auto i = 0; i < a_max; i++) {
+                //     zip_v[i] = v[i];
+                // }
+
+                if (_zipavg_cache.contains(rnb0)) {
+                    auto cache_vec = _zipavg_cache.find(rnb0);
+                    for (int i = 0; i < a_max; i++) {
+                        zip_v[i] = cache_vec[i];
+                    }
+                } else {
+                    char v[a_max];
+                    {
+                        std::scoped_lock lk(mx1);
+                        file_ptr->seekg(rnb0);
+                        file_ptr->read(v, a_max);
+                    }
+                    std::vector<ZIPAVG> cache_vec;
+                    cache_vec.reserve(a_max);
+                    for (auto i = 0; i < a_max; i++) {
+                        zip_v[i] = v[i];
+                        cache_vec.push_back(v[i]);
+                    }
+                    _zipavg_cache.insert(rnb0, cache_vec);
                 }
+
                 return GetPolicy<ZIPAVG>(rnb_avg, a_max, zip_v);
             }
         }
