@@ -5,7 +5,7 @@
     "depth_limited": {
       "on": true,
       "reps": 100,
-      "cache": true
+      "cache": false
     },
     "rollout": {
       "pruning": {
