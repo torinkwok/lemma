@@ -372,8 +372,8 @@ int Engine::GetAction(MatchState *current_acpc_match_state, Action &r_action, do
         if (remaining_ms > 0) {
             logger::debug("⏳remaining ms = %g", remaining_ms);
         } else {
-            logger::debug("🚨malformed ⏳remaining ms = %g. rounding it into 12000", remaining_ms);
-            remaining_ms = 20000;
+            logger::debug("🚨malformed ⏳remaining ms = %g. rounding it into zero", remaining_ms);
+            remaining_ms = 0;
         }
 
         logger::debug("⏳remaining ms = %g", remaining_ms);
