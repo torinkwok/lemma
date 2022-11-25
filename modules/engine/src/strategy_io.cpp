@@ -164,11 +164,11 @@ void SaveStrategy(Strategy *target, STRATEGY_TYPE type, const std::string &prefi
 void LoadStrategy(Strategy *target, STRATEGY_TYPE type, const std::string &prefix, bool disk_lookup)
 {
     if (disk_lookup && type != STRATEGY_ZIPAVG) {
-        logger::critical("only support disk loading for zipavg now");
+        logger::critical("only disk-loading for zipavg is supported for now");
     }
 
     std::filesystem::path dir(BULLDOG_DIR_DATA_STG);
-    //only support scalar mode load strategy. it is a hack cuz we dont quite load reg now
+    // only support scalar mode load strategy. it is a hack because we don't quite load reg now.
     if (disk_lookup) {
         logger::debug("strategy %s will read from disk", prefix);
         target->file_ptr = new std::ifstream(dir / (prefix + "." + StrategyToNameMap[type]), std::ios::binary);

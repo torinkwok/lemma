@@ -186,9 +186,10 @@ Engine::Engine(const char *engine_conf_file, Game *game, BucketPool *bucket_pool
                 logger::debug("Loading blueprint %s [disk %d]", name, disk_look_up);
                 LoadAG(blueprint_i, name, bucket_pool_, nullptr);
                 LoadStrategy(blueprint_i, STRATEGY_ZIPAVG, name, disk_look_up);
-                //the blueprint is never stack aware. dont use compatible
-                if (!Equal(normalized_game_, &blueprint_i->ag_->game_))
+                //the blueprint is never stack aware. don't use compatible
+                if (!Equal(normalized_game_, &blueprint_i->ag_->game_)) {
                     logger::critical("engine game != blueprint game");
+                }
                 blueprint_pool_->AddStrategy(blueprint_i);
             }
         }
