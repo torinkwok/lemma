@@ -753,40 +753,53 @@ int Strategy::ComputeStrategy(Round_t r,
             if (zipavg_ != nullptr) {
                 return GetPolicy<ZIPAVG>(rnb_avg, a_max, zipavg_, rnb0);
             } else {
-                ZIPAVG zip_v[a_max];
-
-                // char v[a_max];
+                // auto fox_begin_time = std::clock();
+                // ZIPAVG fox_zip_v[a_max];
+                //
+                // char fox_v[a_max];
                 // {
                 //     std::scoped_lock lk(mx1);
                 //     file_ptr->seekg(rnb0);
-                //     file_ptr->read(v, a_max);
+                //     file_ptr->read(fox_v, a_max);
                 // }
                 // for (auto i = 0; i < a_max; i++) {
-                //     zip_v[i] = v[i];
+                //     fox_zip_v[i] = fox_v[i];
                 // }
+                // // logger::info("🦊%ld", std::clock() - fox_begin_time);
+                // return GetPolicy<ZIPAVG>(rnb_avg, a_max, fox_zip_v);
+
+                auto dove_begin_time = std::clock();
+                ZIPAVG dove_zip_v[a_max];
 
                 if (_zipavg_cache.contains(rnb0)) {
                     auto cache_vec = _zipavg_cache.find(rnb0);
                     for (int i = 0; i < a_max; i++) {
-                        zip_v[i] = cache_vec[i];
+                        dove_zip_v[i] = cache_vec[i];
                     }
                 } else {
-                    char v[a_max];
+                    char dove_v[a_max];
                     {
                         std::scoped_lock lk(mx1);
                         file_ptr->seekg(rnb0);
-                        file_ptr->read(v, a_max);
+                        file_ptr->read(dove_v, a_max);
                     }
                     std::vector<ZIPAVG> cache_vec;
                     cache_vec.reserve(a_max);
                     for (auto i = 0; i < a_max; i++) {
-                        zip_v[i] = v[i];
-                        cache_vec.push_back(v[i]);
+                        dove_zip_v[i] = dove_v[i];
+                        cache_vec.push_back(dove_v[i]);
                     }
                     _zipavg_cache.insert(rnb0, cache_vec);
                 }
 
-                return GetPolicy<ZIPAVG>(rnb_avg, a_max, zip_v);
+                // for (int i = 0; i < a_max; i++) {
+                //     if (fox_zip_v[i] != dove_zip_v[i]) {
+                //         logger::critical("🦊%u != 🐦%u", fox_zip_v[i], dove_zip_v[i]);
+                //     }
+                // }
+                // logger::info("🐦%ld", std::clock() - dove_begin_time);
+
+                return GetPolicy<ZIPAVG>(rnb_avg, a_max, dove_zip_v);
             }
         }
         default: {
