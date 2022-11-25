@@ -437,9 +437,7 @@ double ScalarCfrWorker::RolloutLeafInterNodeWithBiasFavor(int trainee,
     int a_max = this_node->GetAmax();
 
     float continuation_distr_rnb[a_max]; // NOTE(kwok): one of the four continuation strategies
-    // auto begin_time = std::clock();
     blueprint_->ComputeStrategy(this_node, b, continuation_distr_rnb, STRATEGY_ZIPAVG);
-    // logger::info("🍄%ld", std::clock() - begin_time);
     auto bias_favor = bias_favors_for_all[acting_player];
 
     // find out the children that call
