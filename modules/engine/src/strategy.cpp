@@ -768,6 +768,7 @@ int Strategy::ComputeStrategy(Round_t r,
                 // // logger::info("🦊%ld", std::clock() - fox_begin_time);
                 // return GetPolicy<ZIPAVG>(rnb_avg, a_max, fox_zip_v);
 
+                // FIXME(kwok): Fix potential race conditions.
                 auto dove_begin_time = std::clock();
                 ZIPAVG dove_zip_v[a_max];
 
