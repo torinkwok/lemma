@@ -1,6 +1,6 @@
 {
   "blueprint": {
-    "disk" : true,
+    "disk" : false,
     "strategy_prefix": [
 //      "IR-169-9k-9k-9k_cfrs10m"
 //      "IR-100-100-100-100_cfrs15k"
