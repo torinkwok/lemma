@@ -52,8 +52,6 @@ public:
     cuckoohash_map<size_t, UINT_WAVG> *uint_wavg_ = nullptr;
 
     std::ifstream *file_ptr = nullptr;
-private:
-    mutable cuckoohash_map<size_t, std::vector<ZIPAVG>> _zipavg_cache;
 
 public:
 
