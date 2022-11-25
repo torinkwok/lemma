@@ -105,5 +105,7 @@ add_subdirectory(modules/core)
 add_subdirectory(modules/engine)
 add_subdirectory(modules/agent)
 
+add_subdirectory(cuckoo_lab)
+
 # Enable "make test" command
 enable_testing()
