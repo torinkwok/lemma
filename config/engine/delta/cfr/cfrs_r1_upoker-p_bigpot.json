@@ -24,6 +24,7 @@
       }
     },
     "convergence": {
+      "fixed_iter": 96000,
       "max_iter": 100000
     }
   }

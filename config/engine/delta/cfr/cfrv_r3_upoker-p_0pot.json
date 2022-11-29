@@ -12,6 +12,7 @@
       }
     },
     "convergence": {
+      "fixed_iter": 61000,
       "max_iter": 100000
     }
   }
