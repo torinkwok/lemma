@@ -210,7 +210,7 @@ int main(int argc, char *argv[])
             logger::debug(" [AGENT] : %s", line);
             Action action;
             //slumbot use normalized session.
-            engine->GetActionBySession(match_state, action, 60000);
+            engine->GetActionBySession(match_state, action, 30000);
             //      logger::debug(" [AGENT] : action returned from engine: %c%d", actionChars[action.type], action.size);
 
 #if 0
