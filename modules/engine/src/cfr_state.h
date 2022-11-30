@@ -19,25 +19,19 @@ struct sCFRState { // TODO(kwok): Rename as `sCFRProgress`.
       time_milli_seconds), iteration(iteration), exploitability(exploitability), expl_std(expl_std) {}
 
   double time_milli_seconds = -1;
-  std::optional<int> iteration;
+  int iteration = -1;
   double exploitability = -1;
   double expl_std = -1;
   std::vector<double> window_expl;
 
   virtual ~sCFRState() = default;
 
-  [[nodiscard]] std::string num_iterations_string() const {
-      return iteration.has_value() ? std::to_string(iteration.value()) : "inf";
-  }
-
   void UpdateState(int iter_increment, double time, double explt) {
       // FIXME(kwok): Potential race conditions.
     if (std::isnan(time) || std::isnan(explt)) {
       logger::error("====== Update State Values are NaN!!! ======");
     }
-    if (iteration.has_value()) {
-        iteration.value() += iter_increment;
-    }
+    iteration += iter_increment;
     time_milli_seconds = time;
     exploitability = explt;
     addToWindow(explt);
@@ -46,7 +40,7 @@ struct sCFRState { // TODO(kwok): Rename as `sCFRProgress`.
   bool operator<(const sCFRState &that) {
     bool time_flag = that.time_milli_seconds == -1 || this->time_milli_seconds < that.time_milli_seconds;
     // TODO(kwok): Justify it.
-    bool iter_flag = !that.iteration.has_value() || this->iteration < that.iteration;
+    bool iter_flag = that.iteration == -1 || this->iteration < that.iteration;
     bool expt_flag = that.exploitability == -1 || this->exploitability > that.exploitability;
     bool std_flag = that.expl_std == -1 || this->expl_std > that.expl_std;
     if (!(time_flag && iter_flag && expt_flag && std_flag)) {
@@ -54,11 +48,7 @@ struct sCFRState { // TODO(kwok): Rename as `sCFRProgress`.
           logger::info("cfr terminated || time_flag ended at time = %3.f", this->time_milli_seconds);
       }
       if (!iter_flag) {
-          if (that.iteration.has_value()) {
-              logger::info("cfr terminated || iter_flag ended at iteration = %d", this->iteration.value());
-          } else {
-              logger::info("cfr terminated || iter_flag ended at iteration = inf");
-          }
+          logger::info("cfr terminated || iter_flag ended at iteration = %d", this->iteration);
       }
       if (!expt_flag) {
           logger::info("cfr terminated || expt_flag ended at exploitability = %6.f", this->exploitability);
@@ -89,8 +79,8 @@ struct sCFRState { // TODO(kwok): Rename as `sCFRProgress`.
   }
 
   void Print() {
-    logger::info("iter = %s || expl = %f || expl_std = %f || total_training_time = %f (ms)",
-                 num_iterations_string(),
+    logger::info("iter = %d || expl = %f || expl_std = %f || total_training_time = %f (ms)",
+                 iteration,
                  exploitability,
                  expl_std,
                  time_milli_seconds);

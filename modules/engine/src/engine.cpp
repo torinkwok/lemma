@@ -552,7 +552,7 @@ void Engine::EvalShowdown(MatchState &match_state)
         );
 
         double real_b_canon_sum = 0.0;
-        std::set < Bucket_t > seen_bucket;
+        std::set<Bucket_t> seen_bucket;
         for (auto i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {
             double belief = pb_strategy->ag_->root_hand_beliefs_for_all_[opp_pos].belief_[i];
             // Skip belief values of 0.
@@ -884,22 +884,20 @@ int Engine::AsynStartCFRSolving(SubgameSolver *selected_sgs, Strategy *&new_stra
             std::ref(sgs_cancel_token_),
             0
     );
-    if (!selected_sgs->convergence_state_->iteration.has_value()) {
-        // interrupt if time's up
-        int async_span_count = (int) round(remaining_ms / 100);
-        std::chrono::milliseconds span(100);
-        int count = 0;
-        while (cfr_result_future.wait_for(span) == std::future_status::timeout) {
-            count++;
-            // FIXME(kwok): If `remaining_ms` is negative, it would not be useful.
-            // FIXME(kwok): count == async_span_count won't be respected.
-            if (count == async_span_count) {
-                AsynStopCFRSolving();
-            }
-        }
+    // interrupt if time's up
+    int async_span_count = (int) round(remaining_ms / 100);
+    std::chrono::milliseconds span(100);
+    int count = 0;
+    while (cfr_result_future.wait_for(span) == std::future_status::timeout) {
+        count++;
+        // FIXME(kwok): If `remaining_ms` is negative, it would not be useful.
+        // FIXME(kwok): count == async_span_count won't be respected.
         if (count == async_span_count) {
-            logger::debug("    [ENGINE %s] : force action return after %f ms", engine_name_, remaining_ms);
+            AsynStopCFRSolving();
         }
+    }
+    if (count == async_span_count) {
+        logger::debug("    [ENGINE %s] : force action return after %f ms", engine_name_, remaining_ms);
     }
     return cfr_result_future.get();
 }

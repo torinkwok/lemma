@@ -1,6 +1,6 @@
 {
   "cfr": {
-    "num_threads": 36,
+    "num_threads": 4,
     "algo": "scalar",
     "depth_limited": {
       "on": true,
@@ -24,7 +24,8 @@
       }
     },
     "convergence": {
-      "max_iter": 2000
+      "max_iter": 2000,
+      "timeout": 30000
     }
   }
 }
