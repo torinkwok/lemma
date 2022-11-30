@@ -78,8 +78,8 @@ int CFR::Solve(Strategy *blueprint,
                 case CMD_VECTOR_ALTERNATE_SOLVE :
                 case CMD_VECTOR_PAIRWISE_SOLVE : {
                     // todo: in fact we are not using the convergence state at all.
-                    logger::info("🚦current state iteration = %d, convergence iteration = %d",
-                                 current_state.iteration, convergence.iteration
+                    logger::info("🚦current state iteration = %s, convergence iteration = %s",
+                                 current_state.num_iterations_string(), convergence.num_iterations_string()
                     );
                     if (current_state < convergence) {
                         sTotalThreadOutput total_result;
@@ -125,11 +125,11 @@ int CFR::Solve(Strategy *blueprint,
                                                   br.avg_ + br.std_dev_, br.avg_ - br.std_dev_};
                         profiling_writer_.WriteToFile(br_tuple);
                     }
-                    logger::debug("PROFILER: br[%f] at iter [%d]", br.avg_, current_state.iteration);
+                    logger::debug("PROFILER: br[%f] at iter [%s]", br.avg_, current_state.num_iterations_string());
                     // In the case of blueprint training, inspect the strategy over time
                     if (strategy->ag_->root_node_->GetRound() == HOLDEM_ROUND_PREFLOP) {
                         auto name = strategy->ag_->name_ + "_" + local_cfr_param.name.substr(0, 7) + "_"
-                                    + std::to_string(current_state.iteration);
+                                    + current_state.num_iterations_string();
                         strategy->InspectPreflopBets(name, profiler_cfr_param.profiling_strategy_);
                     }
                     break;
@@ -144,7 +144,7 @@ int CFR::Solve(Strategy *blueprint,
                     break;
                 }
                 case CMD_DISCOUNTING : {
-                    int step = (current_state.iteration / local_cfr_param.rm_disc_interval) + 1;
+                    int step = (current_state.iteration.value() / local_cfr_param.rm_disc_interval) + 1;
                     //def of LCFR, (3/2, 2)
                     auto regret_factor =
                             (double) pow(step, local_cfr_param.lcfr_alpha) /
@@ -159,7 +159,7 @@ int CFR::Solve(Strategy *blueprint,
                 case CMD_SAVE_REG_WAVG : {
                     // Assuming CFR name beginning with either "cfrv" or "cfrs"
                     auto name = strategy->ag_->name_ + "_" + local_cfr_param.name.substr(0, 7) + "_"
-                                + std::to_string(current_state.iteration);
+                                + current_state.num_iterations_string();
                     SaveAG(strategy, name);
                     local_cfr_param.SaveCFRConfig(name);
                     // For now, we don't need checkpoints to do continuous training, hence no need for regret
@@ -192,7 +192,9 @@ int CFR::Solve(Strategy *blueprint,
                 }
             }
 #if DEV > 1
-            cmd.Log(current_state.iteration, cmd_timer.GetLapseFromBegin(), timer.GetLapseFromBegin());
+            cmd.Log(current_state.iteration.has_value() ? current_state.iteration.value() : -1,
+                    cmd_timer.GetLapseFromBegin(),
+                    timer.GetLapseFromBegin());
 #endif
         }
         // pop outside the checkpoint_check loop
@@ -205,19 +207,19 @@ int CFR::Solve(Strategy *blueprint,
     int return_code;
     if (cancelled) {
         //return the iteration checkpoint;
-        return_code = current_state.iteration >= CFR_SOLVING_TERMINATED_ASYNC_CHECKPOINT ?
-                      current_state.iteration : CFR_SOLVING_TERMINATED_ASYNC_CHECKPOINT;
+        return_code = current_state.iteration.value() >= CFR_SOLVING_TERMINATED_ASYNC_CHECKPOINT
+                      ? current_state.iteration.value()
+                      : CFR_SOLVING_TERMINATED_ASYNC_CHECKPOINT;
     } else if (!keep_solving) {
         return_code = CFR_SOLVING_TERMINATED_EARLY;
     } else {
         return_code = CFR_SOLVING_TERMINATED_ALL_COMMANDS;
     }
 
-    logger::debug("   [CFR] : solving time = %d (ms) || ends at iter %d || end code %s",
+    logger::debug("   [CFR] : solving time = %d (ms) || ends at iter %s || end code %s",
                   timer.GetLapseFromBegin(),
-                  current_state.iteration,
+                  current_state.num_iterations_string(),
                   PrintCfrResultCode(return_code));
-
     return return_code;
 }
 

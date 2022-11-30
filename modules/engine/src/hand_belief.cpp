@@ -54,10 +54,10 @@ void sPrivateHandBelief::Purify()
 void sPrivateHandBelief::PrintNonZeroBelief()
 {
     if (NonZeroBeliefCount() <= 100) {
-        std::string output = "hand belief | ";
+        std::string output = "hand belief: ";
         for (auto i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {
             if (belief_[i] > 0) {
-                output += VectorIdxToString(i) + ",";
+                output += VectorIdxToString(i) + " ~ ";
                 output += std::to_string(belief_[i]) + " | ";
             }
         }

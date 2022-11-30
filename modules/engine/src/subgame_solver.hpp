@@ -231,7 +231,7 @@ struct SubgameSolver {
         cfr_ = new CFR(sgs_conf.at("cfr_file").as_string().c_str());
         convergence_state_->iteration = cfr_->cfr_param_.iteration;
         cfr_->BuildCMDPipeline();
-        cfr_->profiling_writer_.prefix_ = cfr_->cfr_param_.name + "_" + std::to_string(convergence_state_->iteration);
+        cfr_->profiling_writer_.prefix_ = cfr_->cfr_param_.name + "_" + convergence_state_->num_iterations_string();
 
         // Setting playing strategy.
         if (sgs_conf.has_field("playing_strategy")) {
