@@ -216,10 +216,10 @@ int CFR::Solve(Strategy *blueprint,
         return_code = CFR_SOLVING_TERMINATED_ALL_COMMANDS;
     }
 
-    logger::debug("   [CFR] : solving time = %d (ms) || ends at iter %d || end code %s",
-                  timer.GetLapseFromBegin(),
-                  current_state.iteration,
-                  PrintCfrResultCode(return_code));
+    logger::info("   [CFR]: ⏳solving time = %d (ms) || ends at iter %d || end code %s",
+                 timer.GetLapseFromBegin(),
+                 current_state.iteration,
+                 PrintCfrResultCode(return_code));
     return return_code;
 }
 
