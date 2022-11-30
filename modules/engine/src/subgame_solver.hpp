@@ -230,6 +230,7 @@ struct SubgameSolver {
 
         cfr_ = new CFR(sgs_conf.at("cfr_file").as_string().c_str());
         convergence_state_->iteration = cfr_->cfr_param_.iteration;
+        convergence_state_->timeout_ms = cfr_->cfr_param_.timeout_ms;
         cfr_->BuildCMDPipeline();
         cfr_->profiling_writer_.prefix_ = cfr_->cfr_param_.name + "_" + std::to_string(convergence_state_->iteration);
 

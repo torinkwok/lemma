@@ -607,6 +607,13 @@ void CFR::Config(web::json::value data)
         auto conv_config = data.at("convergence");
         cfr_param_.iteration =
                 conv_config.has_field("max_iter") ? conv_config.at("max_iter").as_integer() : cfr_param_.iteration;
+        cfr_param_.timeout_ms =
+                conv_config.has_field("timeout_ms") ? conv_config.at("timeout_ms").as_integer() : cfr_param_.timeout_ms;
+        if (cfr_param_.timeout_ms.has_value() && cfr_param_.timeout_ms.value() <= 1000) {
+            logger::critical("[CFR %s]: timeout_ms = %llu is way too small",
+                             cfr_param_.name,
+                             cfr_param_.timeout_ms.value());
+        }
     }
 
     // depth limited searching

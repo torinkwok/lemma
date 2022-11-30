@@ -138,6 +138,9 @@ void train(const cxxopts::ParseResult &result)
     auto conv_config = cfr.cfr_param_.raw_.at("cfr").at("convergence");
     converge_state.iteration =
             conv_config.has_field("max_iter") ? conv_config.at("max_iter").as_integer() : converge_state.iteration;
+    if (conv_config.has_field("timeout_ms")) {
+        logger::critical("there is not supposed to be a timeout for blueprint training");
+    }
     converge_state.time_milli_seconds =
             conv_config.has_field("time_ms") ? conv_config.at("time_ms").as_double()
                                              : converge_state.time_milli_seconds;

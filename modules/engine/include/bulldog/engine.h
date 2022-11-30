@@ -84,9 +84,9 @@ public:
 
     int RefreshEngineState();
 
-    int GetAction(MatchState *current_acpc_match_state, Action &r_action, double timeout_ms);
+    int GetAction(MatchState *current_acpc_match_state, Action &r_action);
 
-    int GetActionBySession(MatchState &normalized_match_state, Action &r_action, int timeout);
+    int GetActionBySession(MatchState &normalized_match_state, Action &r_action);
 
     void EvalShowdown(MatchState &match_state);
 
@@ -128,7 +128,7 @@ private:
 
     void AsynStopCFRSolving();
 
-    int AsynStartCFRSolving(SubgameSolver *selected_sgs, Strategy *&new_strategy, double remaining_ms);
+    int AsynStartCFRSolving(SubgameSolver *selected_sgs, Strategy *&new_strategy);
 
     bool InputSanityCheck(MatchState *new_match_state);
 

@@ -258,7 +258,7 @@ Engine::Engine(const char *engine_conf_file, Game *game, BucketPool *bucket_pool
  * @param r_action
  * @return
  */
-int Engine::GetAction(MatchState *current_acpc_match_state, Action &r_action, double timeout_ms)
+int Engine::GetAction(MatchState *current_acpc_match_state, Action &r_action)
 {
     if (random_action_) {
         return GetRandomAction(current_acpc_match_state, r_action);
@@ -366,22 +366,7 @@ int Engine::GetAction(MatchState *current_acpc_match_state, Action &r_action, do
         new_strategy->name_ = selected_sgs->name_;  // To make the destruction recognizable.
         new_strategy->InitMemoryAndValue(selected_sgs->cfr_->cfr_param_.cfr_mode_);
 
-        // NOTE(kwok): I often drop breakpoints inside `CheckTriggerCondition()`. Such a pause
-        // will more than likely increase the time elapsed and render the result reported by
-        // `timer.GetLapseFromBegin()` invalid.
-        auto remaining_ms = timeout_ms - timer.GetLapseFromBegin();
-        if (remaining_ms > 0) {
-            logger::debug("⏳remaining ms = %g", remaining_ms);
-        } else {
-            logger::debug("🚨malformed ⏳remaining ms = %g. rounding it into zero", remaining_ms);
-            remaining_ms = 0;
-        }
-
-        logger::debug("⏳remaining ms = %g", remaining_ms);
-        cfr_return_code = AsynStartCFRSolving(selected_sgs,
-                                              new_strategy,
-                                              remaining_ms
-        );
+        cfr_return_code = AsynStartCFRSolving(selected_sgs, new_strategy);
         if (cfr_return_code < 0) {
             logger::error("    [ENGINE %sg_i] : 💢cfr solving error in subgame", engine_name_);
             return GET_ACTION_FAILURE;
@@ -588,20 +573,14 @@ void Engine::EvalShowdown(MatchState &match_state)
 /**
  * do match state translation and get action and do backward translation accordingly
  */
-int Engine::GetActionBySession(MatchState &normalized_match_state, Action &r_action, int timeout_ms)
+int Engine::GetActionBySession(MatchState &normalized_match_state, Action &r_action)
 {
     if (busy_flag_) {
         logger::error("    [ENGINE %s] : 💢still busy from the last request man");
         return GET_ACTION_FAILURE;
     }
 
-    if (timeout_ms <= 1000) {
-        logger::warn("    [ENGINE %s] : 🚨time_out %d is too short", engine_name_, timeout_ms);
-        return GET_ACTION_FAILURE;
-    }
-
-    // Leave 500ms leeway for other miscel expenses.
-    auto code = GetAction(&normalized_match_state, r_action, timeout_ms - 500);
+    auto code = GetAction(&normalized_match_state, r_action);
     if (code != GET_ACTION_SUCCESS) {
         logger::error("    [ENGINE %s] : 💢get action failure for some reason", engine_name_);
         return GET_ACTION_FAILURE;
@@ -871,7 +850,7 @@ bool Engine::ValidatePlaybook(PlayBook &playbook, MatchState *new_match_state, i
     return false;
 }
 
-int Engine::AsynStartCFRSolving(SubgameSolver *selected_sgs, Strategy *&new_strategy, double remaining_ms)
+int Engine::AsynStartCFRSolving(SubgameSolver *selected_sgs, Strategy *&new_strategy)
 {
     sgs_cancel_token_ = false; //safegaurding
     auto cfr_result_future = std::async(
@@ -884,20 +863,29 @@ int Engine::AsynStartCFRSolving(SubgameSolver *selected_sgs, Strategy *&new_stra
             std::ref(sgs_cancel_token_),
             0
     );
-    // interrupt if time's up
-    int async_span_count = (int) round(remaining_ms / 100);
-    std::chrono::milliseconds span(100);
-    int count = 0;
-    while (cfr_result_future.wait_for(span) == std::future_status::timeout) {
-        count++;
-        // FIXME(kwok): If `remaining_ms` is negative, it would not be useful.
-        // FIXME(kwok): count == async_span_count won't be respected.
-        if (count == async_span_count) {
-            AsynStopCFRSolving();
+    std::optional<uint64_t> gross_timeout_ms = selected_sgs->convergence_state_->timeout_ms;
+    int max_iter = selected_sgs->convergence_state_->iteration;
+    if (gross_timeout_ms.has_value()) {
+        logger::info("   [CFR]: converge on [✅timeout_ms = %llu, 🚫max_iter = %d]", gross_timeout_ms.value(), max_iter);
+        int count = 0;
+        uint64_t net_timeout_ms = gross_timeout_ms.value() - 500; // half a second leeway for other computing craps
+        int async_span_count = (int) round(net_timeout_ms / 100);
+        std::chrono::milliseconds span(100);
+        while (cfr_result_future.wait_for(span) == std::future_status::timeout) {
+            count++;
+            // FIXME(kwok): count == async_span_count won't be respected.
+            if (count == async_span_count) {
+                // interrupt when time's up
+                AsynStopCFRSolving();
+            }
         }
-    }
-    if (count == async_span_count) {
-        logger::debug("    [ENGINE %s] : force action return after %f ms", engine_name_, remaining_ms);
+        if (count == async_span_count) {
+            logger::debug("    [ENGINE %s] : MCCFR solving was interrupted after %llu ms",
+                          engine_name_, net_timeout_ms
+            );
+        }
+    } else {
+        logger::info("   [CFR]: converge on [🚫timeout_ms = inf, ✅max_iter = %d]", max_iter);
     }
     return cfr_result_future.get();
 }

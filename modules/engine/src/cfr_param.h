@@ -93,6 +93,8 @@ struct sCfrParam
     std::string name;
 
     int iteration = 0;
+    std::optional<uint64_t> timeout_ms;
+
     /*
      * rollout
      */
