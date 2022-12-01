@@ -1,5 +1,5 @@
-#ifndef BULLDOG_MODULES_ENGINE_SRC_CARD_ABS_HPP_
-#define BULLDOG_MODULES_ENGINE_SRC_CARD_ABS_HPP_
+#ifndef AUTODIDACT_MODULES_ENGINE_SRC_CARD_ABS_HPP_
+#define AUTODIDACT_MODULES_ENGINE_SRC_CARD_ABS_HPP_
 
 #include <utility>
 #include <cpprest/json.h>
@@ -72,4 +72,4 @@ private:
     BucketPool *bucket_pool_;
 };
 
-#endif //BULLDOG_MODULES_ENGINE_SRC_CARD_ABS_HPP_
+#endif //AUTODIDACT_MODULES_ENGINE_SRC_CARD_ABS_HPP_

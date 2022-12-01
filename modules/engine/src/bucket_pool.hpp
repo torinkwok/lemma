@@ -1,5 +1,5 @@
-#ifndef BULLDOG_MODULES_ENGINE_SRC_BUCKET_POOL_HPP_
-#define BULLDOG_MODULES_ENGINE_SRC_BUCKET_POOL_HPP_
+#ifndef AUTODIDACT_MODULES_ENGINE_SRC_BUCKET_POOL_HPP_
+#define AUTODIDACT_MODULES_ENGINE_SRC_BUCKET_POOL_HPP_
 
 #include "bucket.h"
 #include <map>
@@ -49,7 +49,7 @@ public:
     static sBucketMeta *LoadBucket(const std::string &name, bool lossless = false)
     {
         auto *meta = new sBucketMeta();
-        std::filesystem::path dir(BULLDOG_DIR_DATA_ABS);
+        std::filesystem::path dir(AUTODIDACT_DIR_DATA_ABS);
         if (name.substr(0, 12) == "hierarchical") {
             // LazyLoadBucketMeta the round number.
             std::vector<std::string> parsed_str;
@@ -93,4 +93,4 @@ private:
     > _bucket_meta_pool;
 };
 
-#endif //BULLDOG_MODULES_ENGINE_SRC_BUCKET_POOL_HPP_
+#endif //AUTODIDACT_MODULES_ENGINE_SRC_BUCKET_POOL_HPP_

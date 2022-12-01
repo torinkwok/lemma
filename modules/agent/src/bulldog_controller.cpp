@@ -414,7 +414,7 @@ bool BulldogController::LoadDefault(std::string engine_file_name,
 {
     //Initiate Game
     Game *game = nullptr;;
-    std::filesystem::path game_dir(BULLDOG_DIR_CFG_GAME);
+    std::filesystem::path game_dir(AUTODIDACT_DIR_CFG_GAME);
     FILE *file = fopen((game_dir / game_conf).c_str(), "r");
     if (file == nullptr) {
         logger::critical("Failed to find file %s", (game_dir / game_conf));
@@ -429,7 +429,7 @@ bool BulldogController::LoadDefault(std::string engine_file_name,
     default_engine_conf_ = engine_file_name;
 
     //configure default blueprint
-    std::filesystem::path eng_dir(BULLDOG_DIR_CFG_ENG);
+    std::filesystem::path eng_dir(AUTODIDACT_DIR_CFG_ENG);
     std::ifstream blueprint_f(eng_dir / default_engine_conf_);
     web::json::value data;
     if (blueprint_f.good()) {

@@ -65,7 +65,7 @@ TEST_CASE("test server-engine interface") {
   logger::init_logger("debug");
   //Initiate Game
   Game *game = nullptr;
-  std::filesystem::path dir(BULLDOG_DIR_CFG_GAME);
+  std::filesystem::path dir(AUTODIDACT_DIR_CFG_GAME);
   std::filesystem::path filename("holdem.nolimit.2p.game");
   FILE *file = fopen((dir / filename).c_str(), "r");
   if (file == nullptr) {
@@ -126,7 +126,7 @@ TEST_CASE("test server-engine interface") {
 }
 
 TEST_CASE("engine mapping") {
-  std::filesystem::path dir(BULLDOG_DIR_CFG_GAME);
+  std::filesystem::path dir(AUTODIDACT_DIR_CFG_GAME);
   Game *game = nullptr;
   FILE *file = fopen((dir / "holdem.nolimit.2p.game").c_str(), "r");
   game = readGame(file);
@@ -144,7 +144,7 @@ TEST_CASE("engine mapping") {
 }
 
 TEST_CASE("test action chooser") {
-  std::filesystem::path dir(BULLDOG_DIR_CFG_GAME);
+  std::filesystem::path dir(AUTODIDACT_DIR_CFG_GAME);
   std::filesystem::path game_file("holdem.nolimit.2p.game");
   FILE *file = fopen((dir / game_file).c_str(), "r");
   if (file == nullptr) {

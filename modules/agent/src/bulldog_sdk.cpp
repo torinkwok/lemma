@@ -12,19 +12,19 @@ bool BulldogSDK::Ping(lLogger f) const
                              .to_string())
             .then([&](const web::http::http_response &response)
                   {
-                      f(const_cast<char *>("BULLDOG SDK: Ping() request return %d\n"), response.status_code());
+                      f(const_cast<char *>("AUTODIDACT SDK: Ping() request return %d\n"), response.status_code());
                       if (response.status_code() != web::http::status_codes::OK)
                           throw std::runtime_error(utility::conversions::to_utf8string(response.to_string()));
                   }
             );
     //do the work
     try {
-        f(const_cast<char *>("BULLDOG SDK: request to check heartbeat\n"));
+        f(const_cast<char *>("AUTODIDACT SDK: request to check heartbeat\n"));
         requestJson.wait();
         return true;
     }
     catch (const std::exception &e) {
-        f(const_cast<char *>("BULLDOG SDK: %s\n"), e.what());
+        f(const_cast<char *>("AUTODIDACT SDK: %s\n"), e.what());
         return false;
     }
 }
@@ -49,12 +49,12 @@ bool BulldogSDK::SendHeartbeat(lLogger f) const
             );
     //do the work
     try {
-        //f(const_cast<char *>("BULLDOG SDK: request to check heartbeat\n"));
+        //f(const_cast<char *>("AUTODIDACT SDK: request to check heartbeat\n"));
         requestJson.wait();
         return true;
     }
     catch (const std::exception &e) {
-        f(const_cast<char *>("BULLDOG SDK: %s\n"), e.what());
+        f(const_cast<char *>("AUTODIDACT SDK: %s\n"), e.what());
         return false;
     }
 }
@@ -62,7 +62,7 @@ bool BulldogSDK::SendHeartbeat(lLogger f) const
 bool BulldogSDK::CreateTableSession(lLogger f, std::string game_conf, std::string table)
 {
     if (!session_id_.empty()) {
-        f(const_cast<char *>("BULLDOG SDK: already have session id %s\n"), session_id_.c_str());
+        f(const_cast<char *>("AUTODIDACT SDK: already have session id %s\n"), session_id_.c_str());
         return false;
     }
 
@@ -77,27 +77,27 @@ bool BulldogSDK::CreateTableSession(lLogger f, std::string game_conf, std::strin
                              .to_string())
             .then([&](const web::http::http_response &response)
                   {
-                      f(const_cast<char *>("BULLDOG SDK: CreateTableSession retured %d\n"), response.status_code());
+                      f(const_cast<char *>("AUTODIDACT SDK: CreateTableSession retured %d\n"), response.status_code());
                       if (response.status_code() == web::http::status_codes::Created) {
                           auto json = response.extract_json().get();
                           session_id_ = json.at(PARAM_SESSION_ID).as_string();
-                          f(const_cast<char *>("BULLDOG SDK: engine returns session_id = %s\n"), session_id_.c_str());
+                          f(const_cast<char *>("AUTODIDACT SDK: engine returns session_id = %s\n"), session_id_.c_str());
                       } else if (response.status_code() == web::http::status_codes::BadRequest) {
-                          f(const_cast<char *>("BULLDOG SDK: bad request %s %s\n"), game_conf.c_str(), table.c_str());
+                          f(const_cast<char *>("AUTODIDACT SDK: bad request %s %s\n"), game_conf.c_str(), table.c_str());
                           throw std::runtime_error(utility::conversions::to_utf8string(response.to_string()));
                       } else if (response.status_code() == web::http::status_codes::ServiceUnavailable) {
-                          f(const_cast<char *>("BULLDOG SDK: service unavailable\n"));
+                          f(const_cast<char *>("AUTODIDACT SDK: service unavailable\n"));
                           throw std::runtime_error(utility::conversions::to_utf8string(response.to_string()));
                       }
                   }
             );
     try {
-        f(const_cast<char *>("BULLDOG SDK: try creating table session\n"));
+        f(const_cast<char *>("AUTODIDACT SDK: try creating table session\n"));
         requestJson.wait();
         return true;
     }
     catch (const std::exception &e) {
-        f(const_cast<char *>("BULLDOG SDK: %s\n"), e.what());
+        f(const_cast<char *>("AUTODIDACT SDK: %s\n"), e.what());
         return false;
     }
 }
@@ -105,7 +105,7 @@ bool BulldogSDK::CreateTableSession(lLogger f, std::string game_conf, std::strin
 bool BulldogSDK::DeleteTableSession(lLogger f) const
 {
     if (session_id_.empty()) {
-        f(const_cast<char *>("BULLDOG SDK: not yet have session id\n"));
+        f(const_cast<char *>("AUTODIDACT SDK: not yet have session id\n"));
         return false;
     }
 
@@ -117,7 +117,7 @@ bool BulldogSDK::DeleteTableSession(lLogger f) const
                              .to_string())
             .then([&](const web::http::http_response &response)
                   {
-                      f(const_cast<char *>("BULLDOG SDK: DeleteTableSession() retured %d\n"), response.status_code());
+                      f(const_cast<char *>("AUTODIDACT SDK: DeleteTableSession() retured %d\n"), response.status_code());
                       switch (response.status_code()) {
                           case web::http::status_codes::OK:
                               break;
@@ -129,12 +129,12 @@ bool BulldogSDK::DeleteTableSession(lLogger f) const
                   }
             );
     try {
-        f(const_cast<char *>("BULLDOG SDK: try deleting table session\n"));
+        f(const_cast<char *>("AUTODIDACT SDK: try deleting table session\n"));
         requestJson.wait();
         return true;
     }
     catch (const std::exception &e) {
-        f(const_cast<char *>("BULLDOG SDK: %s\n"), e.what());
+        f(const_cast<char *>("AUTODIDACT SDK: %s\n"), e.what());
         return false;
     }
 }
@@ -142,7 +142,7 @@ bool BulldogSDK::DeleteTableSession(lLogger f) const
 bool BulldogSDK::NewHand(lLogger f)
 {
     if (in_hand_) {
-        f(const_cast<char *>("BULLDOG SDK: should call EndHand after a hand\n"));
+        f(const_cast<char *>("AUTODIDACT SDK: should call EndHand after a hand\n"));
         return false;
     }
     //let the server node
@@ -153,7 +153,7 @@ bool BulldogSDK::NewHand(lLogger f)
                              .to_string())
             .then([&](const web::http::http_response &response)
                   {
-                      f(const_cast<char *>("BULLDOG SDK: NewHand() retured %d\n"), response.status_code());
+                      f(const_cast<char *>("AUTODIDACT SDK: NewHand() retured %d\n"), response.status_code());
                       switch (response.status_code()) {
                           case web::http::status_codes::OK:
                               break;
@@ -165,13 +165,13 @@ bool BulldogSDK::NewHand(lLogger f)
                   }
             );
     try {
-        f(const_cast<char *>("BULLDOG SDK: try creating table session\n"));
+        f(const_cast<char *>("AUTODIDACT SDK: try creating table session\n"));
         requestJson.wait();
         in_hand_ = true;
         return true;
     }
     catch (const std::exception &e) {
-        f(const_cast<char *>("BULLDOG SDK: %s\n"), e.what());
+        f(const_cast<char *>("AUTODIDACT SDK: %s\n"), e.what());
         return false;
     }
 }
@@ -179,7 +179,7 @@ bool BulldogSDK::NewHand(lLogger f)
 bool BulldogSDK::EndHand(lLogger f)
 {
     if (!in_hand_) {
-        f(const_cast<char *>("BULLDOG SDK: you are not in a hand right now\n"));
+        f(const_cast<char *>("AUTODIDACT SDK: you are not in a hand right now\n"));
         return false;
     }
 
@@ -190,7 +190,7 @@ bool BulldogSDK::EndHand(lLogger f)
                              .to_string())
             .then([&](const web::http::http_response &response)
                   {
-                      f(const_cast<char *>("BULLDOG SDK: EndHand() retured %d\n"), response.status_code());
+                      f(const_cast<char *>("AUTODIDACT SDK: EndHand() retured %d\n"), response.status_code());
                       switch (response.status_code()) {
                           case web::http::status_codes::OK:
                               break;
@@ -203,20 +203,20 @@ bool BulldogSDK::EndHand(lLogger f)
             );
 
     try {
-        f(const_cast<char *>("BULLDOG SDK: try EndHand()\n"));
+        f(const_cast<char *>("AUTODIDACT SDK: try EndHand()\n"));
         requestJson.wait();
         in_hand_ = false;
         return true;
     }
     catch (const std::exception &e) {
-        f(const_cast<char *>("BULLDOG SDK: %s\n"), e.what());
+        f(const_cast<char *>("AUTODIDACT SDK: %s\n"), e.what());
         return false;
     }
 }
 
 bool BulldogSDK::GetAction(lLogger f, Game *game, MatchState &new_match_state, Action &r_action, int timeout) const
 {
-    f(const_cast<char *>("BULLDOG SDK - get action from sdk\n"));
+    f(const_cast<char *>("AUTODIDACT SDK - get action from sdk\n"));
     char match_state_str[MAX_LINE_LEN];
     printMatchState(game, &new_match_state, MAX_LINE_LEN, match_state_str);
     auto match_str = utility::conversions::to_string_t(match_state_str);
@@ -230,7 +230,7 @@ bool BulldogSDK::GetAction(lLogger f, Game *game, MatchState &new_match_state, A
                              .to_string())
             .then([=](const web::http::http_response &response)
                   {
-                      //        f(const_cast<char *>("BULLDOG SDK: returned %d\n"), response.status_code());
+                      //        f(const_cast<char *>("AUTODIDACT SDK: returned %d\n"), response.status_code());
                       if (response.status_code() == web::http::status_codes::OK) {
                           return response.extract_json(true);
                       }
@@ -250,16 +250,16 @@ bool BulldogSDK::GetAction(lLogger f, Game *game, MatchState &new_match_state, A
                           throw std::runtime_error("SDK:  no such action type");
                       }
                       r_action.size = jsonObject.at(U("size")).as_integer();
-                      f(const_cast<char *>("BULLDOG SDK: returned %c%d\n"), actionChars[r_action.type], r_action.size);
+                      f(const_cast<char *>("AUTODIDACT SDK: returned %c%d\n"), actionChars[r_action.type], r_action.size);
                   }
             );
     try {
-        f(const_cast<char *>("BULLDOG SDK: try GetAction\n"));
+        f(const_cast<char *>("AUTODIDACT SDK: try GetAction\n"));
         requestJson.wait();
         return true;
     }
     catch (const std::exception &e) {
-        f(const_cast<char *>("BULLDOG SDK: %s\n"), e.what());
+        f(const_cast<char *>("AUTODIDACT SDK: %s\n"), e.what());
         return false;
     }
 }
@@ -267,7 +267,7 @@ bool BulldogSDK::GetAction(lLogger f, Game *game, MatchState &new_match_state, A
 bool BulldogSDK::ChangeBlinds(lLogger f, int smallblind, int bigblind)
 {
     if (session_id_.empty()) {
-        f(const_cast<char *>("BULLDOG SDK: should create session first\n"));
+        f(const_cast<char *>("AUTODIDACT SDK: should create session first\n"));
         return false;
     }
 
@@ -282,20 +282,20 @@ bool BulldogSDK::ChangeBlinds(lLogger f, int smallblind, int bigblind)
                              .to_string())
             .then([&](const web::http::http_response &response)
                   {
-                      f(const_cast<char *>("BULLDOG SDK: ChangeBlinds returned %d\n"), response.status_code());
+                      f(const_cast<char *>("AUTODIDACT SDK: ChangeBlinds returned %d\n"), response.status_code());
                       if (response.status_code() != web::http::status_codes::OK) {
-                          f(const_cast<char *>("BULLDOG SDK: bad request [sb %d]  [bb %d]\n"), smallblind, bigblind);
+                          f(const_cast<char *>("AUTODIDACT SDK: bad request [sb %d]  [bb %d]\n"), smallblind, bigblind);
                           throw std::runtime_error(utility::conversions::to_utf8string(response.to_string()));
                       }
                   }
             );
     try {
-        f(const_cast<char *>("BULLDOG SDK: try creating table session\n"));
+        f(const_cast<char *>("AUTODIDACT SDK: try creating table session\n"));
         requestJson.wait();
         return true;
     }
     catch (const std::exception &e) {
-        f(const_cast<char *>("BULLDOG SDK: %s\n", e.what()));
+        f(const_cast<char *>("AUTODIDACT SDK: %s\n", e.what()));
         return false;
     }
 }
@@ -307,14 +307,14 @@ bool BulldogSDK::AutoSearchEndpoint(lLogger f)
         if (Ping(f))
             return true;
     }
-    f(const_cast<char *>("BULLDOG SDK: cant find viable endpoint\n"));
+    f(const_cast<char *>("AUTODIDACT SDK: cant find viable endpoint\n"));
     return false;
 }
 
 bool BulldogSDK::EvalState(lLogger f, Game *game, MatchState &matchstate) const
 {
     if (session_id_.empty()) {
-        f(const_cast<char *>("BULLDOG SDK: should create session first\n"));
+        f(const_cast<char *>("AUTODIDACT SDK: should create session first\n"));
         return false;
     }
 
@@ -326,7 +326,7 @@ bool BulldogSDK::EvalState(lLogger f, Game *game, MatchState &matchstate) const
     for (auto p = 0; p < game->numPlayers; p++) {
         for (auto c = 0; c < game->numHoleCards; c++) {
             if (matchstate.state.holeCards[p][c] == UNDEFINED_CARD) {
-                f(const_cast<char *>("BULLDOG SDK: undefined card, skip sending to server\n"));
+                f(const_cast<char *>("AUTODIDACT SDK: undefined card, skip sending to server\n"));
                 return false;
             }
         }
@@ -344,19 +344,19 @@ bool BulldogSDK::EvalState(lLogger f, Game *game, MatchState &matchstate) const
                              .to_string())
             .then([&](const web::http::http_response &response)
                   {
-                      f(const_cast<char *>("BULLDOG SDK: returned %d\n"), response.status_code());
+                      f(const_cast<char *>("AUTODIDACT SDK: returned %d\n"), response.status_code());
                       if (response.status_code() != web::http::status_codes::OK) {
                           throw std::runtime_error(utility::conversions::to_utf8string(response.to_string()));
                       }
                   }
             );
     try {
-        f(const_cast<char *>("BULLDOG SDK: try GetAction\n"));
+        f(const_cast<char *>("AUTODIDACT SDK: try GetAction\n"));
         requestJson.wait();
         return true;
     }
     catch (const std::exception &e) {
-        f(const_cast<char *>("BULLDOG SDK: %s\n"), e.what());
+        f(const_cast<char *>("AUTODIDACT SDK: %s\n"), e.what());
         return false;
     }
 }

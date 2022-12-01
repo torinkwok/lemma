@@ -51,7 +51,7 @@ void train(const cxxopts::ParseResult &result)
         ag_conf = result["builder"].as<std::string>();
     } else {
         //read the sgs file, and extract accordingly
-        std::filesystem::path dir(BULLDOG_DIR_CFG_ENG);
+        std::filesystem::path dir(AUTODIDACT_DIR_CFG_ENG);
         std::filesystem::path filename(result["sgs"].as<std::string>().c_str());
         // std::ifstream sgs_file(dir / filename, std::ios::in);
         std::ifstream sgs_file;
@@ -76,7 +76,7 @@ void train(const cxxopts::ParseResult &result)
 
     //config logger. Supports only 4 log_level right now.
     if (result.count("log_file")) {
-        std::filesystem::path dir(BULLDOG_DIR_LOG);
+        std::filesystem::path dir(AUTODIDACT_DIR_LOG);
         std::filesystem::path filename(cfr.cfr_param_.name + "_" + result["exp_tag"].as<std::string>() + "_"
                                        + std::to_string(cfr.cfr_param_.iteration) + ".log"
         );
@@ -113,7 +113,7 @@ void train(const cxxopts::ParseResult &result)
         LoadStrategy(strategy, STRATEGY_WAVG, prefix, false);
     } else {
         auto ag = new AbstractGame();
-        std::filesystem::path dir(BULLDOG_DIR_CFG_ENG);
+        std::filesystem::path dir(AUTODIDACT_DIR_CFG_ENG);
         std::filesystem::path file(ag_conf);
         auto cut_tail = ag_conf.substr(0, ag_conf.length() - 5);
         ag->name_ = cut_tail.substr(11, 20); //get ride of prefix "builder_r0_" and postfix ".json"

@@ -1,5 +1,5 @@
-#ifndef BULLDOG_MODULES_CORE_INCLUDE_BULLDOG_TABLE_UTIL_H_
-#define BULLDOG_MODULES_CORE_INCLUDE_BULLDOG_TABLE_UTIL_H_
+#ifndef AUTODIDACT_MODULES_CORE_INCLUDE_AUTODIDACT_TABLE_UTIL_H_
+#define AUTODIDACT_MODULES_CORE_INCLUDE_AUTODIDACT_TABLE_UTIL_H_
 
 extern "C" {
 #include "game.h"
@@ -84,4 +84,4 @@ bool TableActionToAction(Game* game, State& state, TableAction& table_action, Ac
 TableAction MapToTableAction(Game* game, State& staet, Action &action);
 bool IsTableActionPresent(Game *game, State &state, TableAction table_action);
 
-#endif //BULLDOG_MODULES_CORE_INCLUDE_BULLDOG_TABLE_UTIL_H_
+#endif //AUTODIDACT_MODULES_CORE_INCLUDE_AUTODIDACT_TABLE_UTIL_H_

@@ -1,5 +1,5 @@
-#ifndef BULLDOG_MODULES_CORE_SRC_LOGGER_HPP_
-#define BULLDOG_MODULES_CORE_SRC_LOGGER_HPP_
+#ifndef AUTODIDACT_MODULES_CORE_SRC_LOGGER_HPP_
+#define AUTODIDACT_MODULES_CORE_SRC_LOGGER_HPP_
 
 #include <string>
 #include <map>
@@ -252,4 +252,4 @@ static void require_critical(bool b, const std::string &s, const Args &... args)
 }
 }
 
-#endif //BULLDOG_MODULES_CORE_SRC_LOGGER_HPP_
+#endif //AUTODIDACT_MODULES_CORE_SRC_LOGGER_HPP_

@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
     // Log level
     std::string log_level = result["log_level"].as<std::string>();
     if (result.count("log_output")) {
-        std::filesystem::path dir(BULLDOG_DIR_LOG);
+        std::filesystem::path dir(AUTODIDACT_DIR_LOG);
         std::filesystem::path filename(result["log_output"].as<std::string>());
         logger::init_logger(dir / filename, log_level);
     } else {
@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
 
     // ACPC-flavor game initialization.
     Game *game = nullptr;
-    std::filesystem::path dir(BULLDOG_DIR_CFG_GAME);
+    std::filesystem::path dir(AUTODIDACT_DIR_CFG_GAME);
     std::filesystem::path filename(result["game"].as<std::string>());
     FILE *file = fopen((dir / filename).c_str(), "r");
     if (file == nullptr) {

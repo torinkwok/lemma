@@ -1,5 +1,5 @@
-#ifndef BULLDOG_MODULES_ENGINE_SRC_BUILDER_HPP_
-#define BULLDOG_MODULES_ENGINE_SRC_BUILDER_HPP_
+#ifndef AUTODIDACT_MODULES_ENGINE_SRC_BUILDER_HPP_
+#define AUTODIDACT_MODULES_ENGINE_SRC_BUILDER_HPP_
 
 #include <flatbuffers/flexbuffers.h>
 #include <NumCpp.hpp>
@@ -184,7 +184,7 @@ public:
             index++;
         }
 
-        std::filesystem::path dir(BULLDOG_DIR_DATA_ABS);
+        std::filesystem::path dir(AUTODIDACT_DIR_DATA_ABS);
         std::filesystem::path file(BUCKET_FILE_PREFIX + "_" + ofilemeta_ + BUCKET_FILE_EXT);
         logger::info("saving bucket of size %d", bucket_map_.size());
         Bucket::Save(bucket_map_, dir / file);
@@ -208,7 +208,7 @@ public:
                 std::to_string(num_clusters) + "_" + std::to_string(priv_cards_num) + "_" +
                 std::to_string(pub_cards_num);
 
-        std::filesystem::path dir(BULLDOG_DIR_DATA_ABS);
+        std::filesystem::path dir(AUTODIDACT_DIR_DATA_ABS);
         std::filesystem::path file
                 (FEATURE_PREFIX + "_" + ifilemeta + std::to_string(priv_cards_num) + "_" + std::to_string(pub_cards_num)
                  + FEATURE_EXT
@@ -234,7 +234,7 @@ public:
             logger::critical("threads > hardware availability");
         }
         if (mode_ == KMeans::InitCheckpoint) {
-            std::filesystem::path dir(BULLDOG_DIR_DATA_ABS);
+            std::filesystem::path dir(AUTODIDACT_DIR_DATA_ABS);
             std::filesystem::path file(BUCKET_CP_PREFIX + "_" + ofilemeta_ + BUCKET_CP_EXT);
             if (!std::filesystem::exists(dir / file)) {
                 logger::critical("missing %s", dir / file);
@@ -314,7 +314,7 @@ public:
                 std::to_string(num_clusters) + "_" + std::to_string(priv_cards_num) + "_" +
                 std::to_string(pub_cards_num);
 
-        std::filesystem::path dir(BULLDOG_DIR_DATA_ABS);
+        std::filesystem::path dir(AUTODIDACT_DIR_DATA_ABS);
         std::filesystem::path file
                 (FEATURE_PREFIX + "_" + ifilemeta + std::to_string(priv_cards_num) + "_" + std::to_string(pub_cards_num)
                  + FEATURE_EXT
@@ -340,7 +340,7 @@ public:
             logger::critical("threads > hardware availability");
         }
         if (mode_ == KMeans::InitCheckpoint) {
-            std::filesystem::path dir(BULLDOG_DIR_DATA_ABS);
+            std::filesystem::path dir(AUTODIDACT_DIR_DATA_ABS);
             std::filesystem::path file(BUCKET_CP_PREFIX + "_" + ofilemeta_ + BUCKET_CP_EXT);
             if (!std::filesystem::exists(dir / file)) {
                 logger::critical("missing %s", dir / file);
@@ -417,7 +417,7 @@ public:
                 std::to_string(base_num_clusters) + "_" + std::to_string(priv_cards_num) + "_" +
                 std::to_string(pub_cards_num);
 
-        std::filesystem::path dir(BULLDOG_DIR_DATA_ABS);
+        std::filesystem::path dir(AUTODIDACT_DIR_DATA_ABS);
         std::filesystem::path
                 file(
                 BUCKET_FILE_PREFIX + "_" + std::to_string(base_num_clusters) + "_" + std::to_string(priv_cards_num) +
@@ -461,7 +461,7 @@ public:
         }
 
         if (mode_ == KMeans::InitCheckpoint) {
-            std::filesystem::path dir(BULLDOG_DIR_DATA_ABS);
+            std::filesystem::path dir(AUTODIDACT_DIR_DATA_ABS);
             std::filesystem::path file(BUCKET_CP_PREFIX + "_" + ofilemeta_ + BUCKET_CP_EXT);
             if (!std::filesystem::exists(dir / file)) {
                 logger::critical("missing %s", dir / file);
@@ -472,7 +472,7 @@ public:
     void run() override
     {
         bool overwrite = false;
-        std::filesystem::path dir(BULLDOG_DIR_DATA_ABS);
+        std::filesystem::path dir(AUTODIDACT_DIR_DATA_ABS);
         if (num_public_ == 3) {
             std::filesystem::path dist_file("hierarchical_distance_" + ifilemeta_ + ".txt");
             if (!std::filesystem::exists(dir / dist_file) || overwrite) {
@@ -619,7 +619,7 @@ public:
 
     void save_labels(int *labels)
     {
-        std::filesystem::path dir(BULLDOG_DIR_DATA_ABS);
+        std::filesystem::path dir(AUTODIDACT_DIR_DATA_ABS);
         std::filesystem::path file("hierarchical_pub_" +
                                    std::to_string(num_clusters_) + "_" +
                                    std::to_string(num_priv_) + "_" +
@@ -734,7 +734,7 @@ public:
 
     void build_distance_table()
     {
-        std::filesystem::path dir(BULLDOG_DIR_DATA_ABS);
+        std::filesystem::path dir(AUTODIDACT_DIR_DATA_ABS);
         std::filesystem::path file("hierarchical_distance_" + ifilemeta_ + ".txt");
         std::ofstream os(dir / file, std::ios::binary | std::ios::trunc);
         os.precision(10);
@@ -836,4 +836,4 @@ private:
 //  read_entries(readEntries, ofile);
 //  logger::info("Read:" + std::to_string(readEntries.size()));
 //}
-#endif //BULLDOG_MODULES_ENGINE_SRC_BUILDER_HPP_
+#endif //AUTODIDACT_MODULES_ENGINE_SRC_BUILDER_HPP_

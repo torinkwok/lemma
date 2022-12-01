@@ -1,5 +1,5 @@
-#ifndef BULLDOG_MODULES_ENGINE_SRC_CFR_WORKER_H_
-#define BULLDOG_MODULES_ENGINE_SRC_CFR_WORKER_H_
+#ifndef AUTODIDACT_MODULES_ENGINE_SRC_CFR_WORKER_H_
+#define AUTODIDACT_MODULES_ENGINE_SRC_CFR_WORKER_H_
 
 #include "cfr_progress.h"
 #include <pthread.h>
@@ -254,4 +254,4 @@ public:
     sPrivateHandBelief *EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivateHandBelief *opp_belief);
 };
 
-#endif //BULLDOG_MODULES_ENGINE_SRC_CFR_WORKER_H_
+#endif //AUTODIDACT_MODULES_ENGINE_SRC_CFR_WORKER_H_

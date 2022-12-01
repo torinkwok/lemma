@@ -1,5 +1,5 @@
-#ifndef BULLDOG_MODULES_ENGINE_SRC_STRATEGY_H_
-#define BULLDOG_MODULES_ENGINE_SRC_STRATEGY_H_
+#ifndef AUTODIDACT_MODULES_ENGINE_SRC_STRATEGY_H_
+#define AUTODIDACT_MODULES_ENGINE_SRC_STRATEGY_H_
 
 #include <libcuckoo/cuckoohash_map.hh>
 
@@ -180,4 +180,4 @@ struct sThreadInputZipavgConvert
     int round;
 };
 
-#endif //BULLDOG_MODULES_ENGINE_SRC_STRATEGY_H_
+#endif //AUTODIDACT_MODULES_ENGINE_SRC_STRATEGY_H_

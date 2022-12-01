@@ -1,5 +1,5 @@
-#ifndef BULLDOG_MODULES_ENGINE_SRC_NODE_H_
-#define BULLDOG_MODULES_ENGINE_SRC_NODE_H_
+#ifndef AUTODIDACT_MODULES_ENGINE_SRC_NODE_H_
+#define AUTODIDACT_MODULES_ENGINE_SRC_NODE_H_
 
 #include <vector>
 #include <autodidact/logger.hpp>
@@ -150,4 +150,4 @@ private:
     static void DestroyBettingTreeR(Node *this_node);
 };
 
-#endif //BULLDOG_MODULES_ENGINE_SRC_NODE_H_
+#endif //AUTODIDACT_MODULES_ENGINE_SRC_NODE_H_

@@ -1,7 +1,7 @@
 // Modified from https://github.com/luxiaoxun/KMeans-GMM-HMM
 
-#ifndef BULLDOG_MODULES_ENGINE_SRC_KMEANS_H_
-#define BULLDOG_MODULES_ENGINE_SRC_KMEANS_H_
+#ifndef AUTODIDACT_MODULES_ENGINE_SRC_KMEANS_H_
+#define AUTODIDACT_MODULES_ENGINE_SRC_KMEANS_H_
 
 #include "bucket.h"
 
@@ -81,4 +81,4 @@ private:
     void LoadCheckpoint(const std::string &prefix);
 };
 
-#endif //BULLDOG_MODULES_ENGINE_SRC_KMEANS_H_
+#endif //AUTODIDACT_MODULES_ENGINE_SRC_KMEANS_H_

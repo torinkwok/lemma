@@ -1,5 +1,5 @@
-#ifndef BULLDOG_MODULES_ENGINE_SRC_ACTION_ABS_H_
-#define BULLDOG_MODULES_ENGINE_SRC_ACTION_ABS_H_
+#ifndef AUTODIDACT_MODULES_ENGINE_SRC_ACTION_ABS_H_
+#define AUTODIDACT_MODULES_ENGINE_SRC_ACTION_ABS_H_
 
 #include <cpprest/json.h>
 #include <utility>
@@ -85,4 +85,4 @@ class CompositeActionAbs {
   }
   std::array<Fcpa, 4> workers;
 };
-#endif //BULLDOG_MODULES_ENGINE_SRC_ACTION_ABS_H_
+#endif //AUTODIDACT_MODULES_ENGINE_SRC_ACTION_ABS_H_

@@ -248,7 +248,7 @@ void Strategy::InspectNode(Node *inspect_node, const std::string &prefix, STRATE
     Round_t r = inspect_node->GetRound();
     Node_t n = inspect_node->GetN();
 
-    std::filesystem::path dir(BULLDOG_DIR_DATA_LAB);
+    std::filesystem::path dir(AUTODIDACT_DIR_DATA_LAB);
     FILE *file = fopen((dir / filename).c_str(), "wb");
     if (file != nullptr) {
         fprintf(file, "colex,suited,paired,card1,card2,hand+board,rank");

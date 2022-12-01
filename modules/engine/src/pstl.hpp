@@ -1,7 +1,7 @@
 // Referencing https://github.com/ParRes/Kernels/blob/master/Cxx11/prk_pstl.h
 
-#ifndef BULLDOG_MODULES_ENGINE_SRC_PSTL_HPP_
-#define BULLDOG_MODULES_ENGINE_SRC_PSTL_HPP_
+#ifndef AUTODIDACT_MODULES_ENGINE_SRC_PSTL_HPP_
+#define AUTODIDACT_MODULES_ENGINE_SRC_PSTL_HPP_
 
 #if defined(__GNUC__) && (__GNUC__ >= 9)
 
@@ -27,4 +27,4 @@ namespace exec = pstl::execution;
 
 #endif
 
-#endif //BULLDOG_MODULES_ENGINE_SRC_PSTL_HPP_
+#endif //AUTODIDACT_MODULES_ENGINE_SRC_PSTL_HPP_

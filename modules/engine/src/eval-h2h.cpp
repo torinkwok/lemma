@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
     }
 
     if (result.count("log_output")) {
-        std::filesystem::path dir(BULLDOG_DIR_LOG);
+        std::filesystem::path dir(AUTODIDACT_DIR_LOG);
         std::filesystem::path filename(result["log_output"].as<std::string>());
         logger::init_logger(dir / filename, "info");
     } else {
@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
 
     std::vector<std::string> game_states;
     if (result.count("subgame")) {
-        std::filesystem::path dir(BULLDOG_DIR_DATA_LAB);
+        std::filesystem::path dir(AUTODIDACT_DIR_DATA_LAB);
         std::filesystem::path file(result["subgame"].as<std::string>());
         if (!std::filesystem::exists(dir / file)) {
             logger::critical("missing %s", dir / file);
@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
     uint32_t numHands, seed;
 
     //Initiate Game
-    std::filesystem::path dir(BULLDOG_DIR_CFG_GAME);
+    std::filesystem::path dir(AUTODIDACT_DIR_CFG_GAME);
     std::filesystem::path filename(result["game"].as<std::string>());
     FILE *file = fopen((dir / filename).c_str(), "r");
     if (file == nullptr) {

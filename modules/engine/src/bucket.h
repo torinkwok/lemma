@@ -1,5 +1,5 @@
-#ifndef BULLDOG_MODULES_ENGINE_SRC_BUCKET_H_
-#define BULLDOG_MODULES_ENGINE_SRC_BUCKET_H_
+#ifndef AUTODIDACT_MODULES_ENGINE_SRC_BUCKET_H_
+#define AUTODIDACT_MODULES_ENGINE_SRC_BUCKET_H_
 
 #include <map>
 #include <vector>
@@ -85,4 +85,4 @@ private:
     hand_indexer_t _river_indexer;
 };
 
-#endif //BULLDOG_MODULES_ENGINE_SRC_BUCKET_H_
+#endif //AUTODIDACT_MODULES_ENGINE_SRC_BUCKET_H_

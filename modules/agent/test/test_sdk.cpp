@@ -8,7 +8,7 @@ void cLogger(char *format, ...){
 }
 
 TEST_CASE("test autodidact sdk", "[sdk]") {
-  fs::path dir(BULLDOG_DIR_CFG_GAME);
+  fs::path dir(AUTODIDACT_DIR_CFG_GAME);
   fs::path filename("holdem.nolimit.2p.game");
   Game *game = nullptr;
   FILE *file = fopen((dir / filename).c_str(), "r");

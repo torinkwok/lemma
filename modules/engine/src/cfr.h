@@ -1,5 +1,5 @@
-#ifndef BULLDOG_MODULES_ENGINE_SRC_CFR_H_
-#define BULLDOG_MODULES_ENGINE_SRC_CFR_H_
+#ifndef AUTODIDACT_MODULES_ENGINE_SRC_CFR_H_
+#define AUTODIDACT_MODULES_ENGINE_SRC_CFR_H_
 
 #include <utility>
 
@@ -197,4 +197,4 @@ private:
     void Config(web::json::value data);
 };
 
-#endif //BULLDOG_MODULES_ENGINE_SRC_CFR_H_
+#endif //AUTODIDACT_MODULES_ENGINE_SRC_CFR_H_

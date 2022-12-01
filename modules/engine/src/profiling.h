@@ -1,5 +1,5 @@
-#ifndef BULLDOG_MODULES_ENGINE_SRC_PROFILING_H_
-#define BULLDOG_MODULES_ENGINE_SRC_PROFILING_H_
+#ifndef AUTODIDACT_MODULES_ENGINE_SRC_PROFILING_H_
+#define AUTODIDACT_MODULES_ENGINE_SRC_PROFILING_H_
 
 #include "node.h"
 #include "hand_belief.h"
@@ -45,7 +45,7 @@ struct sProfilingWriter
     {
         bool no_header = !cfr_profiler_header_written;
         {
-            fs::path dir(BULLDOG_DIR_DATA_LAB);
+            fs::path dir(AUTODIDACT_DIR_DATA_LAB);
             std::string name = prefix_ + expl_tuple_ext;
             fs::path filename(name);
             std::ofstream file;
@@ -66,4 +66,4 @@ struct sProfilingWriter
     }
 };
 
-#endif //BULLDOG_MODULES_ENGINE_SRC_PROFILING_H_
+#endif //AUTODIDACT_MODULES_ENGINE_SRC_PROFILING_H_

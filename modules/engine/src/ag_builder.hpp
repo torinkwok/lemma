@@ -1,5 +1,5 @@
-#ifndef BULLDOG_MODULES_ENGINE_SRC_AG_BUILDER_HPP_
-#define BULLDOG_MODULES_ENGINE_SRC_AG_BUILDER_HPP_
+#ifndef AUTODIDACT_MODULES_ENGINE_SRC_AG_BUILDER_HPP_
+#define AUTODIDACT_MODULES_ENGINE_SRC_AG_BUILDER_HPP_
 
 #include "card_abs.hpp"
 #include "action_abs.h"
@@ -34,7 +34,7 @@ public:
         raw_ = config;
 
         /* Create Game */
-        std::filesystem::path game_dir(BULLDOG_DIR_CFG_GAME);
+        std::filesystem::path game_dir(AUTODIDACT_DIR_CFG_GAME);
         FILE *game_file = fopen((game_dir / config.at("ag_builder").at("game_file").as_string()).c_str(), "rb");
         if (game_file == nullptr) {
             logger::critical("failed to open game file %s", game_file);
@@ -104,4 +104,4 @@ private:
     CardAbs *card_abs_;
 };
 
-#endif //BULLDOG_MODULES_ENGINE_SRC_AG_BUILDER_HPP_
+#endif //AUTODIDACT_MODULES_ENGINE_SRC_AG_BUILDER_HPP_

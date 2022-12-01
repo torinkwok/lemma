@@ -1,5 +1,5 @@
-#ifndef BULLDOG_MODULES_ENGINE_SRC_CFR_PARAM_H_
-#define BULLDOG_MODULES_ENGINE_SRC_CFR_PARAM_H_
+#ifndef AUTODIDACT_MODULES_ENGINE_SRC_CFR_PARAM_H_
+#define AUTODIDACT_MODULES_ENGINE_SRC_CFR_PARAM_H_
 
 #include <string>
 #include <map>
@@ -134,7 +134,7 @@ struct sCfrParam
 
     void SaveCFRConfig(const std::string &prefix)
     {
-        std::filesystem::path dir(BULLDOG_DIR_DATA_STG);
+        std::filesystem::path dir(AUTODIDACT_DIR_DATA_STG);
         std::ofstream file(dir / (prefix + ".cfr"), std::ios::binary | std::ios::trunc);
         if (file.is_open()) {
             file << raw_.serialize() << std::endl;
@@ -159,4 +159,4 @@ struct sCfrParam
 
 };
 
-#endif //BULLDOG_MODULES_ENGINE_SRC_CFR_PARAM_H_
+#endif //AUTODIDACT_MODULES_ENGINE_SRC_CFR_PARAM_H_

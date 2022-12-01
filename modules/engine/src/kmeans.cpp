@@ -457,7 +457,7 @@ double KMeans::CalcDistance(const double *x, const double *u, int dimNum)
 void KMeans::SaveBuckets(const std::string &prefix)
 {
     // Output the label file
-    fs::path dir(BULLDOG_DIR_DATA_ABS);
+    fs::path dir(AUTODIDACT_DIR_DATA_ABS);
     fs::path file(BUCKET_FILE_PREFIX + "_" + prefix + BUCKET_FILE_EXT);
     fs::path full_path = dir / file;
     logger::info("saving bucket of size %d", bucket_map_.size());
@@ -467,7 +467,7 @@ void KMeans::SaveBuckets(const std::string &prefix)
 
 void KMeans::SaveCheckpoint(const std::string &prefix)
 {
-    fs::path dir(BULLDOG_DIR_DATA_ABS);
+    fs::path dir(AUTODIDACT_DIR_DATA_ABS);
     fs::path file(BUCKET_CP_PREFIX + "_" + prefix + BUCKET_CP_EXT);
     fs::path full_path = dir / file;
 
@@ -491,7 +491,7 @@ void KMeans::SaveCheckpoint(const std::string &prefix)
 
 void KMeans::LoadCheckpoint(const std::string &prefix)
 {
-    fs::path dir(BULLDOG_DIR_DATA_ABS);
+    fs::path dir(AUTODIDACT_DIR_DATA_ABS);
     fs::path file(BUCKET_CP_PREFIX + "_" + prefix + BUCKET_CP_EXT);
     fs::path full_path = dir / file;
 

@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
 
     std::string loglevel = result["loglevel"].as<std::string>();
     if (result.count("logfile")) {
-        std::filesystem::path dir(BULLDOG_DIR_LOG);
+        std::filesystem::path dir(AUTODIDACT_DIR_LOG);
         logger::init_logger(dir / result["logfile"].as<std::string>(), loglevel);
     } else {
         logger::init_logger(loglevel);

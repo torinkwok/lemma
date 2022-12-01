@@ -19,7 +19,7 @@ std::string MATCHSTATES[4] = {
 
 //todo: move it away
 TEST_CASE("test readMatchPlus", "[connector]"){
-  fs::path dir(BULLDOG_DIR_CFG_GAME);
+  fs::path dir(AUTODIDACT_DIR_CFG_GAME);
   fs::path filename("holdem.nolimit.2p.game");
   Game *game = nullptr;
   FILE *file = fopen((dir/filename).c_str(), "r");

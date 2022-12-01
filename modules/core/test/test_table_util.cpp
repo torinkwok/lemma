@@ -9,7 +9,7 @@ extern "C" {
 };
 
 TEST_CASE("table action test", "[core]") {
-  std::filesystem::path dir(BULLDOG_DIR_CFG_GAME);
+  std::filesystem::path dir(AUTODIDACT_DIR_CFG_GAME);
   Game *game2 = nullptr;
   FILE *file2 = fopen((dir / "holdem.nolimit.2p.game").c_str(), "r");
   game2 = readGame(file2);

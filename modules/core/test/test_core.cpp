@@ -10,7 +10,7 @@ extern "C" {
 };
 
 SCENARIO("test match state card crash", "[core]") {
-  std::filesystem::path dir(BULLDOG_DIR_CFG_GAME);
+  std::filesystem::path dir(AUTODIDACT_DIR_CFG_GAME);
   Game *game2 = nullptr;
   FILE *file2 = fopen((dir / "holdem.nolimit.2p.game").c_str(), "r");
   game2 = readGame(file2);
@@ -44,7 +44,7 @@ SCENARIO("test match state card crash", "[core]") {
 }
 
 TEST_CASE("test IsPriorState check", "[core]") {
-  std::filesystem::path dir(BULLDOG_DIR_CFG_GAME);
+  std::filesystem::path dir(AUTODIDACT_DIR_CFG_GAME);
   Game *game2 = nullptr;
   FILE *file2 = fopen((dir / "holdem.nolimit.2p.game").c_str(), "r");
   game2 = readGame(file2);
@@ -71,7 +71,7 @@ TEST_CASE("test IsPriorState check", "[core]") {
 }
 
 TEST_CASE("matchstate of bet sum by round", "[core]") {
-  std::filesystem::path dir(BULLDOG_DIR_CFG_GAME);
+  std::filesystem::path dir(AUTODIDACT_DIR_CFG_GAME);
   Game *game = nullptr;
   FILE *file = fopen((dir / "holdem.nolimit.3p.game").c_str(), "r");
   game = readGame(file);
@@ -89,7 +89,7 @@ TEST_CASE("matchstate of bet sum by round", "[core]") {
 }
 
 TEST_CASE("test acpc protocol corner cases", "[core]") {
-  std::filesystem::path dir(BULLDOG_DIR_CFG_GAME);
+  std::filesystem::path dir(AUTODIDACT_DIR_CFG_GAME);
   Game *game = nullptr;
   FILE *file = fopen((dir / "holdem.nolimit.2p.game").c_str(), "r");
   game = readGame(file);
@@ -107,7 +107,7 @@ TEST_CASE("test acpc protocol corner cases", "[core]") {
 }
 
 TEST_CASE("matchstate acpc stack-awared", "[core]") {
-  std::filesystem::path dir(BULLDOG_DIR_CFG_GAME);
+  std::filesystem::path dir(AUTODIDACT_DIR_CFG_GAME);
   Game *game = nullptr;
   FILE *file = fopen((dir / "holdem.nolimit.3p.game").c_str(), "r");
   game = readGame(file);
@@ -145,7 +145,7 @@ TEST_CASE("matchstate acpc stack-awared", "[core]") {
 }
 
 TEST_CASE("stack-aware action raise detection", "[core]") {
-  std::filesystem::path dir(BULLDOG_DIR_CFG_GAME);
+  std::filesystem::path dir(AUTODIDACT_DIR_CFG_GAME);
   Game *game = nullptr;
   FILE *file = fopen((dir / "holdem.nolimit.3p.game").c_str(), "r");
   game = readGame(file);
@@ -182,7 +182,7 @@ TEST_CASE("stack-aware action raise detection", "[core]") {
 }
 
 TEST_CASE("read stack") {
-  std::filesystem::path dir(BULLDOG_DIR_CFG_GAME);
+  std::filesystem::path dir(AUTODIDACT_DIR_CFG_GAME);
   Game *game = nullptr;
   FILE *file = fopen((dir / "holdem.nolimit.3p.game").c_str(), "r");
   game = readGame(file);
@@ -199,7 +199,7 @@ TEST_CASE("read stack") {
 }
 
 TEST_CASE("test poker game", "[core]") {
-  std::filesystem::path dir(BULLDOG_DIR_CFG_GAME);
+  std::filesystem::path dir(AUTODIDACT_DIR_CFG_GAME);
   Game *game = nullptr;
   FILE *file = fopen((dir / "holdem.limit.2p.reverse_blinds.game").c_str(), "r");
   game = readGame(file);
@@ -319,7 +319,7 @@ TEST_CASE("split string") {
 }
 
 TEST_CASE("subgame solving related", "[core]") {
-  std::filesystem::path dir(BULLDOG_DIR_CFG_GAME);
+  std::filesystem::path dir(AUTODIDACT_DIR_CFG_GAME);
   Game *game2 = nullptr;
   FILE *file2 = fopen((dir / "holdem.nolimit.2p.game").c_str(), "r");
   game2 = readGame(file2);
@@ -382,7 +382,7 @@ TEST_CASE("subgame solving related", "[core]") {
 }
 
 TEST_CASE("valid raise ") {
-  std::filesystem::path dir(BULLDOG_DIR_CFG_GAME);
+  std::filesystem::path dir(AUTODIDACT_DIR_CFG_GAME);
   Game *game = nullptr;
   FILE *file = fopen((dir / "holdem.nolimit.2p.game").c_str(), "r");
   game = readGame(file);
@@ -397,7 +397,7 @@ TEST_CASE("valid raise ") {
 }
 
 TEST_CASE("pot raise mode") {
-  std::filesystem::path dir(BULLDOG_DIR_CFG_GAME);
+  std::filesystem::path dir(AUTODIDACT_DIR_CFG_GAME);
   Game *game = nullptr;
   FILE *file = fopen((dir / "holdem.nolimit.2p.game").c_str(), "r");
   game = readGame(file);
@@ -429,7 +429,7 @@ TEST_CASE("pot raise mode") {
 }
 
 TEST_CASE("slumbot state debug") {
-  std::filesystem::path dir(BULLDOG_DIR_CFG_GAME);
+  std::filesystem::path dir(AUTODIDACT_DIR_CFG_GAME);
   Game *game = nullptr;
   FILE *file = fopen((dir / "holdem.nolimit.2p.game").c_str(), "r");
   game = readGame(file);

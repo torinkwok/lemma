@@ -8,7 +8,7 @@
 
 void SaveAG(Strategy *target, const std::string &prefix)
 {
-    std::filesystem::path dir(BULLDOG_DIR_DATA_STG);
+    std::filesystem::path dir(AUTODIDACT_DIR_DATA_STG);
     {
         auto ag_file = dir / (prefix + ".ag");
         std::ofstream os_ag(ag_file, std::ios::binary | std::ios::trunc);
@@ -49,7 +49,7 @@ void SaveAG(Strategy *target, const std::string &prefix)
 
 void LoadAG(Strategy *target, const std::string &prefix, BucketPool *bucket_pool, const char *state_str)
 {
-    std::filesystem::path dir(BULLDOG_DIR_DATA_STG);
+    std::filesystem::path dir(AUTODIDACT_DIR_DATA_STG);
     {
         auto ag = new AbstractGame();
         AGBuilder ag_builder((dir / (prefix + ".ag")), bucket_pool);
@@ -98,7 +98,7 @@ void LoadAG(Strategy *target, const std::string &prefix, BucketPool *bucket_pool
 
 void SaveStrategy(Strategy *target, STRATEGY_TYPE type, const std::string &prefix)
 {
-    std::filesystem::path dir(BULLDOG_DIR_DATA_STG);
+    std::filesystem::path dir(AUTODIDACT_DIR_DATA_STG);
     auto begin = std::chrono::steady_clock::now();
     std::string full_name = prefix + "." + StrategyToNameMap[type];
     {
@@ -168,7 +168,7 @@ void LoadStrategy(Strategy *target, STRATEGY_TYPE type, const std::string &prefi
         logger::critical("only disk-loading for zipavg is supported for now");
     }
 
-    std::filesystem::path dir(BULLDOG_DIR_DATA_STG);
+    std::filesystem::path dir(AUTODIDACT_DIR_DATA_STG);
     // only support scalar mode load strategy. it is a hack because we don't quite load reg now.
     if (disk_lookup) {
         logger::debug("strategy %s will read from disk", prefix);
@@ -254,7 +254,7 @@ void SaveAssertMap(Strategy *target, STRATEGY_TYPE type, const std::string &pref
         }
     }
 
-    std::filesystem::path dir(BULLDOG_DIR_DATA_STG);
+    std::filesystem::path dir(AUTODIDACT_DIR_DATA_STG);
     auto check_file = dir / (prefix + ".check_" + StrategyToNameMap[type]);
     std::ofstream os(check_file, std::ios::binary | std::ios::trunc);
     if (os.is_open()) {
@@ -276,7 +276,7 @@ template<class T>
 void LoadAssertMap(Strategy *target, STRATEGY_TYPE type, const std::string &prefix)
 {
     std::map<RNBA, T> assert_map;
-    std::filesystem::path dir(BULLDOG_DIR_DATA_STG);
+    std::filesystem::path dir(AUTODIDACT_DIR_DATA_STG);
     std::ifstream is(dir / (prefix + ".check_" + StrategyToNameMap[type]), std::ios::binary);
     if (is.is_open()) {
         cereal::JSONInputArchive archive(is);

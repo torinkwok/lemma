@@ -175,7 +175,7 @@ void Bucket::LoadRangeColex(Board_t *board, int round)
 void Bucket::LoadHierarchicalPublic()
 {
     //find public bucket for flop
-    std::filesystem::path dir(BULLDOG_DIR_DATA_ABS);
+    std::filesystem::path dir(AUTODIDACT_DIR_DATA_ABS);
     std::filesystem::path pub_file("hierarchical_pubcolex_60_2_3.txt");
     std::ifstream pub_is(dir / pub_file, std::ios::binary);
     if (pub_is.is_open()) {
@@ -205,7 +205,7 @@ void Bucket::LoadHierarchical(std::string name)
     type_ = HIERARCHICAL_BUCKET;
     //load hierarchical only works after flop
     assert(round > 0);
-    std::filesystem::path dir(BULLDOG_DIR_DATA_ABS);
+    std::filesystem::path dir(AUTODIDACT_DIR_DATA_ABS);
 
     LoadHierarchicalPublic();
 

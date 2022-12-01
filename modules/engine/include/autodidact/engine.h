@@ -8,8 +8,8 @@
  *  -
  */
 
-#ifndef BULLDOG_MODULES_ENGINE_SRC_ENGINE_H_
-#define BULLDOG_MODULES_ENGINE_SRC_ENGINE_H_
+#ifndef AUTODIDACT_MODULES_ENGINE_SRC_ENGINE_H_
+#define AUTODIDACT_MODULES_ENGINE_SRC_ENGINE_H_
 
 #include "../../src/cfr.h"
 #include "../../src/strategy.h"
@@ -143,4 +143,4 @@ private:
 
 };
 
-#endif //BULLDOG_MODULES_ENGINE_SRC_ENGINE_H_
+#endif //AUTODIDACT_MODULES_ENGINE_SRC_ENGINE_H_

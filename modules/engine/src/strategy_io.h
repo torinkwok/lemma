@@ -1,5 +1,5 @@
-#ifndef BULLDOG_MODULES_ENGINE_SRC_IO_H_
-#define BULLDOG_MODULES_ENGINE_SRC_IO_H_
+#ifndef AUTODIDACT_MODULES_ENGINE_SRC_IO_H_
+#define AUTODIDACT_MODULES_ENGINE_SRC_IO_H_
 
 //#include "pstl.hpp"
 #include "strategy.h"
@@ -23,4 +23,4 @@ void SaveAssertMap(Strategy *target, STRATEGY_TYPE type, const std::string &pref
 template<class T>
 void LoadAssertMap(Strategy *target, STRATEGY_TYPE type, const std::string &prefix);
 
-#endif //BULLDOG_MODULES_ENGINE_SRC_IO_H_
+#endif //AUTODIDACT_MODULES_ENGINE_SRC_IO_H_

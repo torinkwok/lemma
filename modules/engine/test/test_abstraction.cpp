@@ -33,7 +33,7 @@ TEST_CASE("hier colex on flop determinisitc", "[abstraction]") {
 }
 
 TEST_CASE("test node match condition", "[abstraction]") {
-  std::filesystem::path dir(BULLDOG_DIR_CFG_GAME);
+  std::filesystem::path dir(AUTODIDACT_DIR_CFG_GAME);
   Game *game = nullptr;
   FILE *file = fopen((dir / "holdem.nolimit.2p.game").c_str(), "r");
   game = readGame(file);
@@ -107,7 +107,7 @@ TEST_CASE("test node match condition", "[abstraction]") {
 
 TEST_CASE("validate bucket files", "[abstraction]") {
   Bucket bucket;
-  std::filesystem::path dir(BULLDOG_DIR_DATA_ABS);
+  std::filesystem::path dir(AUTODIDACT_DIR_DATA_ABS);
 
   for (auto &p: std::filesystem::directory_iterator(dir)) {
     std::string file = p.path().filename();
@@ -146,7 +146,7 @@ TEST_CASE("validate bucket files", "[abstraction]") {
 //TEST_CASE("construct pubcolex") {
 //  //read public clusters
 //  std::map<int, int> canon_pub_map;
-//  std::filesystem::path dir(BULLDOG_DIR_DATA_ABS);
+//  std::filesystem::path dir(AUTODIDACT_DIR_DATA_ABS);
 //  std::filesystem::path pub_file("hierarchical_pub_60_2_3.txt");
 //  std::ifstream is(dir / pub_file, std::ios::binary);
 //  std::string line;
@@ -159,7 +159,7 @@ TEST_CASE("validate bucket files", "[abstraction]") {
 //  is.close();
 //
 //  auto canon_boards = pokerstove::createCardSet(3, pokerstove::Card::SUIT_CANONICAL);
-//  std::filesystem::path dir2(BULLDOG_DIR_DATA_ABS);
+//  std::filesystem::path dir2(AUTODIDACT_DIR_DATA_ABS);
 //  std::filesystem::path pub_file2("hierarchical_pubcolex_60_2_3.txt");
 //  std::ofstream os(dir2 / pub_file2, std::ios::binary);
 //  os << "colex,bucket" << std::endl;
@@ -170,7 +170,7 @@ TEST_CASE("validate bucket files", "[abstraction]") {
 //  os.close();
 //
 //  auto canon_boards = pokerstove::createCardSet(3, pokerstove::Card::SUIT_CANONICAL);
-//  std::filesystem::path dir2(BULLDOG_DIR_DATA_ABS);
+//  std::filesystem::path dir2(AUTODIDACT_DIR_DATA_ABS);
 //  std::filesystem::path pub_file2("hierarchical_pubcards_60_2_3.txt");
 //  std::ofstream os(dir2 / pub_file2, std::ios::binary);
 //  os << "cards,bucket" << std::endl;
@@ -259,7 +259,7 @@ TEST_CASE("hierarchical bucket unit", "[abstraction]") {
 //      "KcAc8dKd2hQh2s"
 //  };
 //
-//  std::filesystem::path dir(BULLDOG_DIR_DATA_ABS);
+//  std::filesystem::path dir(AUTODIDACT_DIR_DATA_ABS);
 //  Bucket bucket;
 //
 //  std::filesystem::path river_file("buckets_200_2_5.bin");
@@ -329,7 +329,7 @@ TEST_CASE("kmeans") {
                        579, 1231, 1704};
 
   std::vector<Entry> entries;
-  std::filesystem::path dir(BULLDOG_DIR_DATA_ABS);
+  std::filesystem::path dir(AUTODIDACT_DIR_DATA_ABS);
   read_entries(entries, dir / "features_hand_histo_2_4.bin");
   int size = entries.size();
 
@@ -401,7 +401,7 @@ void RecursiveTest(Node *root_node_) {
 }
 
 TEST_CASE("node function test", "[abstraction]") {
-  std::filesystem::path dir(BULLDOG_DIR_CFG_GAME);
+  std::filesystem::path dir(AUTODIDACT_DIR_CFG_GAME);
   std::filesystem::path game_file("holdem.nolimit.2p.game");
   FILE *file = fopen((dir / game_file).c_str(), "r");
   if (file == nullptr) {
@@ -488,7 +488,7 @@ TEST_CASE("betting tree building test", "[abstraction]") {
   act_abs.workers[3].raise_config_.push_back(RaiseConfig{POT_AFTER_CALL, 1, 0, 3});
   act_abs.workers[3].raise_mode_ = POT_AFTER_CALL;
 
-  std::filesystem::path dir(BULLDOG_DIR_CFG_GAME);
+  std::filesystem::path dir(AUTODIDACT_DIR_CFG_GAME);
   std::filesystem::path game_file("holdem.nolimit.2p.game");
   FILE *file = fopen((dir / game_file).c_str(), "r");
   if (file == nullptr) {
@@ -524,7 +524,7 @@ TEST_CASE("action abs and action_mapping", "[abstraction]") {
   act_abs.workers[3].raise_config_.push_back(RaiseConfig{POT_AFTER_CALL, 1, 0, 3});
   act_abs.workers[3].raise_mode_ = POT_AFTER_CALL;
 
-  std::filesystem::path dir(BULLDOG_DIR_CFG_GAME);
+  std::filesystem::path dir(AUTODIDACT_DIR_CFG_GAME);
   std::filesystem::path game_file("holdem.nolimit.2p.game");
   FILE *file = fopen((dir / game_file).c_str(), "r");
   if (file == nullptr) {

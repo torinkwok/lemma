@@ -12,7 +12,7 @@ TEST_CASE("cfr async termination") {
   auto bucket_pool = new BucketPool();
 
   auto ag = new AbstractGame();
-  std::filesystem::path dir(BULLDOG_DIR_CFG_ENG);
+  std::filesystem::path dir(AUTODIDACT_DIR_CFG_ENG);
   std::filesystem::path file("builder_r0_for_test.json");
   AGBuilder ag_builder((dir / file), bucket_pool);
   ag_builder.Build(ag);

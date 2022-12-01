@@ -1,5 +1,5 @@
-#ifndef BULLDOG_CONSTANT_H
-#define BULLDOG_CONSTANT_H
+#ifndef AUTODIDACT_CONSTANT_H
+#define AUTODIDACT_CONSTANT_H
 
 #include <cstdint>
 #include <algorithm>
@@ -105,4 +105,4 @@ int GetPolicy(float *inout_distr, int size, T *regrets, size_t offset = 0)
     return 0;
 };
 
-#endif //BULLDOG_CONSTANT_H
+#endif //AUTODIDACT_CONSTANT_H

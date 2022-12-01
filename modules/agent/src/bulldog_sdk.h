@@ -1,5 +1,5 @@
-#ifndef BULLDOG_MODULES_AGENT_SRC_BULLDOG_SDK_H_
-#define BULLDOG_MODULES_AGENT_SRC_BULLDOG_SDK_H_
+#ifndef AUTODIDACT_MODULES_AGENT_SRC_AUTODIDACT_SDK_H_
+#define AUTODIDACT_MODULES_AGENT_SRC_AUTODIDACT_SDK_H_
 
 #include <string>
 #include <cpprest/http_client.h>
@@ -45,4 +45,4 @@ public:
     bool AutoSearchEndpoint(lLogger f);
 };
 
-#endif //BULLDOG_MODULES_AGENT_SRC_BULLDOG_SDK_H_
+#endif //AUTODIDACT_MODULES_AGENT_SRC_AUTODIDACT_SDK_H_

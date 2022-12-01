@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
 
     // ACPC-flavor game initialization.
     Game *game = nullptr;
-    std::filesystem::path dir(BULLDOG_DIR_CFG_GAME);
+    std::filesystem::path dir(AUTODIDACT_DIR_CFG_GAME);
     std::filesystem::path filename(result["game"].as<std::string>());
     FILE *file = fopen((dir / filename).c_str(), "r");
     if (file == nullptr) {

@@ -18,7 +18,7 @@ Engine::Engine(const char *engine_conf_file, Game *game)
     normalized_game_ = game;
     owning_pool_ = true;
 
-    std::filesystem::path dir(BULLDOG_DIR_CFG_ENG);
+    std::filesystem::path dir(AUTODIDACT_DIR_CFG_ENG);
     std::filesystem::path filename(engine_conf_file);
     std::ifstream file(dir / filename);
     web::json::value data;
@@ -139,7 +139,7 @@ Engine::Engine(const char *engine_conf_file, Game *game, BucketPool *bucket_pool
     bucket_pool_ = bucket_pool;
     blueprint_pool_ = blueprint_pool;
 
-    std::filesystem::path dir(BULLDOG_DIR_CFG_ENG);
+    std::filesystem::path dir(AUTODIDACT_DIR_CFG_ENG);
     std::filesystem::path filename(engine_conf_file);
     std::ifstream file(dir / filename);
 

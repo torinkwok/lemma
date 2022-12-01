@@ -32,7 +32,7 @@ TEST_CASE("rnba kernel", "[engine]") {
   act_abs.workers[3].raise_config_.push_back(RaiseConfig{POT_AFTER_CALL, 0.5, 0, 3});
   act_abs.workers[3].raise_config_.push_back(RaiseConfig{POT_AFTER_CALL, 1, 0, 3});
   act_abs.workers[3].raise_mode_ = POT_AFTER_CALL;
-  std::filesystem::path dir(BULLDOG_DIR_CFG_GAME);
+  std::filesystem::path dir(AUTODIDACT_DIR_CFG_GAME);
   std::filesystem::path game_file("holdem.nolimit.2p.game");
   FILE *file = fopen((dir / game_file).c_str(), "r");
   if (file == nullptr) {

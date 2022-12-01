@@ -177,7 +177,7 @@ TEST_CASE("random pick speed benchmarking") {
 }
 
 TEST_CASE("micel") {
-  std::filesystem::path dir(BULLDOG_DIR_CFG_GAME);
+  std::filesystem::path dir(AUTODIDACT_DIR_CFG_GAME);
   Game *game2 = nullptr;
   FILE *file2 = fopen((dir / "holdem.nolimit.2p.game").c_str(), "r");
   game2 = readGame(file2);
@@ -316,7 +316,7 @@ TEST_CASE("board/card crash at/till round") {
 }
 
 TEST_CASE("sample sequential flop board") {
-  std::filesystem::path dir(BULLDOG_DIR_CFG_GAME);
+  std::filesystem::path dir(AUTODIDACT_DIR_CFG_GAME);
   Game *game = nullptr;
   FILE *file = fopen((dir / "holdem.nolimit.2p.game").c_str(), "r");
   game = readGame(file);

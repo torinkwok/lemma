@@ -392,7 +392,7 @@ int printCards(const Game *game,
 
 
 /*
- * BULLDOG newly added
+ * AUTODIDACT newly added
  */
 int32_t actionToCode(Action *action);
 

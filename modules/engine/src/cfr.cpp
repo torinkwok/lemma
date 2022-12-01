@@ -306,7 +306,7 @@ void *CFR::CfrSolve(void *thread_args)
 
 CFR::CFR(const char *config_file)
 {
-    std::filesystem::path dir(BULLDOG_DIR_CFG_ENG);
+    std::filesystem::path dir(AUTODIDACT_DIR_CFG_ENG);
     std::filesystem::path filename(config_file);
     std::ifstream cfr_file(dir / filename);
     auto config_str = std::string(config_file);

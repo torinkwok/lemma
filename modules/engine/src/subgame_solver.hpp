@@ -1,5 +1,5 @@
-#ifndef BULLDOG_MODULES_ENGINE_SRC_SUBGAME_SOLVER_HPP_
-#define BULLDOG_MODULES_ENGINE_SRC_SUBGAME_SOLVER_HPP_
+#ifndef AUTODIDACT_MODULES_ENGINE_SRC_SUBGAME_SOLVER_HPP_
+#define AUTODIDACT_MODULES_ENGINE_SRC_SUBGAME_SOLVER_HPP_
 
 #include "strategy.h"
 #include "ag_builder.hpp"
@@ -215,7 +215,7 @@ struct SubgameSolver
 
     void ConfigWithJson(const char *config_file, BucketPool *bucket_pool)
     {
-        std::filesystem::path dir(BULLDOG_DIR_CFG_ENG);
+        std::filesystem::path dir(AUTODIDACT_DIR_CFG_ENG);
         std::filesystem::path filename(config_file);
         std::ifstream sgs_file(dir / filename);
         web::json::value sgs_conf;
@@ -340,4 +340,4 @@ private:
     }
 };
 
-#endif //BULLDOG_MODULES_ENGINE_SRC_SUBGAME_SOLVER_HPP_
+#endif //AUTODIDACT_MODULES_ENGINE_SRC_SUBGAME_SOLVER_HPP_

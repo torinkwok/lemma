@@ -1,13 +1,12 @@
 cmake_minimum_required(VERSION 3.10)
 
-# SetAvg project name, version and laguages here.
+# SetAvg project name, version and languages here.
 # Version numbers are available by including "exampleConfig.h" in
 # the source. See exampleConfig.h.in for some more details.
 project(autodidact)
 
 set(HOME_DIR ${CMAKE_SOURCE_DIR})
 
-# Specify C++17 standard
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
@@ -34,12 +33,12 @@ endif ()
 set(INSTALL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE}")
 
 # Set file paths
-add_definitions(-DBULLDOG_DIR_LOG="${CMAKE_CURRENT_SOURCE_DIR}/logs")
-add_definitions(-DBULLDOG_DIR_DATA_ABS="${CMAKE_CURRENT_SOURCE_DIR}/data/abstraction")
-add_definitions(-DBULLDOG_DIR_DATA_STG="${CMAKE_CURRENT_SOURCE_DIR}/data/strategy")
-add_definitions(-DBULLDOG_DIR_DATA_LAB="${CMAKE_CURRENT_SOURCE_DIR}/data/lab")
-add_definitions(-DBULLDOG_DIR_CFG_GAME="${CMAKE_CURRENT_SOURCE_DIR}/config/games")
-add_definitions(-DBULLDOG_DIR_CFG_ENG="${CMAKE_CURRENT_SOURCE_DIR}/config/engine")
+add_definitions(-DAUTODIDACT_DIR_LOG="${CMAKE_CURRENT_SOURCE_DIR}/logs")
+add_definitions(-DAUTODIDACT_DIR_DATA_ABS="${CMAKE_CURRENT_SOURCE_DIR}/data/abstraction")
+add_definitions(-DAUTODIDACT_DIR_DATA_STG="${CMAKE_CURRENT_SOURCE_DIR}/data/strategy")
+add_definitions(-DAUTODIDACT_DIR_DATA_LAB="${CMAKE_CURRENT_SOURCE_DIR}/data/lab")
+add_definitions(-DAUTODIDACT_DIR_CFG_GAME="${CMAKE_CURRENT_SOURCE_DIR}/config/games")
+add_definitions(-DAUTODIDACT_DIR_CFG_ENG="${CMAKE_CURRENT_SOURCE_DIR}/config/engine")
 if (CMAKE_BUILD_TYPE MATCHES Debug)
     add_definitions(-DDEV=2)
     #    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
@@ -53,7 +52,7 @@ elseif (CMAKE_BUILD_TYPE MATCHES RelWithDebInfo)
 endif ()
 
 if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0)
-    message(WARNING "please update cmake")
+    message(WARNING "please upgrade cmake")
 endif ()
 
 # Fix RPATH https://stackoverflow.com/questions/30398238/cmake-rpath-not-working-could-not-find-shared-object-file
@@ -65,7 +64,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${HOME_DIR}/3rdparty/Catch2/contrib/
 
 # Add submodule dependencies
 add_subdirectory(3rdparty/Catch2)
-# Submodules that are headeronly
+# Submodules that are header only
 include_directories(3rdparty/cxxopts/include)
 include_directories(3rdparty/spdlog/include)
 include_directories(3rdparty/cereal/include)

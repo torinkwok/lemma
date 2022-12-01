@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
         logger::info("please provide bucket count");
 
     logger::init_logger("debug");
-    std::filesystem::path dir(BULLDOG_DIR_CFG_ENG);
+    std::filesystem::path dir(AUTODIDACT_DIR_CFG_ENG);
     std::filesystem::path ag_filename(result["builder"].as<std::string>());
     std::ifstream ag_file(dir / ag_filename);
 
@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
         act_abs = new CompositeActionAbs(config.at("ag_builder").at("action_abs"));
     }
 
-    std::filesystem::path game_dir(BULLDOG_DIR_CFG_GAME);
+    std::filesystem::path game_dir(AUTODIDACT_DIR_CFG_GAME);
     std::filesystem::path game_file(config.at("ag_builder").at("game_file").as_string());
     FILE *file = fopen((game_dir / game_file).c_str(), "r");
     if (file == nullptr) {
