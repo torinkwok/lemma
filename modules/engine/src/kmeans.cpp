@@ -12,7 +12,7 @@ namespace fs = std::filesystem;
 #include <cstring>
 #include <cmath>
 #include <iostream>
-#include <bulldog/logger.hpp>
+#include <autodidact/logger.hpp>
 
 KMeans::KMeans(int dimNum, int clusterNum, int num_threads)
 {

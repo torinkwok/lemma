@@ -2,7 +2,7 @@
 #define BULLDOG_MODULES_CONNECTOR_INCLUDE_BASE_CONNECTOR_HPP_
 
 extern "C" {
-#include "bulldog/game.h"
+#include "autodidact/game.h"
 };
 
 class BaseConnector

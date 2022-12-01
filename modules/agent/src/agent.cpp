@@ -1,5 +1,5 @@
 /* C / C++ includes */
-#include <bulldog/engine.h>
+#include <autodidact/engine.h>
 #include "acpc_connector.hpp"
 #include "slumbot_connector.hpp"
 #include <cxxopts.hpp>

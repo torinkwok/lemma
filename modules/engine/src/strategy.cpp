@@ -1,4 +1,4 @@
-#include <bulldog/game_util.h>
+#include <autodidact/game_util.h>
 #include <thread>
 
 #include "strategy.h"

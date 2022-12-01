@@ -11,7 +11,7 @@
 #include <netinet/tcp.h>
 #include <sys/wait.h>
 #include <errno.h>
-#include "bulldog/net.h"
+#include "autodidact/net.h"
 
 #define ARG_SERVERNAME 1
 #define ARG_SERVERPORT 2

@@ -7,7 +7,7 @@ void cLogger(char *format, ...){
   logger::debug(format);
 }
 
-TEST_CASE("test bulldog sdk", "[sdk]") {
+TEST_CASE("test autodidact sdk", "[sdk]") {
   fs::path dir(BULLDOG_DIR_CFG_GAME);
   fs::path filename("holdem.nolimit.2p.game");
   Game *game = nullptr;

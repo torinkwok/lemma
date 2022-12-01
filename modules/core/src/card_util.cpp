@@ -1,4 +1,4 @@
-#include <bulldog/card_util.h>
+#include <autodidact/card_util.h>
 #include <pokerstove/peval/CardSetGenerators.h>
 #include <bitset>
 

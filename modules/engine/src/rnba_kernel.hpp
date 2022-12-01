@@ -2,7 +2,7 @@
 #define BULLDOG_MODULES_ENGINE_SRC_RNBA_KERNEL_HPP_
 
 #include <cmath>
-#include <bulldog/logger.hpp>
+#include <autodidact/logger.hpp>
 #include "node.h"
 
 static const int max_rounds_ = 4;

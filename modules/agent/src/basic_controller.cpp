@@ -24,7 +24,7 @@
 // SOFTWARE.
 //
 
-#include <bulldog/logger.hpp>
+#include <autodidact/logger.hpp>
 #include "basic_controller.hpp"
 #include "network_utils.hpp"
 

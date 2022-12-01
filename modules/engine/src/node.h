@@ -2,14 +2,14 @@
 #define BULLDOG_MODULES_ENGINE_SRC_NODE_H_
 
 #include <vector>
-#include <bulldog/logger.hpp>
+#include <autodidact/logger.hpp>
 #include <stack>
 #include "cfr_param.h"
 #include <shared_mutex>
 #include <set>
 
 extern "C" {
-#include "bulldog/game.h"
+#include "autodidact/game.h"
 };
 
 /**

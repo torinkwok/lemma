@@ -3,7 +3,7 @@
 
 #include "node.h"
 #include "hand_belief.h"
-#include <bulldog/logger.hpp>
+#include <autodidact/logger.hpp>
 
 #include <fstream>
 #include <iostream>

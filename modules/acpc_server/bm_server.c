@@ -22,9 +22,9 @@ Copyright (C) 2011 by the Computer Poker Research Group, University of Alberta
 #include <time.h>
 #include <signal.h>
 #include <fcntl.h>
-#include "bulldog/game.h"
-#include "bulldog/net.h"
-#include "bulldog/rng.h"
+#include "autodidact/game.h"
+#include "autodidact/net.h"
+#include "autodidact/rng.h"
 
 
 #define STATUS_CLOSED 0

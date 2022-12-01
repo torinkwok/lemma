@@ -2,7 +2,7 @@
 #include <catch2/catch.hpp>
 
 extern "C" {
-#include "bulldog/game.h"
+#include "autodidact/game.h"
 };
 
 #include <filesystem>

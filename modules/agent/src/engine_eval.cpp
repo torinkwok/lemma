@@ -1,17 +1,17 @@
 // For head-2-head eval
 
-#include <bulldog/engine.h>
-#include <bulldog/logger.hpp>
+#include <autodidact/engine.h>
+#include <autodidact/logger.hpp>
 
 extern "C" {
-#include "bulldog/game.h"
+#include "autodidact/game.h"
 }
 
 #include <cstdlib>
 #include <cxxopts.hpp>
 #include <filesystem>
-#include "bulldog_controller.hpp"
-#include "bulldog_sdk.h"
+#include "autodidact_controller.hpp"
+#include "autodidact_sdk.h"
 
 uint8_t seatToPlayer(const Game *game, const uint8_t player0Seat,
                      const uint8_t seat)
@@ -125,13 +125,13 @@ int main(int argc, char *argv[])
      * Assuming the server is always on the seat 1. quick hack
      */
     BulldogController server;
-    server.setEndpoint("http://host_auto_ip4:8080/v1/bulldog/api");
+    server.setEndpoint("http://host_auto_ip4:8080/v1/autodidact/api");
     server.LoadDefault(solvers[1], game_conf);
     server.accept().wait();
     logger::info("listing for requests at:%s ", server.endpoint());
 
     BulldogSDK sdk;
-    sdk.SetEndpoint("http://192.168.1.177:8080/v1/bulldog/api");
+    sdk.SetEndpoint("http://192.168.1.177:8080/v1/autodidact/api");
     sdk.SendHeartbeat(cLogger);
     sdk.CreateTableSession(cLogger, game_conf, TABLE_POKERSTAR_LITE_NLH2_50_100);
 

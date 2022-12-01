@@ -4,8 +4,8 @@
 #include <map>
 #include <vector>
 #include <set>
-#include <bulldog/logger.hpp>
-#include <bulldog/card_util.h>
+#include <autodidact/logger.hpp>
+#include <autodidact/card_util.h>
 #include <limits>
 #include <cmath>
 #include "engine_util.h"

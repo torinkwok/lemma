@@ -2,7 +2,7 @@
 #define BULLDOG_MODULES_ENGINE_SRC_CFR_COMMAND_HPP_
 
 #include <map>
-#include <bulldog/logger.hpp>
+#include <autodidact/logger.hpp>
 
 enum CFR_COMMAND
 {

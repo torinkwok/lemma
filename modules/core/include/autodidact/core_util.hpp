@@ -2,7 +2,7 @@
 #define BULLDOG_MODULES_CORE_INCLUDE_BULLDOG_CORE_UTIL_HPP_
 
 #include <string>
-#include <bulldog/logger.hpp>
+#include <autodidact/logger.hpp>
 
 extern "C" {
 #include "game.h"

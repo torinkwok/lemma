@@ -1,8 +1,8 @@
 #define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
-#include <bulldog/card_util.h>
+#include <autodidact/card_util.h>
 extern "C" {
-#include <bulldog/game.h>
+#include <autodidact/game.h>
 };
 
 #include <filesystem>

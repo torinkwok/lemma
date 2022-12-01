@@ -1,10 +1,10 @@
 // For head-2-head eval
 
-#include <bulldog/engine.h>
-#include <bulldog/logger.hpp>
+#include <autodidact/engine.h>
+#include <autodidact/logger.hpp>
 
 extern "C" {
-#include "bulldog/game.h"
+#include "autodidact/game.h"
 }
 
 #include <cstdlib>

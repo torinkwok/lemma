@@ -9,8 +9,8 @@ Copyright (C) 2011 by the Computer Poker Research Group, University of Alberta
 #include <sys/time.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#include "bulldog/net.h"
 
+#include "autodidact/net.h"
 
 ReadBuf *createReadBuf(int fd)
 {
@@ -152,7 +152,9 @@ int connectTo(char *hostname, uint16_t port)
 
     if (connect(sock, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
 
-        fprintf(stderr, "ERROR: could not connect to %s:%"PRIu16"\n",
+        fprintf(stderr, "ERROR: could not connect to %s:%"
+        PRIu16
+        "\n",
                 hostname, port
         );
         return -1;

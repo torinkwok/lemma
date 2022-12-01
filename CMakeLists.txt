@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.10)
 # SetAvg project name, version and laguages here.
 # Version numbers are available by including "exampleConfig.h" in
 # the source. See exampleConfig.h.in for some more details.
-project(bulldog)
+project(autodidact)
 
 set(HOME_DIR ${CMAKE_SOURCE_DIR})
 

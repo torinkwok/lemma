@@ -11,7 +11,7 @@
 using namespace libcuckoo;
 
 extern "C" {
-#include <bulldog/game.h>
+#include <autodidact/game.h>
 };
 
 #include <string>

@@ -6,8 +6,8 @@
 
 #include "bucket.h"
 #include "kmeans.h"
-#include <bulldog/logger.hpp>
-#include <bulldog/card_util.h>
+#include <autodidact/logger.hpp>
+#include <autodidact/card_util.h>
 
 #include <pokerstove/peval/CardSetGenerators.h>
 
@@ -20,7 +20,7 @@
 #include <map>
 #include <filesystem>
 #include <pokerstove/util/combinations.h>
-#include <bulldog/core_util.hpp>
+#include <autodidact/core_util.hpp>
 #include <random>
 
 static const std::string BUCKET_FILE_PREFIX = "buckets";

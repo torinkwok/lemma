@@ -1,11 +1,11 @@
 #define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
 #include <filesystem>
-#include "bulldog/table_util.h"
-#include "bulldog/game_util.h"
+#include "autodidact/table_util.h"
+#include "autodidact/game_util.h"
 
 extern "C" {
-#include "bulldog/game.h"
+#include "autodidact/game.h"
 };
 
 TEST_CASE("table action test", "[core]") {

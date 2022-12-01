@@ -1,11 +1,11 @@
 #define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
-#include <bulldog/engine.h>
+#include <autodidact/engine.h>
 #include <pokerstove/peval/CardSet.h>
 #include <pokerstove/peval/Card.h>
 
 extern "C" {
-#include <bulldog/game.h>
+#include <autodidact/game.h>
 };
 
 TEST_CASE("test strategy pool") {

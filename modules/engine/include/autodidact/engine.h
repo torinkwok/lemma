@@ -25,7 +25,7 @@
 #include <future>
 
 extern "C" {
-#include "bulldog/game.h"
+#include "autodidact/game.h"
 }
 
 const int GAME_TYPE_NOT_COMPATIBLE = 0;

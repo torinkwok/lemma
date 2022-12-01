@@ -1,6 +1,6 @@
 #include <spdlog/spdlog.h>
-#include <bulldog/logger.hpp>
-#include <bulldog/game_util.h>
+#include <autodidact/logger.hpp>
+#include <autodidact/game_util.h>
 #include "action_abs.h"
 
 /*

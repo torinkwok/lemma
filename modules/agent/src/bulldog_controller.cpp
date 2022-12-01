@@ -34,11 +34,11 @@ extern "C"
 }
 
 #include "std_micro_service.hpp"
-#include "bulldog_controller.hpp"
+#include "autodidact_controller.hpp"
 #include "server_constants.h"
 
 extern "C" {
-#include "bulldog/game.h"
+#include "autodidact/game.h"
 }
 
 using namespace web;
@@ -95,7 +95,7 @@ void BulldogController::handleGet(http_request request)
           */
         if (path[0] == PATH_PING) {
             logger::debug("SERVER GET: %s", request.request_uri().to_string());
-            request.reply(status_codes::OK, "bulldog is live and well");
+            request.reply(status_codes::OK, "autodidact is live and well");
             return;
         }
 

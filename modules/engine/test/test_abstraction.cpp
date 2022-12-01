@@ -3,9 +3,9 @@
 #include "../src/builder.hpp"
 
 #include <catch2/catch.hpp>
-#include <bulldog/core_util.hpp>
+#include <autodidact/core_util.hpp>
 extern "C" {
-#include <bulldog/game.h>
+#include <autodidact/game.h>
 #include <hand_indexer/src/hand_index.h>
 };
 #include "../src/strategy_io.h"

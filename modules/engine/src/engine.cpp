@@ -1,4 +1,4 @@
-#include <bulldog/engine.h>
+#include <autodidact/engine.h>
 #include <cpprest/json.h>
 
 int Engine::SetTableContext(const TableContext &table_context)
@@ -499,6 +499,7 @@ void Engine::EvalShowdown(MatchState &match_state)
                                 &match_state.state,
                                 match_state.viewingPlayer
     );
+
     char match_state_line[1024];
     printMatchState(normalized_game_, &match_state, 1024, match_state_line);
     //  auto opp_pos = match_state.viewingPlayer - 1;
@@ -510,6 +511,7 @@ void Engine::EvalShowdown(MatchState &match_state)
         logger::info("skip showdown eval: illegal hands for opponents %d %d", opp_c1, opp_c2);
         return;
     }
+
     auto opp_hand_vdx = ToVectorIndex(opp_c1, opp_c2);
     logger::info(" [ENGINE %s]:  showdown eval [net %f] [opp hand %s] [%d playbooks]",
                  engine_name_,

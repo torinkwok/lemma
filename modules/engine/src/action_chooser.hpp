@@ -1,11 +1,11 @@
 #ifndef BULLDOG_MODULES_ENGINE_SRC_ACTION_CHOOSER_HPP_
 #define BULLDOG_MODULES_ENGINE_SRC_ACTION_CHOOSER_HPP_
 
-#include <bulldog/game_util.h>
-#include <bulldog/table_util.h>
+#include <autodidact/game_util.h>
+#include <autodidact/table_util.h>
 
 extern "C" {
-#include "bulldog/game.h"
+#include "autodidact/game.h"
 }
 
 struct ACParam

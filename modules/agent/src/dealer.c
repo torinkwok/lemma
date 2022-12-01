@@ -15,8 +15,8 @@ Copyright (C) 2011 by the Computer Poker Research Group, University of Alberta
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <getopt.h>
-#include <bulldog/game.h>
-#include <bulldog/net.h>
+#include <autodidact/game.h>
+#include <autodidact/net.h>
 
 
 /* the ports for players to connect to will be printed on standard out

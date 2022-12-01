@@ -11,8 +11,8 @@
 ```bash
 ### require_warn cmake 
 
-git clone git://bulldog...
-cd bulldog
+git clone git://autodidact...
+cd autodidact
 git submodule init
 git submodule update
 git pull

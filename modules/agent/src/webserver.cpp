@@ -26,12 +26,12 @@
 
 #include <iostream>
 
-#include "bulldog_controller.hpp"
+#include "autodidact_controller.hpp"
 #include "usr_interrupt_handler.hpp"
 #include "runtime_utils.hpp"
 #include "server_constants.h"
 
-#include <bulldog/logger.hpp>
+#include <autodidact/logger.hpp>
 #include <cxxopts.hpp>
 
 using namespace web;
@@ -39,7 +39,7 @@ using namespace cfx;
 
 int main(int argc, char *argv[])
 {
-    cxxopts::Options options("Bulldog server", "Provide bulldog api service");
+    cxxopts::Options options("Bulldog server", "Provide autodidact api service");
     options.add_options()
             ("l,log_level", "log level", cxxopts::value<std::string>()->default_value("info"))
             ("f,log_file", "file?", cxxopts::value<std::string>()->default_value("bulldog_server"))
@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
 
     BulldogController server;
 
-    auto ep = "http://" + result["endpoint"].as<std::string>() + ":8080/v1/bulldog/api";
+    auto ep = "http://" + result["endpoint"].as<std::string>() + ":8080/v1/autodidact/api";
     server.setEndpoint(ep);
     server.LoadDefault(result["engine"].as<std::string>(), result["game"].as<std::string>());
 

@@ -5,11 +5,11 @@
 #include <vector>
 #include <cereal/access.hpp>
 #include <cereal/types/map.hpp>
-#include <bulldog/card_util.h>
+#include <autodidact/card_util.h>
 #include <set>
 
 extern "C" {
-#include <bulldog/game.h>
+#include <autodidact/game.h>
 #include <hand_indexer/src/hand_index.h>
 }
 

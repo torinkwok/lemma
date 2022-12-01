@@ -2,7 +2,7 @@
 #include "ag_builder.hpp"
 #include "strategy_io.h"
 
-#include <bulldog/logger.hpp>
+#include <autodidact/logger.hpp>
 #include "cxxopts.hpp"
 
 void train(const cxxopts::ParseResult &result);

@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <set>
-#include <bulldog/logger.hpp>
+#include <autodidact/logger.hpp>
 #include <filesystem>
 #include <random>
 #include <pokerstove/util/combinations.h>
@@ -11,7 +11,7 @@
 #include <pokerstove/peval/Card.h>
 
 extern "C" {
-#include "bulldog/game.h"
+#include "autodidact/game.h"
 }
 
 const int HOLDEM_ROUND_RIVER = 3;

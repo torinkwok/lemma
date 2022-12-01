@@ -3,10 +3,10 @@
 
 #include <cpprest/json.h>
 #include <utility>
-#include <bulldog/card_util.h>
+#include <autodidact/card_util.h>
 #include "node.h"
 extern "C" {
-#include "bulldog/game.h"
+#include "autodidact/game.h"
 }
 
 static std::map<std::string, RAISE_MODE> PotEstimateMap{

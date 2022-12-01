@@ -4,17 +4,17 @@
 #include "bucket.h"
 #include "node.h"
 
-#include <bulldog/logger.hpp>
+#include <autodidact/logger.hpp>
 
 #include <cereal/archives/binary.hpp>
 #include <filesystem>
-#include <bulldog/card_util.h>
+#include <autodidact/card_util.h>
 #include <utility>
-#include <bulldog/core_util.hpp>
+#include <autodidact/core_util.hpp>
 #include <pokerstove/peval/CardSetGenerators.h>
 
 extern "C" {
-#include <bulldog/game.h>
+#include <autodidact/game.h>
 }
 
 size_t Bucket::LoadClassicFromFlexbuffers(const std::string &dir, uint8_t r, bool lossless)

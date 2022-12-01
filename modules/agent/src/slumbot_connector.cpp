@@ -1,11 +1,11 @@
 #include "slumbot_connector.hpp"
-#include <bulldog/game.h>
+#include <autodidact/game.h>
 
 #include <cstdlib>
 #include <numeric>
 #include <cpprest/http_client.h>
 #include <cpprest/filestream.h>
-#include <bulldog/logger.hpp>
+#include <autodidact/logger.hpp>
 #include <sys/time.h>
 #include <boost/algorithm/string.hpp>
 

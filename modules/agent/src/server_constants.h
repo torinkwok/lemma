@@ -8,10 +8,10 @@
  * PATH
  */
 //the router must support dhcp for the device
-static utility::string_t SERVER_DEFAULT_ENDPOINT = U("http://host_auto_ip4:8080/v1/bulldog/api");
-static utility::string_t WOLO001_DEFAULT_ENDPOINT = U("http://192.168.1.210:8080/v1/bulldog/api");
-static utility::string_t ISAAC_MBP_DEFAULT_ENDPOINT = U("http://192.168.1.177:8080/v1/bulldog/api");
-static utility::string_t CARMEN_MBP_DEFAULT_ENDPOINT = U("http://192.168.1.27:8080/v1/bulldog/api");
+static utility::string_t SERVER_DEFAULT_ENDPOINT = U("http://host_auto_ip4:8080/v1/autodidact/api");
+static utility::string_t WOLO001_DEFAULT_ENDPOINT = U("http://192.168.1.210:8080/v1/autodidact/api");
+static utility::string_t ISAAC_MBP_DEFAULT_ENDPOINT = U("http://192.168.1.177:8080/v1/autodidact/api");
+static utility::string_t CARMEN_MBP_DEFAULT_ENDPOINT = U("http://192.168.1.27:8080/v1/autodidact/api");
 static utility::string_t PATH_GET_ACTION = U("getaction");
 static utility::string_t PATH_TABLESESSION = U("tablesession");
 static utility::string_t PATH_EVALSTATE = U("evalstate");

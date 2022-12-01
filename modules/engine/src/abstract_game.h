@@ -9,7 +9,7 @@
 #include <cpprest/json.h>
 
 extern "C" {
-#include <bulldog/game.h>
+#include <autodidact/game.h>
 };
 
 // TODO(kwok): Move it to the `AbstractGame` namespace.

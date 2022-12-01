@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="build_buckets_colex_priv2_pub5_clusters169_threads1" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="--mode=colex --private_cards=2 --public_cards=5 --clusters=169 --threads=1 --loglevel=trace" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" WORKING_DIR="file://$CMakeProjectDir$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="bulldog" TARGET_NAME="build_buckets" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="bulldog" RUN_TARGET_NAME="build_buckets">
+  <configuration default="false" name="build_buckets_colex_priv2_pub5_clusters169_threads1" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="--mode=colex --private_cards=2 --public_cards=5 --clusters=169 --threads=1 --loglevel=trace" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" WORKING_DIR="file://$CMakeProjectDir$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="autodidact" TARGET_NAME="build_buckets" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="autodidact" RUN_TARGET_NAME="build_buckets">
     <method v="2">
       <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
     </method>

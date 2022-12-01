@@ -5,7 +5,7 @@
 #include <map>
 #include <array>
 #include <filesystem>
-#include <bulldog/core_util.hpp>
+#include <autodidact/core_util.hpp>
 
 struct sBucketMeta
 {

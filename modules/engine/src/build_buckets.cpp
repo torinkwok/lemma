@@ -1,6 +1,6 @@
 #include "kmeans.h"
 #include "builder.hpp"
-#include <bulldog/logger.hpp>
+#include <autodidact/logger.hpp>
 
 #include <cxxopts.hpp>
 #include <filesystem>

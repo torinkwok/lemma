@@ -1,10 +1,10 @@
 #include <iostream>
 #include <vector>
-#include <bulldog/logger.hpp>
+#include <autodidact/logger.hpp>
 #include "acpc_connector.hpp"
 
 extern "C" {
-#include "bulldog/net.h"
+#include "autodidact/net.h"
 }
 
 /**

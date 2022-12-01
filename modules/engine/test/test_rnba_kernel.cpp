@@ -1,14 +1,14 @@
 #define CATCH_CONFIG_MAIN
 
 #include <catch2/catch.hpp>
-#include <bulldog/logger.hpp>
+#include <autodidact/logger.hpp>
 #include "../src/action_abs.h"
 #include "../src/rnba_kernel.hpp"
 #include "../src/abstract_game.h"
 #include "../src/strategy.h"
 
 extern "C" {
-#include <bulldog/game.h>
+#include <autodidact/game.h>
 };
 
 #include <filesystem>

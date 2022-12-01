@@ -1,12 +1,12 @@
 #define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
 #include <filesystem>
-#include <bulldog/core_util.hpp>
-#include <bulldog/logger.hpp>
-#include <bulldog/game_util.h>
+#include <autodidact/core_util.hpp>
+#include <autodidact/logger.hpp>
+#include <autodidact/game_util.h>
 #include "../../agent/src/base_connector.hpp"
 extern "C" {
-#include "bulldog/game.h"
+#include "autodidact/game.h"
 };
 
 SCENARIO("test match state card crash", "[core]") {

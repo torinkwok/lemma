@@ -3,7 +3,7 @@
 
 #include <string>
 #include <cpprest/http_client.h>
-//#include <bulldog/logger.hpp>
+//#include <autodidact/logger.hpp>
 #include "server_constants.h"
 
 extern "C" {
