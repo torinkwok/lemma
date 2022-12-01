@@ -24,8 +24,7 @@
       }
     },
     "convergence": {
-      "max_iter": 2000,
-      "timeout": 30000
+      "max_iter": 36000
     }
   }
 }
