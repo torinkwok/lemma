@@ -12,7 +12,7 @@ extern "C" {
 
 using lLogger = void (*)(char *format, ...);
 
-class BulldogSDK
+class AutodidactSDK
 {
 public:
     utility::string_t endpoint_;

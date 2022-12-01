@@ -9,13 +9,13 @@ add_executable(dealer src/dealer.c)
 
 add_executable(webserver src/webserver.cpp
         src/network_utils.cpp
-        src/bulldog_controller.cpp
-        src/basic_controller.cpp src/bulldog_sdk.cpp)
+        src/autodidact_controller.cpp
+        src/basic_controller.cpp src/autodidact_sdk.cpp)
 
 add_executable(engine_eval src/engine_eval.cpp
         src/network_utils.cpp
-        src/bulldog_controller.cpp
-        src/basic_controller.cpp src/bulldog_sdk.cpp)
+        src/autodidact_controller.cpp
+        src/basic_controller.cpp src/autodidact_sdk.cpp)
 
 include_directories(${CMAKE_CURRENT_LIST_DIR}/include)
 
@@ -39,9 +39,9 @@ add_executable(test_agent ${CMAKE_CURRENT_SOURCE_DIR}/test/test_agent.cpp
         ${HOME_DIR}/modules/engine/src/bucket.cpp)
 add_executable(test_sdk ${CMAKE_CURRENT_SOURCE_DIR}/test/test_sdk.cpp
         src/network_utils.cpp
-        src/bulldog_controller.cpp
+        src/autodidact_controller.cpp
         src/basic_controller.cpp
-        src/bulldog_sdk.cpp)
+        src/autodidact_sdk.cpp)
 
 add_executable(waugh_bucket_test
         test/waugh_bucket_test.cpp

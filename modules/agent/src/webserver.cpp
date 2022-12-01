@@ -39,10 +39,10 @@ using namespace cfx;
 
 int main(int argc, char *argv[])
 {
-    cxxopts::Options options("Bulldog server", "Provide autodidact api service");
+    cxxopts::Options options("Lemma server", "Provide autodidact api service");
     options.add_options()
             ("l,log_level", "log level", cxxopts::value<std::string>()->default_value("info"))
-            ("f,log_file", "file?", cxxopts::value<std::string>()->default_value("bulldog_server"))
+            ("f,log_file", "file?", cxxopts::value<std::string>()->default_value("autodidact_server"))
             ("e,endpoint", "server address", cxxopts::value<std::string>()->default_value("host_auto_ip4"))
             ("g,game", "game file", cxxopts::value<std::string>())
             ("n,engine", "engine file", cxxopts::value<std::string>())
@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
 
     InterruptHandler::hookSIGINT();
 
-    BulldogController server;
+    AutodidactController server;
 
     auto ep = "http://" + result["endpoint"].as<std::string>() + ":8080/v1/autodidact/api";
     server.setEndpoint(ep);

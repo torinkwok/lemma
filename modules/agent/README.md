@@ -3,11 +3,11 @@ with engine ready for waiting
 
 ##REST Endpoints
 #### New Engine
-with bulldog/config/games/holdem.nolimit.2p.10_20.game
+with autodidact/config/games/holdem.nolimit.2p.10_20.game
 
 ```bash
 method: POST
-uri: http://192.168.1.90:8080/v1/bulldog/api/new/engine
+uri: http://192.168.1.90:8080/v1/autodidact/api/new/engine
 params[example]:
     - players="2p"
     - betting_type="nolimit"
@@ -28,7 +28,7 @@ Not Implemented
 ####Delete Engine
 ```bash
 method: DELETE
-uri: http://192.168.1.90:8080/v1/bulldog/api
+uri: http://192.168.1.90:8080/v1/autodidact/api
 params[example]:
     - session_id="7D256B5E-7120-4F14-8413-8CE5CCF2F7F9"
 ```
@@ -39,7 +39,7 @@ status: 200
 ####Get Action
 ```bash
 method: GET
-uri: http://192.168.1.90:8080/v1/bulldog/api/action
+uri: http://192.168.1.90:8080/v1/autodidact/api/action
 params="example":
     - session_id="7D256B5E-7120-4F14-8413-8CE5CCF2F7F9"
     - matchstate="MATCHSTATE:1:2:c:20000|20000:|4sQs"

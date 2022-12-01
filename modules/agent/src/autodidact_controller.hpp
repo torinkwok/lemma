@@ -17,7 +17,7 @@
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// FITNESS FOR A PARTICULAR PURPOSE AND NON INFRINGEMENT. IN NO EVENT SHALL THE
 // AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
@@ -37,18 +37,18 @@ struct EnginePack
     std::chrono::steady_clock::time_point last_access_timestamp_;
 };
 
-class BulldogController : public BasicController, Controller
+class AutodidactController : public BasicController, Controller
 {
 public:
 
-    BulldogController()
+    AutodidactController()
             : BasicController()
     {
         bucket_pool_ = new BucketPool();
         blueprint_pool_ = new StrategyPool();
     }
 
-    ~BulldogController()
+    ~AutodidactController()
     {
         delete bucket_pool_;
         delete blueprint_pool_;

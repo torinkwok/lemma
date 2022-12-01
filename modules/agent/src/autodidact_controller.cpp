@@ -65,13 +65,13 @@ static std::string newUUID()
     return s;
 }
 
-void BulldogController::initRestOpHandlers()
+void AutodidactController::initRestOpHandlers()
 {
-    _listener.support(methods::GET, std::bind(&BulldogController::handleGet, this, std::placeholders::_1));
-    _listener.support(methods::PUT, std::bind(&BulldogController::handlePut, this, std::placeholders::_1));
-    _listener.support(methods::POST, std::bind(&BulldogController::handlePost, this, std::placeholders::_1));
-    _listener.support(methods::DEL, std::bind(&BulldogController::handleDelete, this, std::placeholders::_1));
-    _listener.support(methods::PATCH, std::bind(&BulldogController::handlePatch, this, std::placeholders::_1));
+    _listener.support(methods::GET, std::bind(&AutodidactController::handleGet, this, std::placeholders::_1));
+    _listener.support(methods::PUT, std::bind(&AutodidactController::handlePut, this, std::placeholders::_1));
+    _listener.support(methods::POST, std::bind(&AutodidactController::handlePost, this, std::placeholders::_1));
+    _listener.support(methods::DEL, std::bind(&AutodidactController::handleDelete, this, std::placeholders::_1));
+    _listener.support(methods::PATCH, std::bind(&AutodidactController::handlePatch, this, std::placeholders::_1));
 }
 
 std::string WstringToString(const std::wstring &str)
@@ -85,7 +85,7 @@ std::string WstringToString(const std::wstring &str)
     return str1;
 }
 
-void BulldogController::handleGet(http_request request)
+void AutodidactController::handleGet(http_request request)
 {
     auto path = requestPath(request);
     auto http_vars = uri::split_query(request.request_uri().query());
@@ -145,12 +145,12 @@ void BulldogController::handleGet(http_request request)
             MatchState normalized_match_state;
             auto translate_result = engine->TranslateToNormState(matchstate_str, normalized_match_state);
             if (translate_result == MATCH_STATE_PARSING_FAILURE) {
-                request.reply(status_codes::BadRequest, "invalid matchstate");
+                request.reply(status_codes::BadRequest, "invalid match state");
                 return;
             }
             // then get action
             Action r_action;
-            auto get_action_result = engine->GetActionBySession(normalized_match_state, r_action, timeout);
+            auto get_action_result = engine->GetActionBySession(normalized_match_state, r_action);
             if (get_action_result == GET_ACTION_SUCCESS) {
                 auto response = json::value::object();
                 response["type"] = json::value::number(r_action.type);
@@ -176,7 +176,7 @@ void BulldogController::handleGet(http_request request)
  * while session game should change with session, especially need to update the blind.
  */
 
-void BulldogController::handlePost(http_request request)
+void AutodidactController::handlePost(http_request request)
 {
     logger::debug("SERVER POST: %s", request.request_uri().to_string());
     auto path = requestPath(request);
@@ -339,7 +339,7 @@ void BulldogController::handlePost(http_request request)
     request.reply(status_codes::NotFound);
 }
 
-void BulldogController::handleDelete(http_request request)
+void AutodidactController::handleDelete(http_request request)
 {
     logger::debug("SERVER DELETE: %s", request.request_uri().to_string());
     auto path = requestPath(request);
@@ -366,51 +366,51 @@ void BulldogController::handleDelete(http_request request)
     request.reply(status_codes::NotFound);
 }
 
-void BulldogController::handlePatch(http_request request)
+void AutodidactController::handlePatch(http_request request)
 {
     request.reply(status_codes::NotImplemented, responseNotImpl(methods::PATCH));
 }
 
-void BulldogController::handlePut(http_request request)
+void AutodidactController::handlePut(http_request request)
 {
     request.reply(status_codes::NotImplemented, responseNotImpl(methods::PUT));
 }
 
-void BulldogController::handleHead(http_request request)
+void AutodidactController::handleHead(http_request request)
 {
     request.reply(status_codes::NotImplemented, responseNotImpl(methods::HEAD));
 }
 
-void BulldogController::handleOptions(http_request request)
+void AutodidactController::handleOptions(http_request request)
 {
     request.reply(status_codes::NotImplemented, responseNotImpl(methods::OPTIONS));
 }
 
-void BulldogController::handleTrace(http_request request)
+void AutodidactController::handleTrace(http_request request)
 {
     request.reply(status_codes::NotImplemented, responseNotImpl(methods::TRCE));
 }
 
-void BulldogController::handleConnect(http_request request)
+void AutodidactController::handleConnect(http_request request)
 {
     request.reply(status_codes::NotImplemented, responseNotImpl(methods::CONNECT));
 }
 
-void BulldogController::handleMerge(http_request request)
+void AutodidactController::handleMerge(http_request request)
 {
     request.reply(status_codes::NotImplemented, responseNotImpl(methods::MERGE));
 }
 
-json::value BulldogController::responseNotImpl(const http::method &method)
+json::value AutodidactController::responseNotImpl(const http::method &method)
 {
     auto response = json::value::object();
-    response["serviceName"] = json::value::string("Bulldog");
+    response["serviceName"] = json::value::string("Lemma");
     response["http_method"] = json::value::string(method);
     return response;
 }
 
-bool BulldogController::LoadDefault(std::string engine_file_name,
-                                    std::string game_conf)
+bool AutodidactController::LoadDefault(std::string engine_file_name,
+                                       std::string game_conf)
 {
     //Initiate Game
     Game *game = nullptr;;
@@ -468,7 +468,7 @@ bool BulldogController::LoadDefault(std::string engine_file_name,
     return true;
 }
 
-bool BulldogController::Cleanup()
+bool AutodidactController::Cleanup()
 {
     return true;
 }

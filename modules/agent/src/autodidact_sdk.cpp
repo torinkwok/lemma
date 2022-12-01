@@ -1,6 +1,6 @@
 #include "autodidact_sdk.h"
 
-bool BulldogSDK::Ping(lLogger f) const
+bool AutodidactSDK::Ping(lLogger f) const
 {
     //Get session_id from server
     web::http::client::http_client_config cfg;
@@ -29,7 +29,7 @@ bool BulldogSDK::Ping(lLogger f) const
     }
 }
 
-bool BulldogSDK::SendHeartbeat(lLogger f) const
+bool AutodidactSDK::SendHeartbeat(lLogger f) const
 {
     //Get session_id from server
     web::http::client::http_client_config cfg;
@@ -59,7 +59,7 @@ bool BulldogSDK::SendHeartbeat(lLogger f) const
     }
 }
 
-bool BulldogSDK::CreateTableSession(lLogger f, std::string game_conf, std::string table)
+bool AutodidactSDK::CreateTableSession(lLogger f, std::string game_conf, std::string table)
 {
     if (!session_id_.empty()) {
         f(const_cast<char *>("AUTODIDACT SDK: already have session id %s\n"), session_id_.c_str());
@@ -81,9 +81,11 @@ bool BulldogSDK::CreateTableSession(lLogger f, std::string game_conf, std::strin
                       if (response.status_code() == web::http::status_codes::Created) {
                           auto json = response.extract_json().get();
                           session_id_ = json.at(PARAM_SESSION_ID).as_string();
-                          f(const_cast<char *>("AUTODIDACT SDK: engine returns session_id = %s\n"), session_id_.c_str());
+                          f(const_cast<char *>("AUTODIDACT SDK: engine returns session_id = %s\n"),
+                            session_id_.c_str());
                       } else if (response.status_code() == web::http::status_codes::BadRequest) {
-                          f(const_cast<char *>("AUTODIDACT SDK: bad request %s %s\n"), game_conf.c_str(), table.c_str());
+                          f(const_cast<char *>("AUTODIDACT SDK: bad request %s %s\n"), game_conf.c_str(),
+                            table.c_str());
                           throw std::runtime_error(utility::conversions::to_utf8string(response.to_string()));
                       } else if (response.status_code() == web::http::status_codes::ServiceUnavailable) {
                           f(const_cast<char *>("AUTODIDACT SDK: service unavailable\n"));
@@ -102,7 +104,7 @@ bool BulldogSDK::CreateTableSession(lLogger f, std::string game_conf, std::strin
     }
 }
 
-bool BulldogSDK::DeleteTableSession(lLogger f) const
+bool AutodidactSDK::DeleteTableSession(lLogger f) const
 {
     if (session_id_.empty()) {
         f(const_cast<char *>("AUTODIDACT SDK: not yet have session id\n"));
@@ -117,7 +119,8 @@ bool BulldogSDK::DeleteTableSession(lLogger f) const
                              .to_string())
             .then([&](const web::http::http_response &response)
                   {
-                      f(const_cast<char *>("AUTODIDACT SDK: DeleteTableSession() retured %d\n"), response.status_code());
+                      f(const_cast<char *>("AUTODIDACT SDK: DeleteTableSession() retured %d\n"),
+                        response.status_code());
                       switch (response.status_code()) {
                           case web::http::status_codes::OK:
                               break;
@@ -139,7 +142,7 @@ bool BulldogSDK::DeleteTableSession(lLogger f) const
     }
 }
 
-bool BulldogSDK::NewHand(lLogger f)
+bool AutodidactSDK::NewHand(lLogger f)
 {
     if (in_hand_) {
         f(const_cast<char *>("AUTODIDACT SDK: should call EndHand after a hand\n"));
@@ -176,7 +179,7 @@ bool BulldogSDK::NewHand(lLogger f)
     }
 }
 
-bool BulldogSDK::EndHand(lLogger f)
+bool AutodidactSDK::EndHand(lLogger f)
 {
     if (!in_hand_) {
         f(const_cast<char *>("AUTODIDACT SDK: you are not in a hand right now\n"));
@@ -214,7 +217,7 @@ bool BulldogSDK::EndHand(lLogger f)
     }
 }
 
-bool BulldogSDK::GetAction(lLogger f, Game *game, MatchState &new_match_state, Action &r_action, int timeout) const
+bool AutodidactSDK::GetAction(lLogger f, Game *game, MatchState &new_match_state, Action &r_action, int timeout) const
 {
     f(const_cast<char *>("AUTODIDACT SDK - get action from sdk\n"));
     char match_state_str[MAX_LINE_LEN];
@@ -250,7 +253,9 @@ bool BulldogSDK::GetAction(lLogger f, Game *game, MatchState &new_match_state, A
                           throw std::runtime_error("SDK:  no such action type");
                       }
                       r_action.size = jsonObject.at(U("size")).as_integer();
-                      f(const_cast<char *>("AUTODIDACT SDK: returned %c%d\n"), actionChars[r_action.type], r_action.size);
+                      f(const_cast<char *>("AUTODIDACT SDK: returned %c%d\n"), actionChars[r_action.type],
+                        r_action.size
+                      );
                   }
             );
     try {
@@ -264,7 +269,7 @@ bool BulldogSDK::GetAction(lLogger f, Game *game, MatchState &new_match_state, A
     }
 }
 
-bool BulldogSDK::ChangeBlinds(lLogger f, int smallblind, int bigblind)
+bool AutodidactSDK::ChangeBlinds(lLogger f, int smallblind, int bigblind)
 {
     if (session_id_.empty()) {
         f(const_cast<char *>("AUTODIDACT SDK: should create session first\n"));
@@ -300,7 +305,7 @@ bool BulldogSDK::ChangeBlinds(lLogger f, int smallblind, int bigblind)
     }
 }
 
-bool BulldogSDK::AutoSearchEndpoint(lLogger f)
+bool AutodidactSDK::AutoSearchEndpoint(lLogger f)
 {
     for (const auto &e: ENDPOINT_CANDIDATES) {
         SetEndpoint(e);
@@ -311,7 +316,7 @@ bool BulldogSDK::AutoSearchEndpoint(lLogger f)
     return false;
 }
 
-bool BulldogSDK::EvalState(lLogger f, Game *game, MatchState &matchstate) const
+bool AutodidactSDK::EvalState(lLogger f, Game *game, MatchState &matchstate) const
 {
     if (session_id_.empty()) {
         f(const_cast<char *>("AUTODIDACT SDK: should create session first\n"));

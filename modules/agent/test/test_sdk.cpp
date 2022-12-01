@@ -1,7 +1,7 @@
 #define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
-#include "../src/bulldog_sdk.h"
-#include "../src/bulldog_controller.hpp"
+#include "../src/autodidact_sdk.h"
+#include "../src/autodidact_controller.hpp"
 
 void cLogger(char *format, ...){
   logger::debug(format);
@@ -16,7 +16,7 @@ TEST_CASE("test autodidact sdk", "[sdk]") {
 
   logger::init_logger("debug");
 
-  BulldogController server;
+  AutodidactController server;
   server.setEndpoint(SERVER_DEFAULT_ENDPOINT);
   REQUIRE(server.LoadDefault("engine_random_action.json", GAME_NLH2));
 
@@ -27,10 +27,10 @@ TEST_CASE("test autodidact sdk", "[sdk]") {
     server.accept().wait();
     logger::info("listing for requests at:%s ", server.endpoint());
 
-    BulldogSDK sdk;
-    BulldogSDK sdk2;
-    BulldogSDK sdk3;
-    BulldogSDK sdk4;
+    AutodidactSDK sdk;
+    AutodidactSDK sdk2;
+    AutodidactSDK sdk3;
+    AutodidactSDK sdk4;
     /*
      * hack to the right ip
      */

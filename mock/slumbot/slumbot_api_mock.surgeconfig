@@ -9,9 +9,9 @@ test-timeout = 5
 FINAL,DIRECT
 
 [Map Local]
-https://slumbot.com/api/act data="/Users/kwokt/dev/git/bulldog/mock/slumbot/b400b900b1600b8100_pos1_holecards_JSJh_resp.json"
-https://slumbot.com/api/new_hand data="/Users/kwokt/dev/git/bulldog/mock/slumbot/b400b900b1600b8100_pos1_holecards_JSJh_resp.json"
-https://slumbot.com/api/login data="/Users/kwokt/dev/git/bulldog/mock/slumbot/login_success_resp.json"
+https://slumbot.com/api/act data="/Users/kwokt/dev/git/autodidact/mock/slumbot/b400b900b1600b8100_pos1_holecards_JSJh_resp.json"
+https://slumbot.com/api/new_hand data="/Users/kwokt/dev/git/autodidact/mock/slumbot/b400b900b1600b8100_pos1_holecards_JSJh_resp.json"
+https://slumbot.com/api/login data="/Users/kwokt/dev/git/autodidact/mock/slumbot/login_success_resp.json"
 
 [MITM]
 tcp-connection = true
