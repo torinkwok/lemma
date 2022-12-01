@@ -23,21 +23,22 @@ std::string PrintCfrResultCode(int code);
 
 struct sThreadOutput
 {
-    std::mutex _mx;
     sThreadOutput() = default;
 
-    double avg_util_;
-    double std_dev_;
+    double avg_util_{};
+    double std_dev_{};
+
     double max_util_ = -99999999999;
     double min_util_ = 99999999999;
+
     double *array_ = nullptr;
-    int size_;
-    int cursor_ = 0;
+
+    int size_{};
+    int cursor_{};
     int remaining_iter{size_};
 
     void AddIterResult(double local_util)
     {
-        std::scoped_lock lk(_mx);
         array_[cursor_++] = local_util;
         if (local_util > max_util_) max_util_ = local_util;
         if (local_util < min_util_) min_util_ = local_util;
@@ -45,7 +46,6 @@ struct sThreadOutput
 
     void Prepare(int size)
     {
-        std::scoped_lock lk(_mx);
         size_ = size;
         array_ = new double[size_];
         for (int i = 0; i < size_; i++) {
@@ -55,7 +55,6 @@ struct sThreadOutput
 
     void Process()
     {
-        std::scoped_lock lk(_mx);
         double sum = 0;
         for (auto i = 0; i < size_; i++) {
             if (array_[i] != -1) {
