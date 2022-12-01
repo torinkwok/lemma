@@ -5,8 +5,6 @@
  * to determine when the searcher should stop.
  * by time, by max_iter, by residual sigma
  * -1 means not applicable
- *
- * < means keep searching
  */
 
 #include <bulldog/logger.hpp>
@@ -45,7 +43,8 @@ struct sCFRProgress
         addToWindow(explt);
     }
 
-    bool operator<(const sCFRProgress &that)
+    // < means keep searching
+    bool operator<(const sCFRProgress &that) const
     {
         bool time_flag = that.time_milli_seconds == -1 || this->time_milli_seconds < that.time_milli_seconds;
         // TODO(kwok): Justify it.
@@ -89,7 +88,7 @@ struct sCFRProgress
         this->expl_std = std::sqrt(sq_sum / v.size());
     }
 
-    void Print()
+    void Print() const
     {
         logger::info("iter = %d || expl = %f || expl_std = %f || total_training_time = %f (ms)",
                      iteration,
