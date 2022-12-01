@@ -514,7 +514,7 @@ void CFR::ThreadedCfrSolve(Strategy *blueprint,
     }
 
     // Also required for thread = 1, so that the same variables can be accessed similarly
-    merged_result.MergeThreadOutputs(thread_local_outputs, effective_thread);
+    merged_result.MergeThreadLocalOutputs(thread_local_outputs, effective_thread);
 }
 
 int CFR::AsyncCfrSolving(CFR *cfr,

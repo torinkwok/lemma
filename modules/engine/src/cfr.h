@@ -84,10 +84,10 @@ struct sThreadSharedCfrWorkerOutput
     double min_ = 99999999999;
     double std_dev_ = 0.0;
 
-    void MergeThreadOutputs(sThreadLocalCfrWorkerOutput *outputs, int num_thread)
+    void MergeThreadLocalOutputs(sThreadLocalCfrWorkerOutput *outputs, int num_thread)
     {
         int effective_thread = num_thread;
-        //compute mean and max and min
+        // compute mean and max and min
         for (int i = 0; i < num_thread; ++i) {
             if (outputs->array_ == nullptr) {
                 effective_thread--;
