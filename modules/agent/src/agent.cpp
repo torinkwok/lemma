@@ -200,8 +200,7 @@ int main(int argc, char *argv[])
             /* Ignore states that we are not acting in */
             // FIXME(kwok): Is this guardian code necessary?
             if (currentPlayer(game, &match_state.state) != match_state.viewingPlayer) {
-                logger::debug(" [AGENT]: 🚨ignore state, not acting player");
-                continue;
+                logger::critical(" [AGENT]: ignore state, not acting player");
             }
 
             /* Pick an action to play. */
