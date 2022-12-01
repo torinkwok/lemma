@@ -810,7 +810,6 @@ bool Engine::ValidatePlaybook(PlayBook &playbook, MatchState *new_match_state, i
         if (selected_candidate.off_tree_dist_ > 1500) {
             break;
         }
-
         auto inited = new_strategy->IsStrategyInitializedForMyHand(selected_candidate.matched_node_,
                                                                    STRATEGY_WAVG,
                                                                    new_match_state

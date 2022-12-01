@@ -189,15 +189,9 @@ public:
                                int cfr_checkpoint = 0);
 
 private:
-    static void ThreadedCfrSolve(Strategy *blueprint,
-                                 Strategy *strategy,
-                                 sCfrParam &cfr_param,
-                                 sCFRProgress &current_progress,
-                                 int steps,
-                                 sTotalThreadOutput &total_result,
-                                 std::vector<int> *thread_board,
-                                 std::vector<Board_t> *pub_bucket_flop_boards,
-                                 pthread_t *thread_pool,
+    static void ThreadedCfrSolve(Strategy *blueprint, Strategy *strategy, sCfrParam &cfr_param, int steps,
+                                 sTotalThreadOutput &total_result, std::vector<int> *thread_board,
+                                 std::vector<Board_t> *pub_bucket_flop_boards, pthread_t *thread_pool,
                                  const std::atomic_bool &cancelled);
 
     void Config(web::json::value data);
