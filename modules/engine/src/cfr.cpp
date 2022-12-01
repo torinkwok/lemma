@@ -12,7 +12,7 @@ int CFR::Solve(Strategy *blueprint,
                int starting_checkpoint)
 {
     auto num_thread = cfr_param_.num_threads;
-    logger::debug("   [CFR] : solving begins [%d threads] [round %d] [checkpoint %d] [depth limited %d]",
+    logger::info("   [CFR] : solving begins with [%d threads] [round %d] [checkpoint %d] [depth limited %d]",
                   num_thread,
                   strategy->ag_->root_node_->GetRound(),
                   starting_checkpoint,
@@ -216,7 +216,7 @@ int CFR::Solve(Strategy *blueprint,
         return_code = CFR_SOLVING_TERMINATED_ALL_COMMANDS;
     }
 
-    logger::info("   [CFR]: ⏳solving time = %d (ms) || ends at iter %d || end code %s",
+    logger::info("   [CFR]: ⏳solving took %d (ms) || ends at iter %d || end code %s",
                  timer.GetLapseFromBegin(),
                  current_state.iteration,
                  PrintCfrResultCode(return_code));
@@ -521,7 +521,7 @@ int CFR::AsyncCfrSolving(CFR *cfr,
                          const std::atomic_bool &cancelled,
                          int cfr_checkpoint)
 {
-    logger::debug("🟢starting async MCCFR solving");
+    logger::info("🟢starting async MCCFR solving");
     return cfr->Solve(blueprint, new_strategy, *convergence, cancelled, cfr_checkpoint);
 }
 

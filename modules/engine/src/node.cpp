@@ -203,7 +203,7 @@ void Node::PrintState(const std::string &prefix)
 {
     char line[MAX_LINE_LEN];
     printState(game_, &state_, MAX_LINE_LEN, line);
-    logger::debug(prefix + line);
+    logger::info(prefix + line);
 }
 
 int Node::GetAmax()

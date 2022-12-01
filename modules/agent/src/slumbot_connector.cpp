@@ -227,7 +227,7 @@ int SlumbotConnector::send()
             .then([](const web::http::http_response &response)
                   {
                       if (response.status_code() != 200) {
-                          logger::error("(kwok) slumbot_connector::send action returned Error" +
+                          logger::error("slumbot_connector::send action returned Error" +
                                         std::to_string(response.status_code()));
                       }
                       return response.extract_json(true);
@@ -235,7 +235,7 @@ int SlumbotConnector::send()
             )
             .then([this](const web::json::value &jsonObject)
                   {
-                      logger::debug("(kwok) slumbot_connector::send action returned:" + jsonObject.serialize());
+                      logger::info("slumbot_connector::send action returned:" + jsonObject.serialize());
                       this->previous_act_result_json_ = jsonObject;
                       from_json(this->previous_act_result_json_, this->slumbot_match_state_);
                   }
@@ -267,14 +267,14 @@ bool SlumbotConnector::get()
                       {
                           if (response.status_code() != 200) {
                               // FIXME(kwok): Check the type of error reported here.
-                              throw std::runtime_error("(kwok) slumbot_connector::get next_hand returned Error");
+                              throw std::runtime_error("slumbot_connector::get next_hand returned Error");
                           }
                           return response.extract_json(true);
                       }
                 )
                 .then([this](const web::json::value &jsonObject)
                       {
-                          logger::trace("(kwok) slumbot_connector::get next_hand returned:" + jsonObject.serialize());
+                          logger::info("slumbot_connector::get next_hand returned:" + jsonObject.serialize());
                           if (jsonObject.has_field(U("token"))) {
                               this->token_ = jsonObject.at(U("token")).as_string();
                           }
@@ -299,6 +299,7 @@ int SlumbotConnector::parse(const Game *game, MatchState *state)
     if (slumbot_match_state_->p1_ >= game->numPlayers) {
         logger::critical("viewing player recieved from slumbot is not compatible with game");
     }
+
     initState(game, iter_rec_ - iter_, &state->state);
 
     // In Slumbot, `p1_ = 1` is the small blind. In ACPC, `p1_ = 0` is the small
@@ -327,7 +328,7 @@ int SlumbotConnector::parse(const Game *game, MatchState *state)
     std::string ref_acpc_msg =
             "MATCHSTATE:" + std::to_string(state->viewingPlayer) + ":" + std::to_string(state->state.handId) +
             ":" + ":" + slumbot_match_state_->action_ + ":" + holes_str + board_str;
-    logger::debug("slumbot_connector state in ref_acpc_msg: " + ref_acpc_msg);
+    logger::info("slumbot_connector state in ref_acpc_msg: " + ref_acpc_msg);
 
     // Use readMatchStatePlus you'd like to supply custom ReadBettingFunction.
     //
@@ -336,11 +337,12 @@ int SlumbotConnector::parse(const Game *game, MatchState *state)
     int c_acpc_msg_len = readMatchStatePlus(ref_acpc_msg.c_str(), game, state, bsbgReadBetting);
     char c_acpc_msg[MAX_LINE_LEN]; // TODO(kwok): Rename the `MAX_LINE_LEN` constant.
     printMatchState(game, state, MAX_LINE_LEN, c_acpc_msg);
-    logger::debug("slumbot_connector state parsed: " + std::string(c_acpc_msg));
+    logger::info("slumbot_connector state parsed: " + std::string(c_acpc_msg));
 
     if (c_acpc_msg_len < 0) {
         return EXIT_FAILURE;
     }
+
     return EXIT_SUCCESS;
 }
 
@@ -426,6 +428,6 @@ int SlumbotConnector::build(const Game *game, Action *action, State *state)
         action_str_ += std::to_string(action_size_by_round);
     }
 
-    logger::trace("slumbot_connector built action string " + action_str_);
+    logger::info("slumbot_connector built action string " + action_str_);
     return EXIT_SUCCESS;
 }

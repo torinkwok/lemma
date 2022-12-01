@@ -22,10 +22,10 @@ struct SimpleTimer
     void Checkpoint(const std::string &ckp_name)
     {
         auto now_ = std::chrono::steady_clock::now();
-        logger::debug("⏱️TIME SPENT [%s took %d ms]",
-                      ckp_name,
-                      std::chrono::duration_cast<std::chrono::milliseconds>(
-                              now_ - ckp_.at(0)).count());
+        logger::info("⏱️TIME SPENT [%s took %d ms]",
+                     ckp_name,
+                     std::chrono::duration_cast<std::chrono::milliseconds>(
+                             now_ - ckp_.at(0)).count());
         ckp_.push_back(now_);
         names_.emplace_back(ckp_name);
     }

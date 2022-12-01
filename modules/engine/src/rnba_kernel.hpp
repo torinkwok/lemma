@@ -129,17 +129,17 @@ struct sRNBAKernel
             int size = 16; // assuming using pure strategy, 2 * 8 bytes
             auto m = (double) (max_index_ * size / (1024.0 * 1024.0));
             logger::breaker();
-            logger::debug("VECTOR: entries = %d || bytes/entry %d || memory = %f (mb)", max_index_, size, m);
+            logger::info("VECTOR: entries = %d || bytes/entry %d || memory = %f (mb)", max_index_, size, m);
         }
         {
             int size = 8; // assuming using pure strategy, 2 * 4 bytes
             auto m = (double) (max_index_ * size / (1024.0 * 1024.0));
-            logger::debug("SCALAR: entries = %d || bytes/entry %d || memory = %f (mb) || + zipavg = %f (mb)",
+            logger::info("SCALAR: entries = %d || bytes/entry %d || memory = %f (mb) || + zipavg = %f (mb)",
                           max_index_, size, m, m * 1.125
             );
         }
         for (int i = 0; i < 4; i++) {
-            logger::debug(
+            logger::info(
                     "round %d || bucket = %d || action_max_per_node = %d || node = %d || effective_total = %d || lean_round_beginning = %d",
                     i,
                     bmax_by_r_[i],

@@ -54,7 +54,7 @@ void Strategy::InitMemory(STRATEGY_TYPE type, CFR_MODE mode)
             logger::critical("unsupported strategy type %s", StrategyToNameMap[type]);
         }
     }
-    logger::trace("%d init to 0 | size = %d", type, size);
+    logger::info("%d init to 0 | size = %d", type, size);
 }
 
 void Strategy::InitMemoryAndValue(CFR_MODE cfr_mode)

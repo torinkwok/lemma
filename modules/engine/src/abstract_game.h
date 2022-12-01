@@ -143,7 +143,7 @@ public:
     void Print() const
     {
         logger::breaker();
-        logger::debug("abstract game <- print()");
+        logger::info("abstract game <- print()");
         kernel_->Print();
         logger::breaker();
     }

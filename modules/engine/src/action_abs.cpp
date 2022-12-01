@@ -77,10 +77,10 @@ Node *CompositeActionAbs::BuildBettingTreeInner(Game *game,
                         ++it;
                 }
             candidate_actions.emplace_back(forced_action);
-            logger::debug("forced action %d is appended to the following state", actionToCode(&forced_action));
+            logger::info("forced action %d is appended to the following state", actionToCode(&forced_action));
             new_node->PrintState("appended state");
         } else {
-            logger::trace("the forced action %d is forfeited because it already exists", actionToCode(&forced_action));
+            logger::info("the forced action %d is forfeited because it already exists", actionToCode(&forced_action));
         }
     }
 
@@ -88,9 +88,10 @@ Node *CompositeActionAbs::BuildBettingTreeInner(Game *game,
      * sort actions and remove duplicated actions
      */
     std::sort(candidate_actions.begin(), candidate_actions.end(), [](Action &a, Action &b)
-    {
-        return actionToCode(&a) < actionToCode(&b);
-    });
+              {
+                  return actionToCode(&a) < actionToCode(&b);
+              }
+    );
 
     int last_code = -2;
     for (auto it(candidate_actions.begin()); it != candidate_actions.end();) {
@@ -123,7 +124,8 @@ Node *CompositeActionAbs::BuildBettingTreeInner(Game *game,
                                                  term_node_index_by_round,
                                                  new_node,
                                                  forced_state,
-                                                 depth_limited);
+                                                 depth_limited
+        );
         new_node->children.emplace_back(child_node);
     }
     new_node->SortChildNodes();
@@ -149,10 +151,12 @@ Node *CompositeActionAbs::BuildBettingTree(Game *game, State current_state, Stat
             term_node_index_by_round,
             nullptr,
             forced_state,
-            depth_limited);
+            depth_limited
+    );
 
     logger::require_critical(IsBettingTreeValid(root_node),
-                             "Invalid Betting Tree!!!");
+                             "Invalid Betting Tree!!!"
+    );
     return root_node;
 }
 

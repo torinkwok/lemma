@@ -408,7 +408,7 @@ int Engine::GetAction(MatchState *current_acpc_match_state, Action &r_action)
                 continue;
             }
 
-            mr.Print("\n🔍trying to get action from this node : ");
+            mr.Print("🔍trying to get action from this node : ");
 
             // Also check if the path is decent when using blueprint. Skip it if not.
             // TODO(kwok): Why only check for using blueprint?
@@ -444,11 +444,11 @@ int Engine::GetAction(MatchState *current_acpc_match_state, Action &r_action)
                                      pb.strategy_type,
                                      mr.matched_node_
             );
-            logger::debug("    [ENGINE %s] : ✅pick action [%c%d] with mode [%s]",
-                          engine_name_,
-                          actionChars[r_action.type],
-                          r_action.size,
-                          StrategyToNameMap[pb.strategy_type]
+            logger::info("    [ENGINE %s] : ✅pick action [%c%d] with mode [%s]",
+                         engine_name_,
+                         actionChars[r_action.type],
+                         r_action.size,
+                         StrategyToNameMap[pb.strategy_type]
             );
 
             busy_flag_ = false;

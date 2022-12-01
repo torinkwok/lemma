@@ -149,9 +149,9 @@ struct SubgameSolver
 
         // New round: Lemma acts first.
         if (action_kth == 0) {
-            logger::debug("    [SGS %s] : built subgame [step back 0] for new round for [round = %d] [action_kth = %d]",
-                          name_, round,
-                          action_kth
+            logger::info("    [SGS %s] : built subgame [step back 0] for new round for [round = %d] [action_kth = %d]",
+                         name_, round,
+                         action_kth
             );
             ag_builder_->Build(ag_out, &ref_state, nullptr, cfr_->cfr_param_.depth_limited);
             return SOLVE_ON_NEW_ROUND_HERO_FIRST;
@@ -333,8 +333,8 @@ private:
 
         ag_builder_->Build(ag_out, step_back_state, &ref_state, cfr_->cfr_param_.depth_limited);
         delete step_back_state;
-        logger::debug("    [SGS %s] : built subgame [step back %d] for r = %d", name_, steps_to_reverse,
-                      ref_state.round
+        logger::info("    [SGS %s] : built subgame [step back %d] for r = %d",
+                     name_, steps_to_reverse, ref_state.round
         );
         return true;
     }

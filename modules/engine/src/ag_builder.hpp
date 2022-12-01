@@ -48,7 +48,7 @@ public:
 
         card_abs_ = new CardAbs(config.at("ag_builder").at("card_abs"), pool);
         action_abs_ = new CompositeActionAbs(action_config);
-        logger::debug("ag_builder configured.");
+        logger::info("ag_builder configured.");
     }
 
     /*
@@ -71,24 +71,24 @@ public:
         char line[1024];
         printState(game_, &ag_out->root_state_, 1024, line);
 
-        logger::debug("    tree root state = %s", line);
+        logger::info("    tree root state = %s", line);
         {
             ag_out->raw_ = raw_;
             ag_out->game_ = *game_;
         }
-        logger::trace("ag_builder -> building betting tree...");
+        logger::info("ag_builder -> building betting tree...");
         {
             ag_out->depth_limited_ = depth_limited;
             ag_out->root_node_ = action_abs_->BuildBettingTree(&ag_out->game_, ag_out->root_state_, forced_state,
                                                                depth_limited);
         }
         Bucket_t bucket_count_by_round[4]{0, 0, 0, 0};
-        logger::trace("ag_builder -> building bucket reader...");
+        logger::info("ag_builder -> building bucket reader...");
         {
             card_abs_->BuildReader(&ag_out->game_, &ag_out->root_state_, &ag_out->bucket_reader_);
             ag_out->bucket_reader_.GetBucketCounts(bucket_count_by_round);
         }
-        logger::trace("ag_builder -> building kernel...");
+        logger::info("ag_builder -> building kernel...");
         {
             ag_out->BuildKernelFromRootNode(bucket_count_by_round);
             //default if in new game.
