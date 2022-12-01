@@ -21,9 +21,9 @@ static std::map<int, std::string> CFR_RESULT_MAP = {
 
 std::string PrintCfrResultCode(int code);
 
-struct sThreadLocalOutput
+struct sThreadLocalCfrWorkerOutput
 {
-    sThreadLocalOutput() = default;
+    sThreadLocalCfrWorkerOutput() = default;
 
     double avg_util_{};
     double std_dev_{};
@@ -71,7 +71,7 @@ struct sThreadLocalOutput
         std_dev_ = std::sqrt(variance / size_);
     }
 
-    virtual ~sThreadLocalOutput()
+    virtual ~sThreadLocalCfrWorkerOutput()
     {
         delete[] array_;
     }
@@ -84,7 +84,7 @@ struct sThreadSharedOutput
     double min_ = 99999999999;
     double std_dev_ = 0.0;
 
-    void MergeThreadOutputs(sThreadLocalOutput *outputs, int num_thread)
+    void MergeThreadOutputs(sThreadLocalCfrWorkerOutput *outputs, int num_thread)
     {
         int effective_thread = num_thread;
         //compute mean and max and min
@@ -114,7 +114,7 @@ struct sThreadInput
                  int thread_idx,
                  sCfrParam cfr_param,
                  std::vector<int> thread_board,
-                 sThreadLocalOutput *output,
+                 sThreadLocalCfrWorkerOutput *output,
                  int iterations,
                  const std::atomic_bool &cancelled_token,
                  unsigned long long rnd_seed)
@@ -138,7 +138,7 @@ struct sThreadInput
     sCfrParam cfr_param_;
 
     std::vector<int> thread_board_;
-    sThreadLocalOutput *output_;
+    sThreadLocalCfrWorkerOutput *output_;
     int iterations_;
     CFR_COMMAND cfr_mode_;
     const std::atomic_bool &cancelled_token_;
