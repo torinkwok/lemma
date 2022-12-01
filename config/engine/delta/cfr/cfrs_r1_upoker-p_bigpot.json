@@ -20,7 +20,7 @@
       "discounting": {
         "first_iter": 50000,
         "iterations": 10,
-        "interval": 50
+        "num_threads": 10000
       }
     },
     "convergence": {
