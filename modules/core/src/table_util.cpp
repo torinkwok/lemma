@@ -1,4 +1,4 @@
-#include "../../core/include/bulldog/table_util.h"
+#include "../../core/include/autodidact/table_util.h"
 #include <algorithm>
 
 TableAction ActionToTableAction(Game *game, State &state, Action &action)

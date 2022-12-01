@@ -47,7 +47,7 @@
    email: m-mat @ math.sci.hiroshima-u.ac.jp (remove space)
 */
 
-#include "../include/bulldog/rng.h"
+#include "../include/autodidact/rng.h"
 
 /* NOTE changes made on 2005/9/7 by Neil Burch - if you have problems
    with this code, DON'T complain to Makoto Matsumoto... */

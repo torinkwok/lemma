@@ -1,4 +1,4 @@
-#include "../../core/include/bulldog/game_util.h"
+#include "../../core/include/autodidact/game_util.h"
 #include <cmath>
 #include <set>
 #include <vector>

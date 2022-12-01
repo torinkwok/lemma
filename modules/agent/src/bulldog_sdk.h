@@ -7,7 +7,7 @@
 #include "server_constants.h"
 
 extern "C" {
-#include "../../core/include/bulldog/game.h"
+#include "../../core/include/autodidact/game.h"
 }
 
 using lLogger = void (*)(char *format, ...);
