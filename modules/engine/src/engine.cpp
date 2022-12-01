@@ -118,7 +118,7 @@ Engine::Engine(const char *engine_conf_file, Game *game)
             }
         } else {
             if (!Equal(normalized_game_, subgame_solvers_[i].ag_builder_->game_)) {
-                logger::critical("    [ENGINE %s]  : engine game def != sgs game def.", engine_name_);
+                logger::critical("    [ENGINE %s] : engine game def != sgs game def.", engine_name_);
             }
         }
     }
@@ -233,7 +233,7 @@ Engine::Engine(const char *engine_conf_file, Game *game, BucketPool *bucket_pool
             }
         } else {
             if (!Equal(normalized_game_, subgame_solvers_[i].ag_builder_->game_)) {
-                logger::critical("    [ENGINE %s]  : engine game def != sgs game def.", engine_name_);
+                logger::critical("    [ENGINE %s] : engine game def != sgs game def.", engine_name_);
             }
         }
     }
@@ -408,7 +408,7 @@ int Engine::GetAction(MatchState *current_acpc_match_state, Action &r_action)
                 continue;
             }
 
-            mr.Print("🔍trying to get action from this node : ");
+            mr.Print("🔍trying to get action from this node: ");
 
             // Also check if the path is decent when using blueprint. Skip it if not.
             // TODO(kwok): Why only check for using blueprint?
@@ -437,7 +437,7 @@ int Engine::GetAction(MatchState *current_acpc_match_state, Action &r_action)
                 }
             }
 
-            mr.matched_node_->PrintState("getting action from node : ");
+            mr.matched_node_->PrintState("getting action from node: ");
             pb.strategy_->PickAction(current_acpc_match_state,
                                      pb.action_chooser_,
                                      r_action,
@@ -516,7 +516,7 @@ void Engine::EvalShowdown(MatchState &match_state)
                  net_win,
                  VectorIdxToString(opp_hand_vdx),
                  playbook_stack_.size());
-    logger::info(" [ENGINE %s]:  final state : %s", engine_name_, match_state_line);
+    logger::info(" [ENGINE %s]:  final state: %s", engine_name_, match_state_line);
 
     /* Conduct eval for all playbooks except blueprint. */
     for (auto pb_it = playbook_stack_.size() - 1; pb_it > 0; pb_it--) {
@@ -559,10 +559,10 @@ void Engine::EvalShowdown(MatchState &match_state)
 
         /* Ready to print. */
         auto opp_hand_belief = pb_strategy->ag_->root_hand_beliefs_for_all_[opp_pos].belief_[opp_hand_vdx];
-        pb_strategy->ag_->root_node_->PrintState("    strategy root : ");
+        pb_strategy->ag_->root_node_->PrintState("    strategy root: ");
         logger::info("    [strategy %s] [%s %f] [weight %f] [bucket_sum %f] [all_buckets_count %d]",
                      pb_strategy->name_,
-                     opp_hand_belief > 0 ? "hit" : "miss",
+                     opp_hand_belief > 0 ? "hit": "miss",
                      opp_hand_belief,
                      real_b_canon_sum * seen_bucket.size(),
                      real_b_canon_sum,
