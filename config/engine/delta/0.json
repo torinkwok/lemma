@@ -15,11 +15,9 @@
   },
   "daemon": false,
   "subgame_solvers": [
-    "delta/sgs/sgs_r1_upoker-p_0.json",
-    "delta/sgs/sgs_r1_upoker-p_200.json",
-    "delta/sgs/sgs_r1_upoker-p_400.json",
-    "delta/sgs/sgs_r1_upoker-p_800.json",
-    "delta/sgs/sgs_r1_upoker-p_1600.json",
+    "delta/sgs/sgs_r1_upoker-p_bigpot.json",
+    "delta/sgs/sgs_r1_upoker-p_midpot.json",
+    "delta/sgs/sgs_r1_upoker-p_0pot.json",
 
     "delta/sgs/sgs_r2_upoker-p_bigpot.json",
     "delta/sgs/sgs_r2_upoker-p_midpot.json",
