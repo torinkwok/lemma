@@ -82,12 +82,12 @@ int CFR::Solve(Strategy *blueprint,
                                  thread_local_current_progress.iteration, convergence.iteration
                     );
                     if (thread_local_current_progress < convergence) {
-                        sTotalThreadOutput total_result;
+                        sThreadSharedOutput merged_result;
                         ThreadedCfrSolve(blueprint,
                                          strategy,
                                          local_cfr_param,
                                          cmd.steps_,
-                                         total_result,
+                                         merged_result,
                                          thread_board,
                                          pub_bucket_flop_boards,
                                          thread_pool_,
@@ -95,7 +95,10 @@ int CFR::Solve(Strategy *blueprint,
                         );
                         if (!cancelled) {
                             // only update the current state if not abruptly cancelled from outside
-                            thread_local_current_progress.UpdateState(cmd.steps_, timer.GetLapseFromBegin(), total_result.avg_);
+                            thread_local_current_progress.UpdateState(cmd.steps_,
+                                                                      timer.GetLapseFromBegin(),
+                                                                      merged_result.avg_
+                            );
                         }
                     } else {
                         // break all loops
@@ -105,7 +108,7 @@ int CFR::Solve(Strategy *blueprint,
                 }
                 case CMD_VECTOR_PROFILING : {
                     auto profiler_cfr_param = sCfrParam();
-                    sTotalThreadOutput br;
+                    sThreadSharedOutput br;
                     profiler_cfr_param = local_cfr_param;
                     profiler_cfr_param.ProfileModeOn();
                     if (!cfr_param_.depth_limited) {
@@ -308,10 +311,13 @@ CFR::CFR(const char *config_file)
 {
     std::filesystem::path dir(AUTODIDACT_DIR_CFG_ENG);
     std::filesystem::path filename(config_file);
+
     std::ifstream cfr_file(dir / filename);
     auto config_str = std::string(config_file);
+
     cfr_param_.name = config_str.substr(0, config_str.length() - 5);
     web::json::value cfr_config;
+
     if (cfr_file.good()) {
         std::stringstream buffer;
         buffer << cfr_file.rdbuf();
@@ -357,7 +363,7 @@ void CFR::AllocateFlops(std::vector<Board_t> *pub_flop_boards,
         pub_flop_board_sortable.emplace_back(i, pub_flop_boards[i].size());
     }
 
-    //sort in decending order of number of flops in public bucket
+    // sort in descending order of number of flops in public bucket
     std::sort(pub_flop_board_sortable.begin(), pub_flop_board_sortable.end(), [](const auto &l, const auto &r) -> bool
               {
                   return l.second > r.second;
@@ -423,7 +429,7 @@ void CFR::ThreadedCfrSolve(Strategy *blueprint,
                            Strategy *strategy,
                            sCfrParam &cfr_param,
                            int steps,
-                           sTotalThreadOutput &total_result,
+                           sThreadSharedOutput &merged_result,
                            std::vector<int> *thread_board,
                            std::vector<Board_t> *pub_bucket_flop_boards,
                            pthread_t *thread_pool,
@@ -441,7 +447,7 @@ void CFR::ThreadedCfrSolve(Strategy *blueprint,
         }
     }
 
-    sThreadOutput thread_output[effective_thread];
+    sThreadOutput thread_local_outputs[effective_thread];
     if (effective_thread > 1) {
         int iter_avg = steps / effective_thread;
 
@@ -455,22 +461,22 @@ void CFR::ThreadedCfrSolve(Strategy *blueprint,
                 auto remain = steps - (iter_avg * (effective_thread - 1));
                 quota = remain;
             }
-            auto thread_input = new sThreadInput(blueprint,
-                                                 strategy,
-                                                 pub_bucket_flop_boards,
-                                                 i,
-                                                 cfr_param,
-                                                 thread_board[i],
-                                                 &thread_output[i],
-                                                 quota,
-                                                 cancelled,
-                                                 std::random_device()());
+            auto thread_local_input = new sThreadInput(blueprint,
+                                                       strategy,
+                                                       pub_bucket_flop_boards,
+                                                       i,
+                                                       cfr_param,
+                                                       thread_board[i],
+                                                       &thread_local_outputs[i],
+                                                       quota,
+                                                       cancelled,
+                                                       std::random_device()());
             if (quota != last_distinct_quota) {
                 logger::info("[🧵thread %d] assigned %d iterations", i, quota);
                 logger::info("\t\tthreads being assigned with the same quota of %d were omitted here ...", quota);
                 last_distinct_quota = quota;
             }
-            if (pthread_create(&thread_pool[i], nullptr, CFR::CfrSolve, thread_input)) {
+            if (pthread_create(&thread_pool[i], nullptr, CFR::CfrSolve, thread_local_input)) {
                 logger::critical("failed to launch threads.");
             }
         }
@@ -483,7 +489,7 @@ void CFR::ThreadedCfrSolve(Strategy *blueprint,
             if (pthread_join(thread_pool[i], nullptr)) {
                 logger::error("Couldn't join to thread %d", i);
             }
-            int unfinished_quota = thread_output[i].remaining_iter;
+            int unfinished_quota = thread_local_outputs[i].remaining_iter;
             if (unfinished_quota != last_distinct_unfinished_quota) {
                 logger::info("[🧵thread %d] unfinished quota = %d", i, unfinished_quota);
                 logger::info("\t\tthreads ending with the same unfinished quota of %d were omitted here ...",
@@ -500,7 +506,7 @@ void CFR::ThreadedCfrSolve(Strategy *blueprint,
                                              0,
                                              cfr_param,
                                              thread_board[0],
-                                             &thread_output[0],
+                                             &thread_local_outputs[0],
                                              steps,
                                              cancelled,
                                              std::random_device()());
@@ -508,7 +514,7 @@ void CFR::ThreadedCfrSolve(Strategy *blueprint,
     }
 
     // Also required for thread = 1, so that the same variables can be accessed similarly
-    total_result.MergeThreadOutputs(thread_output, effective_thread);
+    merged_result.MergeThreadOutputs(thread_local_outputs, effective_thread);
 }
 
 int CFR::AsyncCfrSolving(CFR *cfr,
