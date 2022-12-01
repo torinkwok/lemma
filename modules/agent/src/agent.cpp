@@ -189,7 +189,7 @@ int main(int argc, char *argv[])
                 // NOTE(kwok): It's me.
                 double net = valueOfState(game, &match_state.state, match_state.viewingPlayer);
                 session_total += net;
-                logger::debug(" [AGENT]: net win of this hand: %.3f | %s", net, full_match_str);
+                logger::info(" [AGENT]: net win of this hand: %.3f | %s", net, full_match_str);
                 logger::info(" [AGENT]: [hand %d] session total: %d", match_state.state.handId, session_total);
 
                 engine->EvalShowdown(match_state);
@@ -207,24 +207,24 @@ int main(int argc, char *argv[])
             /* Pick an action to play. */
             char line[MAX_LINE_LEN];
             printMatchState(game, &match_state, MAX_LINE_LEN, line);
-            logger::debug(" [AGENT]: %s", line);
+            logger::info(" [AGENT]: %s", line);
             Action action;
             //slumbot use normalized session.
             engine->GetActionBySession(match_state, action);
-            //      logger::debug(" [AGENT]: action returned from engine: %c%d", actionChars[action.type], action.size);
+            //      logger::info(" [AGENT]: action returned from engine: %c%d", actionChars[action.type], action.size);
 
 #if 0
             //detect if the action should be fixed
             //no longger needed, done within the engine interface
       //      if (!isValidAction(game, &match_state.state, 0, &action)) {
-      //        logger::debug(" [AGENT]: invalid action from engine: %c%d", actionChars[action.type], action.size);
+      //        logger::info(" [AGENT]: invalid action from engine: %c%d", actionChars[action.type], action.size);
       //        //try to fix it.
       //        if (!isValidAction(game, &match_state.state, 1, &action)) {
       //          logger::warn(" [AGENT]: unable to fix action");
       //          //normally it is a r20000 invalid. return call as a hack
       //          action.type = a_call;
       //        }
-      //        logger::debug(" [AGENT]: invalid action has been fixed to: %c%d", actionChars[action.type], action.size);
+      //        logger::info(" [AGENT]: invalid action has been fixed to: %c%d", actionChars[action.type], action.size);
       //      }
 #endif
 
@@ -241,7 +241,7 @@ int main(int argc, char *argv[])
                 break;
             }
 
-            logger::debug("\n\n\n");
+            logger::info("\n\n\n");
         }
 
         logger::info(" [AGENT]: Session total = %d ", session_total);
