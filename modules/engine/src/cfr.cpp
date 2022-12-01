@@ -424,7 +424,7 @@ void CFR::AllocateFlops(std::vector<Board_t> *pub_flop_boards,
 void CFR::ThreadedCfrSolve(Strategy *blueprint,
                            Strategy *strategy,
                            sCfrParam &cfr_param,
-                           sCFRProgress &current_state,
+                           sCFRProgress &current_progress,
                            int steps,
                            sTotalThreadOutput &total_result,
                            std::vector<int> *thread_board,
@@ -517,17 +517,12 @@ void CFR::ThreadedCfrSolve(Strategy *blueprint,
 int CFR::AsyncCfrSolving(CFR *cfr,
                          Strategy *new_strategy,
                          Strategy *blueprint,
-                         sCFRProgress *convergence_state,
+                         sCFRProgress *convergence,
                          const std::atomic_bool &cancelled,
                          int cfr_checkpoint)
 {
     logger::debug("🟢starting async MCCFR solving");
-    return cfr->Solve(blueprint,
-                      new_strategy,
-                      *convergence_state,
-                      cancelled,
-                      cfr_checkpoint
-    );
+    return cfr->Solve(blueprint, new_strategy, *convergence, cancelled, cfr_checkpoint);
 }
 
 void CFR::Config(web::json::value data)

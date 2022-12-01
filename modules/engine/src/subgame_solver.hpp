@@ -30,13 +30,13 @@ struct SubgameSolver
     {
         delete cfr_;
         delete ag_builder_;
-        delete convergence_state_;
+        delete convergence_;
         delete action_chooser_;
     }
 
     SubgameSolver()
     {
-        convergence_state_ = new sCFRProgress();
+        convergence_ = new sCFRProgress();
         action_chooser_ = new ActionChooser();
     }
 
@@ -58,7 +58,7 @@ struct SubgameSolver
     // Actors
     AGBuilder *ag_builder_ = nullptr;
     CFR *cfr_ = nullptr;
-    sCFRProgress *convergence_state_;
+    sCFRProgress *convergence_;
     ActionChooser *action_chooser_;
     STRATEGY_TYPE strategy_type = STRATEGY_REG; //default at reg
 
@@ -241,21 +241,21 @@ struct SubgameSolver
 #if 0
         //make convergence self enclosed in the cfr
         auto conv_config = sgs_conf.at("convergence");
-        convergence_state_->iteration =
+        convergence_->iteration =
             conv_config.has_field("iter") ? conv_config.at("iter").as_integer() : -1;
-        convergence_state_->time_milli_seconds =
+        convergence_->time_milli_seconds =
             conv_config.has_field("time_ms") ? conv_config.at("time_ms").as_double() : -1;
-        convergence_state_->exploitability =
+        convergence_->exploitability =
             conv_config.has_field("expl") ? conv_config.at("expl").as_double() : -1;
-        convergence_state_->expl_std =
+        convergence_->expl_std =
             conv_config.has_field("expl_std") ? conv_config.at("expl_std").as_double() : -1;
 #endif
 
         cfr_ = new CFR(sgs_conf.at("cfr_file").as_string().c_str());
-        convergence_state_->iteration = cfr_->cfr_param_.iteration;
-        convergence_state_->timeout_ms = cfr_->cfr_param_.timeout_ms;
+        convergence_->iteration = cfr_->cfr_param_.iteration;
+        convergence_->timeout_ms = cfr_->cfr_param_.timeout_ms;
         cfr_->BuildCMDPipeline();
-        cfr_->profiling_writer_.prefix_ = cfr_->cfr_param_.name + "_" + std::to_string(convergence_state_->iteration);
+        cfr_->profiling_writer_.prefix_ = cfr_->cfr_param_.name + "_" + std::to_string(convergence_->iteration);
 
         // Setting playing strategy.
         if (sgs_conf.has_field("playing_strategy")) {

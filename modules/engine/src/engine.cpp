@@ -712,7 +712,7 @@ void Engine::AsynStartDaemonSolving(SubgameSolver *sgs, int checkpoint)
                                 sgs->cfr_,
                                 target_strategy,
                                 blueprint,
-                                sgs->convergence_state_,
+                                sgs->convergence_,
                                 std::ref(daemon_cancel_token_),
                                 checkpoint
                         );
@@ -859,12 +859,12 @@ int Engine::AsynStartCFRSolving(SubgameSolver *selected_sgs, Strategy *&new_stra
             selected_sgs->cfr_,
             new_strategy,
             playbook_stack_.front().strategy_,
-            selected_sgs->convergence_state_,
+            selected_sgs->convergence_,
             std::ref(sgs_cancel_token_),
             0
     );
-    std::optional<uint64_t> gross_timeout_ms = selected_sgs->convergence_state_->timeout_ms;
-    int max_iter = selected_sgs->convergence_state_->iteration;
+    std::optional<uint64_t> gross_timeout_ms = selected_sgs->convergence_->timeout_ms;
+    int max_iter = selected_sgs->convergence_->iteration;
     if (gross_timeout_ms.has_value()) {
         logger::info("   [CFR]: converge on [✅timeout_ms = %llu, 🚫max_iter = %d]", gross_timeout_ms.value(), max_iter);
         int count = 0;

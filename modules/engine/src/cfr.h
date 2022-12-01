@@ -184,7 +184,7 @@ public:
     static int AsyncCfrSolving(CFR *cfr,
                                Strategy *new_strategy,
                                Strategy *blueprint,
-                               sCFRProgress *convergence_state,
+                               sCFRProgress *convergence,
                                const std::atomic_bool &cancelled,
                                int cfr_checkpoint = 0);
 
@@ -192,7 +192,7 @@ private:
     static void ThreadedCfrSolve(Strategy *blueprint,
                                  Strategy *strategy,
                                  sCfrParam &cfr_param,
-                                 sCFRProgress &current_state,
+                                 sCFRProgress &current_progress,
                                  int steps,
                                  sTotalThreadOutput &total_result,
                                  std::vector<int> *thread_board,
