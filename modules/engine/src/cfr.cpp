@@ -447,7 +447,7 @@ void CFR::ThreadedCfrSolve(Strategy *blueprint,
         }
     }
 
-    sThreadOutput thread_local_outputs[effective_thread];
+    sThreadLocalOutput thread_local_outputs[effective_thread];
     if (effective_thread > 1) {
         int iter_avg = steps / effective_thread;
 
