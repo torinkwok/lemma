@@ -12,7 +12,7 @@ int CFR::Solve(Strategy *blueprint,
                int starting_checkpoint)
 {
     auto num_thread = cfr_param_.num_threads;
-    logger::info("   [CFR] : solving begins with [%d threads] [round %d] [checkpoint %d] [depth limited %d]",
+    logger::info("   [CFR]: solving begins with [%d threads] [round %d] [checkpoint %d] [depth limited %d]",
                   num_thread,
                   strategy->ag_->root_node_->GetRound(),
                   starting_checkpoint,

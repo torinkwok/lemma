@@ -29,7 +29,7 @@ Engine::Engine(const char *engine_conf_file, Game *game)
         data = web::json::value::parse(buffer);
         file.close();
     } else {
-        logger::critical("    [ENGINE %s] : unable to open file %s", engine_name_, dir / filename);
+        logger::critical("    [ENGINE %s]: unable to open file %s", engine_name_, dir / filename);
     }
 
     // Solver meta.
@@ -48,7 +48,7 @@ Engine::Engine(const char *engine_conf_file, Game *game)
         web::json::value blueprint_conf = data.at("blueprint");
         if (!blueprint_conf.has_field("strategy_prefix")) {
             logger::critical(
-                    "    [ENGINE %s] : please fill in the must-have options for configuration || blueprint prefix",
+                    "    [ENGINE %s]: please fill in the must-have options for configuration || blueprint prefix",
                     engine_name_
             );
         }
@@ -61,7 +61,7 @@ Engine::Engine(const char *engine_conf_file, Game *game)
         for (web::json::value &obj: pool) {
             const std::string &name = obj.as_string();
             auto *blueprint = new Strategy();
-            logger::debug("    [ENGINE %s] : loading blueprint %s [disk %d]",
+            logger::debug("    [ENGINE %s]: loading blueprint %s [disk %d]",
                           engine_name_,
                           name,
                           disk_look_up
@@ -70,7 +70,7 @@ Engine::Engine(const char *engine_conf_file, Game *game)
             LoadStrategy(blueprint, STRATEGY_ZIPAVG, name, disk_look_up);
             // The blueprint is never stack aware. Don't use compatible.
             if (!Equal(normalized_game_, &blueprint->ag_->game_)) {
-                logger::critical("    [ENGINE %s] : engine game != blueprint game", engine_name_);
+                logger::critical("    [ENGINE %s]: engine game != blueprint game", engine_name_);
             }
             blueprint_pool_->AddStrategy(blueprint);
         } // Offline blueprints installation.
@@ -90,7 +90,7 @@ Engine::Engine(const char *engine_conf_file, Game *game)
         subgame_solvers_ = new SubgameSolver[sgs_size_];
         for (int i = 0; i < sgs_size_; i++) {
             subgame_solvers_[i].ConfigWithJson(solvers[i].as_string().c_str(), bucket_pool_);
-            logger::debug("    [ENGINE %s] : loaded sgs %d/%d - %s",
+            logger::debug("    [ENGINE %s]: loaded sgs %d/%d - %s",
                           engine_name_,
                           i + 1,
                           sgs_size_,
@@ -112,7 +112,7 @@ Engine::Engine(const char *engine_conf_file, Game *game)
         if (normalized_game_->use_state_stack == 1) {
             // Normalized game, a.k.a. global game, must be compatible with those sub-games.
             if (CompatibleGame(normalized_game_, subgame_solvers_[i].ag_builder_->game_) == 0) {
-                logger::critical("    [ENGINE %s] : engine game def != sgs game betting type, in game type",
+                logger::critical("    [ENGINE %s]: engine game def != sgs game betting type, in game type",
                                  engine_name_
                 );
             }
@@ -128,7 +128,7 @@ Engine::Engine(const char *engine_conf_file, Game *game)
         is_daemon_engine = data.at("daemon").as_bool();
     }
 
-    logger::debug("    [ENGINE %s] : solving engine properly configured. ready to go.", engine_name_);
+    logger::debug("    [ENGINE %s]: solving engine properly configured. ready to go.", engine_name_);
     RefreshEngineState();
 }
 
@@ -150,7 +150,7 @@ Engine::Engine(const char *engine_conf_file, Game *game, BucketPool *bucket_pool
         data = web::json::value::parse(buffer);
         file.close();
     } else {
-        logger::critical("    [ENGINE %s] : unable to open file %s", engine_name_, dir / filename);
+        logger::critical("    [ENGINE %s]: unable to open file %s", engine_name_, dir / filename);
     }
     //solver meta
     auto engine_conf_str = std::string(engine_conf_file);
@@ -204,7 +204,7 @@ Engine::Engine(const char *engine_conf_file, Game *game, BucketPool *bucket_pool
         subgame_solvers_ = new SubgameSolver[sgs_size_];
         for (int i = 0; i < sgs_size_; i++) {
             subgame_solvers_[i].ConfigWithJson(solvers[i].as_string().c_str(), bucket_pool_);
-            logger::debug("    [ENGINE %s] : loaded sgs %d/%d - %s",
+            logger::debug("    [ENGINE %s]: loaded sgs %d/%d - %s",
                           engine_name_,
                           i + 1,
                           sgs_size_,
@@ -227,7 +227,7 @@ Engine::Engine(const char *engine_conf_file, Game *game, BucketPool *bucket_pool
     for (int i = 0; i < sgs_size_; i++) {
         if (normalized_game_->use_state_stack == 1) {
             if (CompatibleGame(normalized_game_, subgame_solvers_[i].ag_builder_->game_) == 0) {
-                logger::critical("    [ENGINE %s] : engine game def != sgs game betting type, in game type",
+                logger::critical("    [ENGINE %s]: engine game def != sgs game betting type, in game type",
                                  engine_name_
                 );
             }
@@ -243,7 +243,7 @@ Engine::Engine(const char *engine_conf_file, Game *game, BucketPool *bucket_pool
         is_daemon_engine = data.at("daemon").as_bool();
     }
 
-    logger::debug("    [ENGINE %s] : solving engine properly configured. ready to go.", engine_name_);
+    logger::debug("    [ENGINE %s]: solving engine properly configured. ready to go.", engine_name_);
     RefreshEngineState();
 }
 
@@ -331,7 +331,7 @@ int Engine::GetAction(MatchState *current_acpc_match_state, Action &r_action)
         );
         // Do nothing if the sub-game gets skipped.
         if (subgame_built_code == SKIP_RESOLVING_SUBGAME) {
-            logger::debug("    [ENGINE %sg_i] : build subgame skipped [code %sg_i]",
+            logger::debug("    [ENGINE %sg_i]: build subgame skipped [code %sg_i]",
                           engine_name_,
                           SubgameBuiltCodeMap[subgame_built_code]
             );
@@ -350,7 +350,7 @@ int Engine::GetAction(MatchState *current_acpc_match_state, Action &r_action)
             if (estimate_success) {
                 break;
             }
-            logger::warn("    [ENGINE %sg_i] : range estimate fails. try next strategy", engine_name_);
+            logger::warn("    [ENGINE %sg_i]: range estimate fails. try next strategy", engine_name_);
         }
 
         if (!estimate_success) {
@@ -368,7 +368,7 @@ int Engine::GetAction(MatchState *current_acpc_match_state, Action &r_action)
 
         cfr_return_code = AsynStartCFRSolving(selected_sgs, new_strategy);
         if (cfr_return_code < 0) {
-            logger::error("    [ENGINE %sg_i] : 💢cfr solving error in subgame", engine_name_);
+            logger::error("    [ENGINE %sg_i]: 💢cfr solving error in subgame", engine_name_);
             return GET_ACTION_FAILURE;
         }
 
@@ -391,7 +391,7 @@ int Engine::GetAction(MatchState *current_acpc_match_state, Action &r_action)
     for (int pb_i = pb_depth - 1; pb_i >= 0; pb_i--) { // FIXME(kwok): If pb_i is of size_t, pb_i-- will underflow.
         // Try to find from this playbook.
         auto pb = playbook_stack_.at(pb_i);
-        logger::debug("    [ENGINE %s] : get action from %d/%d playbooks (%s)",
+        logger::debug("    [ENGINE %s]: get action from %d/%d playbooks (%s)",
                       engine_name_,
                       pb_depth - pb_i,
                       pb_depth,
@@ -444,7 +444,7 @@ int Engine::GetAction(MatchState *current_acpc_match_state, Action &r_action)
                                      pb.strategy_type,
                                      mr.matched_node_
             );
-            logger::info("    [ENGINE %s] : ✅pick action [%c%d] with mode [%s]",
+            logger::info("    [ENGINE %s]: ✅pick action [%c%d] with mode [%s]",
                          engine_name_,
                          actionChars[r_action.type],
                          r_action.size,
@@ -465,8 +465,8 @@ int Engine::GetAction(MatchState *current_acpc_match_state, Action &r_action)
 
 int Engine::RefreshEngineState()
 {
-    logger::debug("    [ENGINE %s] : ===== REFRESH STATE =====", engine_name_);
-    logger::debug("    [ENGINE %s] : safe delete [%d playbooks] [%d new strategy]",
+    logger::debug("    [ENGINE %s]: ===== REFRESH STATE =====", engine_name_);
+    logger::debug("    [ENGINE %s]: safe delete [%d playbooks] [%d new strategy]",
                   engine_name_,
                   playbook_stack_.size(),
                   sgs_strategy_stack_.size());
@@ -485,12 +485,12 @@ void Engine::EvalShowdown(MatchState &match_state)
 {
     // No need to analyze blueprint.
     if (!IsNestedSgsStarted()) {
-        logger::debug("    [ENGINE %s] : skip final state eval for blueprint-played games", engine_name_);
+        logger::debug("    [ENGINE %s]: skip final state eval for blueprint-played games", engine_name_);
         return;
     }
 
     if (match_state.state.round == HOLDEM_ROUND_PREFLOP) {
-        logger::debug("    [ENGINE %s] : skip final state eval for PREFLOP", engine_name_);
+        logger::debug("    [ENGINE %s]: skip final state eval for PREFLOP", engine_name_);
         return;
     }
 
@@ -511,12 +511,12 @@ void Engine::EvalShowdown(MatchState &match_state)
         return;
     }
     auto opp_hand_vdx = ToVectorIndex(opp_c1, opp_c2);
-    logger::debug(" [ENGINE %s] :  showdown eval [net %f] [opp hand %s] [%d playbooks]",
+    logger::debug(" [ENGINE %s]:  showdown eval [net %f] [opp hand %s] [%d playbooks]",
                   engine_name_,
                   net_win,
                   VectorIdxToString(opp_hand_vdx),
                   playbook_stack_.size());
-    logger::debug(" [ENGINE %s] :  final state : %s", engine_name_, match_state_line);
+    logger::debug(" [ENGINE %s]:  final state : %s", engine_name_, match_state_line);
 
     /* Conduct eval for all playbooks except blueprint. */
     for (auto pb_it = playbook_stack_.size() - 1; pb_it > 0; pb_it--) {
@@ -576,13 +576,13 @@ void Engine::EvalShowdown(MatchState &match_state)
 int Engine::GetActionBySession(MatchState &normalized_match_state, Action &r_action)
 {
     if (busy_flag_) {
-        logger::error("    [ENGINE %s] : 💢still busy from the last request man");
+        logger::error("    [ENGINE %s]: 💢still busy from the last request man");
         return GET_ACTION_FAILURE;
     }
 
     auto code = GetAction(&normalized_match_state, r_action);
     if (code != GET_ACTION_SUCCESS) {
-        logger::error("    [ENGINE %s] : 💢get action failure for some reason", engine_name_);
+        logger::error("    [ENGINE %s]: 💢get action failure for some reason", engine_name_);
         return GET_ACTION_FAILURE;
     }
 
@@ -593,29 +593,29 @@ int Engine::GetActionBySession(MatchState &normalized_match_state, Action &r_act
      */
 
     if (!isValidAction(normalized_game_, &normalized_match_state.state, 0, &r_action)) {
-        logger::debug("    [ENGINE %s] : 💢invalid action from engine: %c%d",
+        logger::debug("    [ENGINE %s]: 💢invalid action from engine: %c%d",
                       engine_name_,
                       actionChars[r_action.type],
                       r_action.size
         );
         //    if (IsNestedSgsStarted())
-        //      logger::warn("    [ENGINE %s] : sgs does not give invalid action", engine_name_);
+        //      logger::warn("    [ENGINE %s]: sgs does not give invalid action", engine_name_);
         Action original_action = r_action;
         //try to fix it.
         if (!isValidAction(normalized_game_, &normalized_match_state.state, 1, &r_action)) {
-            logger::warn("    [ENGINE %s] : 💢unable to fix action", engine_name_);
+            logger::warn("    [ENGINE %s]: 💢unable to fix action", engine_name_);
             //normally it is a r20000 invalid. return call as a hack
             r_action.type = a_call;
         }
 
         if (abs(original_action.size - r_action.size) >= 1000) {
-            logger::warn("    [ENGINE %s] : 💢invalid action has been SUBSTANTIALLY fixed to: %c%d",
+            logger::warn("    [ENGINE %s]: 💢invalid action has been SUBSTANTIALLY fixed to: %c%d",
                          engine_name_,
                          actionChars[r_action.type],
                          r_action.size
             );
         } else {
-            logger::debug("    [ENGINE %s] : 💢invalid action has been MARGINALLY fixed to: %c%d",
+            logger::debug("    [ENGINE %s]: 💢invalid action has been MARGINALLY fixed to: %c%d",
                           engine_name_,
                           actionChars[r_action.type],
                           r_action.size
@@ -634,13 +634,13 @@ int Engine::GetActionBySession(MatchState &normalized_match_state, Action &r_act
         r_action.size = adjusted_raise;
     }
 
-    logger::debug("    [ENGINE %s] : return translated action %d", engine_name_, actionToCode(&r_action));
+    logger::debug("    [ENGINE %s]: return translated action %d", engine_name_, actionToCode(&r_action));
     return GET_ACTION_SUCCESS;
 }
 
 int Engine::TranslateToNormState(const std::string &match_state_str, MatchState &normalized_match_state)
 {
-    logger::debug("    [ENGINE %s] :     real match state = %s", engine_name_, match_state_str);
+    logger::debug("    [ENGINE %s]:     real match state = %s", engine_name_, match_state_str);
     //real match state should be translated with the game def of the session. or u may have invalid betting ctions
     MatchState real_match_state;
     if (readMatchState(match_state_str.c_str(), &table_context_.session_game, &real_match_state) == -1)
@@ -648,7 +648,7 @@ int Engine::TranslateToNormState(const std::string &match_state_str, MatchState 
 
     double bet_scaler = (double) BigBlind(normalized_game_) / BigBlind(&table_context_.session_game);
     if (bet_scaler == 0) {
-        logger::error("    [ENGINE %s] : invalid betting scaler in translation == 0", engine_name_);
+        logger::error("    [ENGINE %s]: invalid betting scaler in translation == 0", engine_name_);
         return MATCH_STATE_PARSING_FAILURE;
     }
 
@@ -677,7 +677,7 @@ int Engine::TranslateToNormState(const std::string &match_state_str, MatchState 
 
     char norm_state_str[MAX_LINE_LEN];
     printMatchState(normalized_game_, &normalized_match_state, MAX_LINE_LEN, norm_state_str);
-    logger::debug("    [ENGINE %s] : translated match state %s", engine_name_, norm_state_str);
+    logger::debug("    [ENGINE %s]: translated match state %s", engine_name_, norm_state_str);
 
     return MATCH_STATE_PARSING_SUCCESS;
 }
@@ -690,11 +690,11 @@ void Engine::AsynStartDaemonSolving(SubgameSolver *sgs, int checkpoint)
 {
     if (is_daemon_engine) {
         if (checkpoint < CFR_SOLVING_TERMINATED_ASYNC) {
-            logger::debug("    [ENGINE %s] : DAEMON solving not needed", engine_name_);
+            logger::debug("    [ENGINE %s]: DAEMON solving not needed", engine_name_);
             return;
         }
         //solve with no time limit.
-        logger::debug("    [ENGINE %s] : DAEMON solving started at cfr checkpoint %d",
+        logger::debug("    [ENGINE %s]: DAEMON solving started at cfr checkpoint %d",
                       engine_name_,
                       checkpoint
         );
@@ -718,7 +718,7 @@ void Engine::AsynStartDaemonSolving(SubgameSolver *sgs, int checkpoint)
                         );
                         try {
                             int cfr_return_code = cfr_result_future.get();
-                            logger::debug("    [ENGINE %s] : DAEMON solving ended with status %s",
+                            logger::debug("    [ENGINE %s]: DAEMON solving ended with status %s",
                                           engine_name_,
                                           PrintCfrResultCode(cfr_return_code));
                         } catch (std::exception &e) {
@@ -733,7 +733,7 @@ void Engine::AsynStartDaemonSolving(SubgameSolver *sgs, int checkpoint)
 void Engine::AsynStopDaemonSolving()
 {
     if (is_daemon_engine && !daemon_cancel_token_) {
-        logger::debug("    [ENGINE %s] : asyn stopping DAEMON solving", engine_name_);
+        logger::debug("    [ENGINE %s]: asyn stopping DAEMON solving", engine_name_);
         daemon_cancel_token_ = true;
         //sleep for 200ms to make sure the DAEMON solving ended before proceeding
         logger::debug("thread sleeping for 100 ms to wait for DAEMON graceful finishing");
@@ -772,7 +772,7 @@ bool Engine::EngineStateStaleCheck(MatchState *new_match_state)
     // check game state continuity.
     // FIXME(kwok): Is the logic here proper?
     if (!playbook_stack_.empty() && InSameMatch(normalized_game_, &last_matchstate_, new_match_state) > 0) {
-        logger::warn("    [ENGINE %s] : match state not continuted. force set new hand", engine_name_);
+        logger::warn("    [ENGINE %s]: match state not continuted. force set new hand", engine_name_);
         return false;
     }
     return true;
@@ -880,7 +880,7 @@ int Engine::AsynStartCFRSolving(SubgameSolver *selected_sgs, Strategy *&new_stra
             }
         }
         if (count == async_span_count) {
-            logger::debug("    [ENGINE %s] : MCCFR solving was interrupted after %llu ms",
+            logger::debug("    [ENGINE %s]: MCCFR solving was interrupted after %llu ms",
                           engine_name_, net_timeout_ms
             );
         }

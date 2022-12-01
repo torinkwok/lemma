@@ -31,7 +31,7 @@ public:
             sum_avg += rnb_avg[a];
         //if it happens, it may be an error in training
         if (sum_avg == 0) {
-            logger::warn("    [ACTION CHOOSER] : sum avg of valid actions is zero, returning fold");
+            logger::warn("    [ACTION CHOOSER]: sum avg of valid actions is zero, returning fold");
             r_action.type = a_fold;
             return;
         }
@@ -53,7 +53,7 @@ public:
         //if fold exceeds threshold, we fold with probability 1
         if (al_fold == a_fold && rnb_avg[al_fold] >= params_.fold_threshold_) {
             r_action.type = a_fold;
-            logger::info("    [ACTION CHOOSER] :    fold action [%c%d] chosen with probability [%f]",
+            logger::info("    [ACTION CHOOSER]:    fold action [%c%d] chosen with probability [%f]",
                          actionChars[r_action.type],
                          r_action.size,
                          rnb_avg[al_fold]
@@ -72,7 +72,7 @@ public:
                 if (rnb_avg[al_call] > rnb_avg[al_fold] && rnb_avg[al_call] > raise_total) {
                     //return call action
                     r_action.type = a_call;
-                    logger::info("    [ACTION CHOOSER] :      purified action [%c%d] chosen with probability [%f]",
+                    logger::info("    [ACTION CHOOSER]:      purified action [%c%d] chosen with probability [%f]",
                                  actionChars[r_action.type],
                                  r_action.size,
                                  rnb_avg[al_call]
@@ -81,7 +81,7 @@ public:
                 } else if (rnb_avg[al_fold] > rnb_avg[al_call] && rnb_avg[al_fold] > raise_total) {
                     //return fold action
                     r_action.type = a_fold;
-                    logger::info("    [ACTION CHOOSER] :      purified action [%c%d] chosen with probability [%f]",
+                    logger::info("    [ACTION CHOOSER]:      purified action [%c%d] chosen with probability [%f]",
                                  actionChars[r_action.type],
                                  r_action.size,
                                  rnb_avg[al_fold]
@@ -92,7 +92,7 @@ public:
             } else if (rnb_avg[al_call] > raise_total) {
                 //first action is a call and sum prob > raise total
                 r_action.type = a_call;
-                logger::info("    [ACTION CHOOSER] :      purified action [%c%d] chosen with probability [%f]",
+                logger::info("    [ACTION CHOOSER]:      purified action [%c%d] chosen with probability [%f]",
                              actionChars[r_action.type],
                              r_action.size,
                              rnb_avg[al_call]
@@ -112,7 +112,7 @@ public:
                     chosen_prob = rnb_avg[a];
                 }
             }
-            logger::info("    [ACTION CHOOSER] :      purified action [%c%d] chosen with probability [%f]",
+            logger::info("    [ACTION CHOOSER]:      purified action [%c%d] chosen with probability [%f]",
                          actionChars[r_action.type],
                          r_action.size,
                          chosen_prob
@@ -133,12 +133,12 @@ public:
                     auto sum_pot = GetTotalPot(matched_node->state_);
                     if (sum_pot < last_action.size * params_.pot_allin_threshold_) {
                         logger::info(
-                                "    [ACTION CHOOSER] : all-in %d is too much for sum_pot %d. force remove it then renorm",
+                                "    [ACTION CHOOSER]: all-in %d is too much for sum_pot %d. force remove it then renorm",
                                 actionToCode(&last_action), sum_pot
                         );
                         if (rnb_avg[final_action_idx] > 0.9) {
                             logger::warn(
-                                    "    [ACTION CHOOSER] : all-in at [round %d] is too much. force it to the next largest bet",
+                                    "    [ACTION CHOOSER]: all-in at [round %d] is too much. force it to the next largest bet",
                                     matched_node->GetRound());
                             rnb_avg[final_action_idx - 1] = rnb_avg[final_action_idx];
                         }
@@ -155,7 +155,7 @@ public:
             if (rnb_avg[a] == 0.0)
                 continue;
             if (rnb_avg[a] <= params_.prune_threshold_) {
-                logger::info("    [ACTION CHOOSER] :    prune [action %d] [%f < %f]",
+                logger::info("    [ACTION CHOOSER]:    prune [action %d] [%f < %f]",
                              matched_node->children[a]->GetLastActionCode(),
                              rnb_avg[a],
                              params_.prune_threshold_
@@ -173,7 +173,7 @@ public:
         auto matched_action = matched_node->children[picked_number]->GetLastAction();
         r_action.size = matched_action.size;
         r_action.type = matched_action.type;
-        logger::info("    [ACTION CHOOSER] :      standard action [%c%d] chosen with probability [%f]",
+        logger::info("    [ACTION CHOOSER]:      standard action [%c%d] chosen with probability [%f]",
                      actionChars[r_action.type],
                      r_action.size,
                      rnb_avg[picked_number]

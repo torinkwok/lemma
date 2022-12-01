@@ -50,12 +50,12 @@ int main(int argc, char *argv[]) {
     std::filesystem::path filename(result["game"].as<std::string>());
     FILE *file = fopen((dir / filename).c_str(), "r");
     if (file == nullptr) {
-        logger::critical(" [AGENT] : Failed to find file %s", (dir / filename));
+        logger::critical(" [AGENT]: Failed to find file %s", (dir / filename));
     }
 
     game = readGame(file);
     if (game == nullptr) {
-        logger::critical(" [AGENT] : Failed to read content of game file %s", (dir / filename));
+        logger::critical(" [AGENT]: Failed to read content of game file %s", (dir / filename));
     }
 
     { // All-in
@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
 
         char line[MAX_LINE_LEN];
         printMatchState(game, &match_state, MAX_LINE_LEN, line);
-        logger::info(" [AGENT] : %s", line);
+        logger::info(" [AGENT]: %s", line);
 
         Action action{a_raise, 20000}; // All-in
         auto build_result = connector.build(game, &action, &match_state.state);
@@ -93,7 +93,7 @@ int main(int argc, char *argv[]) {
 
         char line[MAX_LINE_LEN];
         printMatchState(game, &match_state, MAX_LINE_LEN, line);
-        logger::info(" [AGENT] : %s", line);
+        logger::info(" [AGENT]: %s", line);
 
         Action action{a_raise, 400};
         auto build_result = connector.build(game, &action, &match_state.state);
@@ -114,7 +114,7 @@ int main(int argc, char *argv[]) {
 
         char line[MAX_LINE_LEN];
         printMatchState(game, &match_state, MAX_LINE_LEN, line);
-        logger::info(" [AGENT] : %s", line);
+        logger::info(" [AGENT]: %s", line);
 
         Action action{a_raise, 1200};
         auto build_result = connector.build(game, &action, &match_state.state);
@@ -135,7 +135,7 @@ int main(int argc, char *argv[]) {
 
         char line[MAX_LINE_LEN];
         printMatchState(game, &match_state, MAX_LINE_LEN, line);
-        logger::info(" [AGENT] : %s", line);
+        logger::info(" [AGENT]: %s", line);
 
         Action action{a_raise, 2400};
         auto build_result = connector.build(game, &action, &match_state.state);
@@ -156,7 +156,7 @@ int main(int argc, char *argv[]) {
 
         char line[MAX_LINE_LEN];
         printMatchState(game, &match_state, MAX_LINE_LEN, line);
-        logger::info(" [AGENT] : %s", line);
+        logger::info(" [AGENT]: %s", line);
 
         Action action{a_call, 0};
         auto build_result = connector.build(game, &action, &match_state.state);
@@ -175,7 +175,7 @@ int main(int argc, char *argv[]) {
     //
     //     char line[MAX_LINE_LEN];
     //     printMatchState(game, &match_state, MAX_LINE_LEN, line);
-    //     logger::info(" [AGENT] : %s", line);
+    //     logger::info(" [AGENT]: %s", line);
     //
     //     Action action{a_raise, 20000};
     //     auto build_result = connector->build(game, &action, &match_state.state);
@@ -196,7 +196,7 @@ int main(int argc, char *argv[]) {
 
         char line[MAX_LINE_LEN];
         printMatchState(game, &match_state, MAX_LINE_LEN, line);
-        logger::info(" [AGENT] : %s", line);
+        logger::info(" [AGENT]: %s", line);
 
         Action action{a_raise, 20000};
         auto build_result = connector.build(game, &action, &match_state.state);
@@ -218,7 +218,7 @@ int main(int argc, char *argv[]) {
 
         char line[MAX_LINE_LEN];
         printMatchState(game, &match_state, MAX_LINE_LEN, line);
-        logger::info(" [AGENT] : %s", line);
+        logger::info(" [AGENT]: %s", line);
 
         Action action{a_raise, 20000};
         auto build_result = connector.build(game, &action, &match_state.state);
@@ -240,7 +240,7 @@ int main(int argc, char *argv[]) {
 
         char line[MAX_LINE_LEN];
         printMatchState(game, &match_state, MAX_LINE_LEN, line);
-        logger::info(" [AGENT] : %s", line);
+        logger::info(" [AGENT]: %s", line);
     }
 
     return 0;

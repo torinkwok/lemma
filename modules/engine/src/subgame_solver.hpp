@@ -73,37 +73,37 @@ struct SubgameSolver
     {
         if (condition.matched_node_->GetRound() == active_round) {
             if (condition.matched_node_->GetSumPot() >= active_sumpot_min) {
-                logger::info("    [SGS %s] : 💥triggered by sumpot %d", name_, condition.matched_node_->GetSumPot());
+                logger::info("    [SGS %s]: 💥triggered by sumpot %d", name_, condition.matched_node_->GetSumPot());
                 return true;
             } else {
-                logger::info("        [SGS %s] : node_sum_pot=%d, sgs_conf_active_sumpot_min=%d", name_,
+                logger::info("        [SGS %s]: node_sum_pot=%d, sgs_conf_active_sumpot_min=%d", name_,
                              condition.matched_node_->GetSumPot(), active_sumpot_min
                 );
             }
             if (condition.bet_similarity_dist_ >= active_bet_seq_min) {
-                logger::info("    [SGS %s] : 💥triggered by bet sequence pattern distance %d", name_,
+                logger::info("    [SGS %s]: 💥triggered by bet sequence pattern distance %d", name_,
                              condition.bet_similarity_dist_
                 );
                 return true;
             } else {
-                logger::info("        [SGS %s] : node_bet_similarity_dist_=%d, sgs_conf_active_bet_seq_min=%d", name_,
+                logger::info("        [SGS %s]: node_bet_similarity_dist_=%d, sgs_conf_active_bet_seq_min=%d", name_,
                              condition.bet_similarity_dist_, active_bet_seq_min
                 );
             }
             if (condition.off_tree_dist_ >= active_offtree_min) {
-                logger::info("    [SGS %s] : 💥triggered by offtree distance %f", name_, condition.off_tree_dist_);
+                logger::info("    [SGS %s]: 💥triggered by offtree distance %f", name_, condition.off_tree_dist_);
                 return true;
             } else {
-                logger::info("        [SGS %s] : node_off_tree_dist_=%f, sgs_active_offtree_min=%f", name_,
+                logger::info("        [SGS %s]: node_off_tree_dist_=%f, sgs_active_offtree_min=%f", name_,
                              condition.off_tree_dist_, active_offtree_min
                 );
             }
         } else {
-            logger::info("        [SGS %s] : node_round=%d, sgs_active_round=%d", name_,
+            logger::info("        [SGS %s]: node_round=%d, sgs_active_round=%d", name_,
                          condition.matched_node_->GetRound(), active_round
             );
         }
-        logger::info("    [SGS %s] : not triggered.", name_);
+        logger::info("    [SGS %s]: not triggered.", name_);
         return false;
     }
 
@@ -133,7 +133,7 @@ struct SubgameSolver
             // TODO(kwok): If we don't panic here, an `EXC_BAD_ACCESS` exception would be thrown by `Node::GetRound()` anyway.
             // TODO(kwok): Recover from it elegantly.
             logger::critical(
-                    "    [SGS %s] : according to 10.1126/science.aay2400 (https://www.science.org/doi/10.1126/science.aay2400), we don't do sub-game solve in pre-flop",
+                    "    [SGS %s]: according to 10.1126/science.aay2400 (https://www.science.org/doi/10.1126/science.aay2400), we don't do sub-game solve in pre-flop",
                     name_
             );
             return UNSUPPORTED_SUBGAME;
@@ -149,7 +149,7 @@ struct SubgameSolver
 
         // New round: Lemma acts first.
         if (action_kth == 0) {
-            logger::info("    [SGS %s] : built subgame [step back 0] for new round for [round = %d] [action_kth = %d]",
+            logger::info("    [SGS %s]: built subgame [step back 0] for new round for [round = %d] [action_kth = %d]",
                          name_, round,
                          action_kth
             );
@@ -169,11 +169,11 @@ struct SubgameSolver
 
         // Check which trigger activated sub-game resolving: off-tree or pot-limit?
         if (match_result.off_tree_dist_ >= resolve_offtree_min) {
-            logger::debug("    [SGS %s] : subgame resolving activated by off_tree_dist", name_);
+            logger::debug("    [SGS %s]: subgame resolving activated by off_tree_dist", name_);
         } else if ((ref_state.spent[0] + ref_state.spent[1]) >= resolve_sumpot_min) {
-            logger::debug("    [SGS %s] : subgame resolving activated by min_pot", name_);
+            logger::debug("    [SGS %s]: subgame resolving activated by min_pot", name_);
         } else {
-            logger::debug("    [SGS %s] : skip resolving subgame. resolving requirement not met", name_);
+            logger::debug("    [SGS %s]: skip resolving subgame. resolving requirement not met", name_);
             return SKIP_RESOLVING_SUBGAME;
         }
 
@@ -191,11 +191,11 @@ struct SubgameSolver
             // If `last_startegy` belongs to the same round, resolve to the root of `last_strategy`.
             nsteps_to_reverse =
                     action_kth - last_strategy->ag_->root_state_.numActions[this_round]; // n-steps to the last root.
-            logger::debug("    [SGS %s] : needs to step back to the last root. steps to reverse = ", name_,
+            logger::debug("    [SGS %s]: needs to step back to the last root. steps to reverse = ", name_,
                           nsteps_to_reverse
             );
         } else {
-            logger::debug("    [SGS %s] : skipping resolve to street root cuz %d < %d", name_, last_root_pot,
+            logger::debug("    [SGS %s]: skipping resolve to street root cuz %d < %d", name_, last_root_pot,
                           resolve_last_root_sumpot_min
             );
             // If `last_strategy` belongs to the prior round, resolve to the root of the current street.
@@ -204,7 +204,7 @@ struct SubgameSolver
         }
 
         // TODO(kwok): To uncomment this line of code.
-        // logger::debug("    [SGS %s] : resolving takes [step back %d]", name_, nsteps_to_reverse);
+        // logger::debug("    [SGS %s]: resolving takes [step back %d]", name_, nsteps_to_reverse);
         if (!this->BuildResolvingSubgame_(ag_out, ref_match_state, nsteps_to_reverse)) {
             return SKIP_RESOLVING_SUBGAME;
         }
@@ -320,20 +320,20 @@ private:
 
         if (StepBackAction(ag_builder_->game_, &ref_state, step_back_state, steps_to_reverse) == -1) {
             logger::warn(
-                    "    [SGS %s] : stepping too many steps. you may have an empty state or invalid state. return false",
+                    "    [SGS %s]: stepping too many steps. you may have an empty state or invalid state. return false",
                     name_
             );
             return false;
         }
 
         if (ref_state.round != step_back_state->round) {
-            logger::error("    [SGS %s] : can not step back to the last round", name_);
+            logger::error("    [SGS %s]: can not step back to the last round", name_);
             return false;
         }
 
         ag_builder_->Build(ag_out, step_back_state, &ref_state, cfr_->cfr_param_.depth_limited);
         delete step_back_state;
-        logger::info("    [SGS %s] : built subgame [step back %d] for r = %d",
+        logger::info("    [SGS %s]: built subgame [step back %d] for r = %d",
                      name_, steps_to_reverse, ref_state.round
         );
         return true;

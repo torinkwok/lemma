@@ -82,11 +82,11 @@ int main(int argc, char *argv[])
     std::filesystem::path filename(result["game"].as<std::string>());
     FILE *file = fopen((dir / filename).c_str(), "r");
     if (file == nullptr) {
-        logger::critical(" [AGENT] : Failed to find file %s", (dir / filename));
+        logger::critical(" [AGENT]: Failed to find file %s", (dir / filename));
     }
     game = readGame(file);
     if (game == nullptr) {
-        logger::critical(" [AGENT] : Failed to read content of game file %s", (dir / filename));
+        logger::critical(" [AGENT]: Failed to read content of game file %s", (dir / filename));
     }
 
     // Engine initialization.
@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
 
     // Run Sessions.
     for (int i = 1; i <= result["sessions"].as<int>(); i++) {
-        logger::info(" [AGENT] : RUNNING SESSION %d\n", i);
+        logger::info(" [AGENT]: RUNNING SESSION %d\n", i);
 
         // Connector initialization.
         BaseConnector *connector = nullptr;
@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
             case acpc: {
                 connector = new AcpcConnector(result["connector_params"].as<std::vector<std::string>>());
                 if (connector->connect() != EXIT_SUCCESS) {
-                    logger::critical(" [AGENT] : Failed to connect to ACPC dealer");
+                    logger::critical(" [AGENT]: Failed to connect to ACPC dealer");
                 }
                 break;
             }
@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
                 }
                 if (slumbot_session_key.empty()) {
                     if (!connector->connect()) {
-                        logger::critical(" [AGENT] : failed to login on Slumbot");
+                        logger::critical(" [AGENT]: failed to login on Slumbot");
                     }
                 } else {
                     ((SlumbotConnector *) connector)->connectWithSession(slumbot_session_key);
@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
                 break;
             }
             default: {
-                logger::critical(" [AGENT] : Connector Not Implemented");
+                logger::critical(" [AGENT]: Connector Not Implemented");
             }
         }
 
@@ -155,7 +155,7 @@ int main(int argc, char *argv[])
             MatchState match_state;
             // TODO: Handle `-1` properly.
             if (connector->parse(game, &match_state) == EXIT_FAILURE) {
-                logger::error(" [AGENT] : failed to parse into game state");
+                logger::error(" [AGENT]: failed to parse into game state");
                 break;
             }
 
@@ -182,15 +182,15 @@ int main(int argc, char *argv[])
                 }
 
                 auto full_match_str = std::string(line) + ":" + outcome + ":" + player_names;
-                logger::info(" [AGENT] : %s", full_match_str);
+                logger::info(" [AGENT]: %s", full_match_str);
 
                 total_hands_played++;
 
                 // NOTE(kwok): It's me.
                 double net = valueOfState(game, &match_state.state, match_state.viewingPlayer);
                 session_total += net;
-                logger::debug(" [AGENT] : net win of this hand: %.3f | %s", net, full_match_str);
-                logger::info(" [AGENT] : [hand %d] session total: %d", match_state.state.handId, session_total);
+                logger::debug(" [AGENT]: net win of this hand: %.3f | %s", net, full_match_str);
+                logger::info(" [AGENT]: [hand %d] session total: %d", match_state.state.handId, session_total);
 
                 engine->EvalShowdown(match_state);
                 engine->RefreshEngineState();
@@ -200,53 +200,53 @@ int main(int argc, char *argv[])
             /* Ignore states that we are not acting in */
             // FIXME(kwok): Is this guardian code necessary?
             if (currentPlayer(game, &match_state.state) != match_state.viewingPlayer) {
-                logger::debug(" [AGENT] : 🚨ignore state, not acting player");
+                logger::debug(" [AGENT]: 🚨ignore state, not acting player");
                 continue;
             }
 
             /* Pick an action to play. */
             char line[MAX_LINE_LEN];
             printMatchState(game, &match_state, MAX_LINE_LEN, line);
-            logger::debug(" [AGENT] : %s", line);
+            logger::debug(" [AGENT]: %s", line);
             Action action;
             //slumbot use normalized session.
             engine->GetActionBySession(match_state, action);
-            //      logger::debug(" [AGENT] : action returned from engine: %c%d", actionChars[action.type], action.size);
+            //      logger::debug(" [AGENT]: action returned from engine: %c%d", actionChars[action.type], action.size);
 
 #if 0
             //detect if the action should be fixed
             //no longger needed, done within the engine interface
       //      if (!isValidAction(game, &match_state.state, 0, &action)) {
-      //        logger::debug(" [AGENT] : invalid action from engine: %c%d", actionChars[action.type], action.size);
+      //        logger::debug(" [AGENT]: invalid action from engine: %c%d", actionChars[action.type], action.size);
       //        //try to fix it.
       //        if (!isValidAction(game, &match_state.state, 1, &action)) {
-      //          logger::warn(" [AGENT] : unable to fix action");
+      //          logger::warn(" [AGENT]: unable to fix action");
       //          //normally it is a r20000 invalid. return call as a hack
       //          action.type = a_call;
       //        }
-      //        logger::debug(" [AGENT] : invalid action has been fixed to: %c%d", actionChars[action.type], action.size);
+      //        logger::debug(" [AGENT]: invalid action has been fixed to: %c%d", actionChars[action.type], action.size);
       //      }
 #endif
 
             /* Craft a request. */
             // FIXME(kwok): If `engine->GetActionBySession` failed, `action` remains as an undefined value.
             if (connector->build(game, &action, &match_state.state) == EXIT_FAILURE) {
-                logger::error(" [AGENT] : failed to build action");
+                logger::error(" [AGENT]: failed to build action");
                 break;
             }
 
             /* Send it! */
             if (connector->send() == EXIT_FAILURE) {
-                logger::error(" [AGENT] : failed to send action");
+                logger::error(" [AGENT]: failed to send action");
                 break;
             }
 
             logger::debug("\n\n\n");
         }
 
-        logger::info(" [AGENT] : Session total = %d ", session_total);
+        logger::info(" [AGENT]: Session total = %d ", session_total);
         sum_session_total += session_total;
-        logger::info(" [AGENT] : Running total = %d, Total hands played = %d", sum_session_total, total_hands_played);
+        logger::info(" [AGENT]: Running total = %d, Total hands played = %d", sum_session_total, total_hands_played);
         delete connector;
     }
 
