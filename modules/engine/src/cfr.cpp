@@ -19,7 +19,7 @@ int CFR::Solve(Strategy *blueprint,
                  cfr_param_.depth_limited
     );
 
-    //more safegaurding codes
+    // more safeguarding codes
     if (strategy->ag_->root_node_->GetRound() != HOLDEM_ROUND_RIVER) {
         if (strategy->ag_->root_hand_beliefs_for_all_[0].NonZeroBeliefCount() <= 30
             || strategy->ag_->root_hand_beliefs_for_all_[1].NonZeroBeliefCount() <= 30) {
@@ -58,8 +58,8 @@ int CFR::Solve(Strategy *blueprint,
 
     /*
      * Run all commands by default,
-     *      - unless the cfr_solving termininate it naturally.
-     *      - unless it is cancalled from the outside
+     *      - unless the cfr_solving terminate it naturally.
+     *      - unless it is cancelled from the outside
      */
     bool keep_solving = true;
     thread_local_current_progress.iteration = starting_checkpoint;
@@ -161,7 +161,7 @@ int CFR::Solve(Strategy *blueprint,
                     SaveAG(strategy, name);
                     local_cfr_param.SaveCFRConfig(name);
                     // For now, we don't need checkpoints to do continuous training, hence no need for regret
-                    // checkpoints to merge strategy. Just mkake it simple here.
+                    // checkpoints to merge strategy. Just make it simple here.
                     strategy->InitMemory(STRATEGY_ZIPAVG, CFR_SCALAR_SOLVE);
                     // FIXME(kwok): This command potentially triggers the "b_max %d must >= num_threads %d" fatal error.
                     strategy->ConvertWavgToZipAvg(thread_pool_, num_thread);
@@ -283,8 +283,8 @@ void *CFR::CfrSolve(void *thread_args)
     while (remaining_iter-- && !args->cancelled_token_) {
         Board_t board{};
         // NOTE(kwok): Here we're sampling the public chance events, i.e. the public cards. Required
-        // private chance events will be sampled within ScalaraCfrWorker::Solve in the case of the
-        // primitive Chance-Sampled variant, or be exhaustedly considered within VectorCfrWorker::Solve
+        // private chance events will be sampled within `ScalarCfrWorker::Solve` in the case of the
+        // primitive Chance-Sampled variant, or be exhaustively considered within VectorCfrWorker::Solve
         // in the case of the Public Chance Sampling variant.
         //
         // Note that we are not going to sample the public chance events one by one as the game proceeds.

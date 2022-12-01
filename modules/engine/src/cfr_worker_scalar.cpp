@@ -26,7 +26,7 @@ double ScalarCfrWorker::Solve(Board_t board)
         //
         // NOTE(kwok): Here we're sampling all the private chance events, i.e. the private hands of each player.
         // The public chance event, i.e. the public cards, has already been sampled by the outside invoker of
-        // ScalaraCfrWorker::Solve.
+        // ScalarCfrWorker::Solve.
         private_hands_info.SamplePrivateHandsForAll(ag, local_root_beliefs);
         if (cfr_param_->pruning_on && cfr_param_->rm_floor < 0) {
             iter_prune_flag = GenRndNumber(1, 100) <= cfr_param_->rollout_prune_prob * 100;
@@ -455,18 +455,18 @@ double ScalarCfrWorker::RolloutLeafInterNodeWithBiasFavor(int trainee,
     // NOTE(kwok): biased according to the specified favor
     switch (bias_favor) {
         case BIASED_CALLING: {
-            continuation_distr_rnb[call_sibling_idx] *= BIASED_SCALER;
+            continuation_distr_rnb[call_sibling_idx] *= BIASED_SCALE;
             break;
         }
         case BIASED_RAISING: {
             for (int i = call_sibling_idx + 1; i < a_max; i++) {
-                continuation_distr_rnb[i] *= BIASED_SCALER;
+                continuation_distr_rnb[i] *= BIASED_SCALE;
             }
             break;
         }
         case BIASED_FOLDING: {
             if (call_sibling_idx == 1) {
-                continuation_distr_rnb[0] *= BIASED_SCALER;
+                continuation_distr_rnb[0] *= BIASED_SCALE;
             }
             break;
         }

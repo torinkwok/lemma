@@ -16,7 +16,7 @@ const int BIASED_FOLDING = 2;
 const int BIASED_NONE = 3;
 const int MAX_META_STRATEGY = 4;
 
-const int BIASED_SCALER = 5;
+const int BIASED_SCALE = 5;
 
 class CfrWorker
 {
@@ -49,7 +49,7 @@ public:
 
     CFR_MODE mode_;
 
-    //return expl mbb/g
+    // return exploitability mbb/g
     virtual double Solve(Board_t board) = 0;
 
     static double ClampRegret(double old_reg, double diff, double floor)
