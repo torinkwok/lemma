@@ -9,7 +9,7 @@ Copyright (C) 2011 by the Computer Poker Research Group, University of Alberta
 #include <assert.h>
 
 #include <stdint.h>
-#include "../include/bulldog/game.h"
+#include "../include/autodidact/game.h"
 
 #include "evalHandTables"
 
