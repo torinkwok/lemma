@@ -16,7 +16,8 @@
 //using namespace web::http::client;          // HTTP client features
 //using namespace concurrency::streams;       // Asynchronous streams
 
-std::string acpcified_actions(std::string slumbot_actions) {
+std::string acpcified_actions(std::string slumbot_actions)
+{
     std::string acpcified_actions = slumbot_actions;
     std::replace(acpcified_actions.begin(), acpcified_actions.end(), 'b', 'r');
     std::replace(acpcified_actions.begin(), acpcified_actions.end(), 'k', 'c');
@@ -60,12 +61,14 @@ std::string acpcified_actions(std::string slumbot_actions) {
         }
         streets[i] = std::accumulate(betstrs.begin(),
                                      betstrs.end(),
-                                     std::string{});
+                                     std::string{}
+        );
     }
     return boost::algorithm::join(streets, "/");
 }
 
-void from_json(const web::json::value &j, sSlumbotMatchState *s) {
+void from_json(const web::json::value &j, sSlumbotMatchState *s)
+{
     // {'old_action': 'b400c/kk/b200b400c/k', 'action': 'b400c/kk/b200b400c/kk',
     // 'client_pos': 1, 'hole_cards': ['7c', '2s'], 'board': ['Th', '9c', '4s',
     // '8c', '9d'], 'bot_hole_cards': ['Qc', 'Tc'], 'winnings': -800, 'won_pot':
@@ -152,7 +155,8 @@ void from_json(const web::json::value &j, sSlumbotMatchState *s) {
     s->hip_ = j.has_field("hip") ? j.at("hip").as_integer() : 0; //always initialize to 0
 };
 
-SlumbotConnector::SlumbotConnector(const std::vector<std::string> &params) {
+SlumbotConnector::SlumbotConnector(const std::vector<std::string> &params)
+{
     username_ = params[0].c_str();
     password_ = params[1].c_str();
     iter_ = (unsigned int) std::strtoul(params[2].c_str(), nullptr, 0);
@@ -161,15 +165,19 @@ SlumbotConnector::SlumbotConnector(const std::vector<std::string> &params) {
 }
 
 SlumbotConnector::SlumbotConnector(const std::vector<std::string> &params,
-                                   web::http::client::http_client_config http_config) : SlumbotConnector(params) {
+                                   web::http::client::http_client_config http_config)
+        : SlumbotConnector(params)
+{
     _http_client_config = std::move(http_config);
 }
 
-SlumbotConnector::~SlumbotConnector() {
+SlumbotConnector::~SlumbotConnector()
+{
     delete slumbot_match_state_;
 }
 
-int SlumbotConnector::connect() {
+int SlumbotConnector::connect()
+{
     web::http::http_request loginRequest(web::http::methods::POST);
     loginRequest.headers().add(U("Content-Type"), U("application/json"));
     web::json::value loginRequestJsonBody;
@@ -179,16 +187,20 @@ int SlumbotConnector::connect() {
     // FIXME(kwok): Encapsulate REST talks better.
     auto loginRequestJson = web::http::client::http_client(U("https://slumbot.com/api/login"), _http_client_config)
             .request(loginRequest)
-            .then([](const web::http::http_response &response) {
-                if (response.status_code() != 200) {
-                    logger::error("❌login returned " + std::to_string(response.status_code()));
-                }
-                return response.extract_json(true);
-            })
-            .then([this](const web::json::value &jsonObject) {
-                logger::info("🦥login returned:" + jsonObject.serialize());
-                this->token_ = jsonObject.at(U("token")).as_string();
-            });
+            .then([](const web::http::http_response &response)
+                  {
+                      if (response.status_code() != 200) {
+                          logger::error("❌login returned " + std::to_string(response.status_code()));
+                      }
+                      return response.extract_json(true);
+                  }
+            )
+            .then([this](const web::json::value &jsonObject)
+                  {
+                      logger::info("🦥login returned:" + jsonObject.serialize());
+                      this->token_ = jsonObject.at(U("token")).as_string();
+                  }
+            );
     try { loginRequestJson.wait(); }
     catch (const std::exception &e) {
         logger::error("error: %s, session: %s", e.what(), this->slumbot_match_state_->token);
@@ -197,11 +209,13 @@ int SlumbotConnector::connect() {
     return EXIT_FAILURE;
 }
 
-int SlumbotConnector::connectWithSession(const std::string &session_key) {
+int SlumbotConnector::connectWithSession(const std::string &session_key)
+{
     this->token_ = session_key;
 }
 
-int SlumbotConnector::send() {
+int SlumbotConnector::send()
+{
     web::http::http_request actRequest(web::http::methods::POST);
     actRequest.headers().add(U("Content-Type"), U("application/json"));
     web::json::value actRequestJsonBody;
@@ -210,18 +224,22 @@ int SlumbotConnector::send() {
     actRequest.set_body(actRequestJsonBody);
     auto actRequestFuture = web::http::client::http_client(U("https://slumbot.com/api/act"), _http_client_config)
             .request(actRequest)
-            .then([](const web::http::http_response &response) {
-                if (response.status_code() != 200) {
-                    logger::error("(kwok) slumbot_connector::send action returned Error" +
-                                  std::to_string(response.status_code()));
-                }
-                return response.extract_json(true);
-            })
-            .then([this](const web::json::value &jsonObject) {
-                logger::debug("(kwok) slumbot_connector::send action returned:" + jsonObject.serialize());
-                this->previous_act_result_json_ = jsonObject;
-                from_json(this->previous_act_result_json_, this->slumbot_match_state_);
-            });
+            .then([](const web::http::http_response &response)
+                  {
+                      if (response.status_code() != 200) {
+                          logger::error("(kwok) slumbot_connector::send action returned Error" +
+                                        std::to_string(response.status_code()));
+                      }
+                      return response.extract_json(true);
+                  }
+            )
+            .then([this](const web::json::value &jsonObject)
+                  {
+                      logger::debug("(kwok) slumbot_connector::send action returned:" + jsonObject.serialize());
+                      this->previous_act_result_json_ = jsonObject;
+                      from_json(this->previous_act_result_json_, this->slumbot_match_state_);
+                  }
+            );
     try { actRequestFuture.wait(); }
     catch (const std::exception &e) {
         logger::error("error: %s, session: %s", e.what(), this->slumbot_match_state_->token);
@@ -230,7 +248,8 @@ int SlumbotConnector::send() {
     return EXIT_SUCCESS;
 }
 
-bool SlumbotConnector::get() {
+bool SlumbotConnector::get()
+{
     // A hand has completed.
     if (this->has_showed_down()) {
         this->reset_hand();
@@ -241,23 +260,28 @@ bool SlumbotConnector::get() {
         newHandRequest.set_body(newHandRequestJsonBody);
         // FIXME(kwok): Encapsulate REST talks better.
         auto newHandRequestFuture = web::http::client::http_client(U("https://slumbot.com/api/new_hand"),
-                                                                   _http_client_config)
+                                                                   _http_client_config
+        )
                 .request(newHandRequest)
-                .then([](const web::http::http_response &response) {
-                    if (response.status_code() != 200) {
-                        // FIXME(kwok): Check the type of error reported here.
-                        throw std::runtime_error("(kwok) slumbot_connector::get next_hand returned Error");
-                    }
-                    return response.extract_json(true);
-                })
-                .then([this](const web::json::value &jsonObject) {
-                    logger::trace("(kwok) slumbot_connector::get next_hand returned:" + jsonObject.serialize());
-                    if (jsonObject.has_field(U("token"))) {
-                        this->token_ = jsonObject.at(U("token")).as_string();
-                    }
-                    this->previous_act_result_json_ = jsonObject;
-                    from_json(this->previous_act_result_json_, this->slumbot_match_state_);
-                });
+                .then([](const web::http::http_response &response)
+                      {
+                          if (response.status_code() != 200) {
+                              // FIXME(kwok): Check the type of error reported here.
+                              throw std::runtime_error("(kwok) slumbot_connector::get next_hand returned Error");
+                          }
+                          return response.extract_json(true);
+                      }
+                )
+                .then([this](const web::json::value &jsonObject)
+                      {
+                          logger::trace("(kwok) slumbot_connector::get next_hand returned:" + jsonObject.serialize());
+                          if (jsonObject.has_field(U("token"))) {
+                              this->token_ = jsonObject.at(U("token")).as_string();
+                          }
+                          this->previous_act_result_json_ = jsonObject;
+                          from_json(this->previous_act_result_json_, this->slumbot_match_state_);
+                      }
+                );
         try { newHandRequestFuture.wait(); }
         catch (const std::exception &e) {
             logger::error("error: %s, session: %s", e.what(), this->slumbot_match_state_->token);
@@ -270,7 +294,8 @@ bool SlumbotConnector::get() {
     }
 }
 
-int SlumbotConnector::parse(const Game *game, MatchState *state) {
+int SlumbotConnector::parse(const Game *game, MatchState *state)
+{
     if (slumbot_match_state_->p1_ >= game->numPlayers) {
         logger::critical("viewing player recieved from slumbot is not compatible with game");
     }
@@ -323,7 +348,8 @@ int SlumbotConnector::parse(const Game *game, MatchState *state) {
 //
 // TODO(wolo): Maybe wrap this ACPC standard to Slumbnot standard in a function?
 // But all you need is the action after all.
-int SlumbotConnector::build(const Game *game, Action *action, State *state) {
+int SlumbotConnector::build(const Game *game, Action *action, State *state)
+{
     if (action->type == a_call && state->round > 0 && state->numActions[state->round] == 0) {
         // (kwok) A CALL action leading a non-PRE-FLOP betting round is illegal.
         // Replace it with a CHECK. This occurs from time to time with random
@@ -331,7 +357,8 @@ int SlumbotConnector::build(const Game *game, Action *action, State *state) {
         action_str_ = "k";
         // FIXME(kwok): logger::error it when we're not in the random strategy mode.
         logger::warn("slumbot_connector built action string " + action_str_ +
-                     " (in place of [c" + std::to_string(action->size) + "])");
+                     " (in place of [c" + std::to_string(action->size) + "])"
+        );
         return EXIT_SUCCESS;
     }
 
@@ -385,13 +412,15 @@ int SlumbotConnector::build(const Game *game, Action *action, State *state) {
             logger::error("💢engine action size (by game): " + std::to_string(action_size_by_game) +
                           ", raise size (by game) must be inclusively within the range of [" +
                           std::to_string(lower_bound_by_game) + ", " +
-                          std::to_string(upper_bound_by_game) + "]");
+                          std::to_string(upper_bound_by_game) + "]"
+            );
         }
 
         if (action_size_by_round < 0) {
             logger::error("💢raise (by round) must not be less than 0, "
                           + std::to_string(action_size_by_round)
-                          + "recieved");
+                          + "recieved"
+            );
         }
 
         action_str_ += std::to_string(action_size_by_round);

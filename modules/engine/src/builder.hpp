@@ -41,32 +41,38 @@ static std::map<int, int> CanonCardsetCount{
         {7, 6009159},
 };
 
-struct Equity {
+struct Equity
+{
     unsigned int index_;
     double value_;
 
     template<class Archive>
-    void serialize(Archive &ar) {
+    void serialize(Archive &ar)
+    {
         ar(index_, value_);
     }
 };
 
-struct Entry {
+struct Entry
+{
     unsigned int index_;
     float histo_[HISTOGRAM_SIZE]; // Normalized values
 
     template<class Archive>
-    void save(Archive &ar) const {
+    void save(Archive &ar) const
+    {
         ar(index_, histo_);
     }
 
     template<class Archive>
-    void load(Archive &ar) {
+    void load(Archive &ar)
+    {
         ar(index_, histo_);
     }
 };
 
-static void read_entries(std::vector<Entry> &entries, const std::string &ofile) {
+static void read_entries(std::vector<Entry> &entries, const std::string &ofile)
+{
     std::ifstream is(ofile, std::ios::binary | std::ios::ate);
     if (is.is_open()) {
         // TODO(kwok): Replace cereal with flexbuffers more elegantly.
@@ -102,7 +108,8 @@ static void read_entries(std::vector<Entry> &entries, const std::string &ofile) 
     is.close();
 }
 
-static void read_equities(std::vector<Equity> &equities, const std::string &ofile) {
+static void read_equities(std::vector<Equity> &equities, const std::string &ofile)
+{
     std::ifstream is(ofile, std::ios::binary);
     if (is.is_open()) {
         cereal::BinaryInputArchive load(is);
@@ -113,9 +120,11 @@ static void read_equities(std::vector<Equity> &equities, const std::string &ofil
     is.close();
 }
 
-class BaseBuilder {
+class BaseBuilder
+{
 public:
-    enum BuildMode {
+    enum BuildMode
+    {
         BuildNotImplemented,
         BuildKMeansEMD,
         BuildKMeansEuclidean,
@@ -136,20 +145,23 @@ protected:
     int num_threads_;
 };
 
-class ColexBuilder : public BaseBuilder {
+class ColexBuilder : public BaseBuilder
+{
 public:
     ~ColexBuilder() override = default;
 
     explicit ColexBuilder(int priv_cards_num,
                           int pub_cards_num,
-                          int num_clusters) {
+                          int num_clusters)
+    {
         ofilemeta_ =
                 std::to_string(num_clusters) + "_" + std::to_string(priv_cards_num) + "_" +
                 std::to_string(pub_cards_num);
         num_clusters_ = num_clusters;
     }
 
-    void run() override {
+    void run() override
+    {
         std::set<uint64_t> ret;
         static const std::string cardstrings = "2c3c4c5c6c7c8c9cTcJcQcKcAc"
                                                "2d3d4d5d6d7d8d9dTdJdQdKdAd"
@@ -180,7 +192,8 @@ public:
     }
 };
 
-class KMeansEMDBuilder : public BaseBuilder {
+class KMeansEMDBuilder : public BaseBuilder
+{
 public:
     KMeansEMDBuilder(const std::string &ifilemeta,
                      int priv_cards_num,
@@ -189,7 +202,8 @@ public:
                      int num_threads,
                      int max_iterr,
                      double end_error,
-                     KMeans::InitMode mode) {
+                     KMeans::InitMode mode)
+    {
         ofilemeta_ =
                 std::to_string(num_clusters) + "_" + std::to_string(priv_cards_num) + "_" +
                 std::to_string(pub_cards_num);
@@ -197,7 +211,8 @@ public:
         std::filesystem::path dir(BULLDOG_DIR_DATA_ABS);
         std::filesystem::path file
                 (FEATURE_PREFIX + "_" + ifilemeta + std::to_string(priv_cards_num) + "_" + std::to_string(pub_cards_num)
-                 + FEATURE_EXT);
+                 + FEATURE_EXT
+                );
         ifile_ = dir / file;
 
         num_clusters_ = num_clusters;
@@ -229,7 +244,8 @@ public:
 
     ~KMeansEMDBuilder() override = default;;
 
-    void run() override {
+    void run() override
+    {
         KMeans::sRawData kmeans_raw_data{};
         kmeans_raw_data.prefix_ = ofilemeta_;
         std::vector<Entry> entries;
@@ -282,7 +298,8 @@ private:
     KMeans::InitMode mode_;
 };
 
-class KMeansEuclideanBuilder : public BaseBuilder {
+class KMeansEuclideanBuilder : public BaseBuilder
+{
 public:
     KMeansEuclideanBuilder(const std::string &ifilemeta,
                            int priv_cards_num,
@@ -291,7 +308,8 @@ public:
                            int num_threads,
                            int max_iterr,
                            double end_error,
-                           KMeans::InitMode mode) {
+                           KMeans::InitMode mode)
+    {
         ofilemeta_ =
                 std::to_string(num_clusters) + "_" + std::to_string(priv_cards_num) + "_" +
                 std::to_string(pub_cards_num);
@@ -299,7 +317,8 @@ public:
         std::filesystem::path dir(BULLDOG_DIR_DATA_ABS);
         std::filesystem::path file
                 (FEATURE_PREFIX + "_" + ifilemeta + std::to_string(priv_cards_num) + "_" + std::to_string(pub_cards_num)
-                 + FEATURE_EXT);
+                 + FEATURE_EXT
+                );
         ifile_ = dir / file;
 
         num_clusters_ = num_clusters;
@@ -331,7 +350,8 @@ public:
 
     ~KMeansEuclideanBuilder() override = default;;
 
-    void run() override {
+    void run() override
+    {
         KMeans::sRawData raw_data{};
         raw_data.prefix_ = ofilemeta_;
         std::vector<Equity> equities;
@@ -365,9 +385,11 @@ private:
     KMeans::InitMode mode_;
 };
 
-class HierarchicalBuilder : public BaseBuilder {
+class HierarchicalBuilder : public BaseBuilder
+{
 public:
-    ~HierarchicalBuilder() override {
+    ~HierarchicalBuilder() override
+    {
         for (int i = 0; i < CanonCardsetCount[num_public_]; i++) {
             delete[] transition_table_[i];
             delete[] distance_[i];
@@ -384,7 +406,8 @@ public:
                         int num_threads,
                         int max_iterr,
                         double end_error,
-                        KMeans::InitMode mode) {
+                        KMeans::InitMode mode)
+    {
         num_public_ = pub_cards_num;
         num_priv_ = priv_cards_num;
         ofilemeta_ =
@@ -399,7 +422,8 @@ public:
                 file(
                 BUCKET_FILE_PREFIX + "_" + std::to_string(base_num_clusters) + "_" + std::to_string(priv_cards_num) +
                 "_"
-                + std::to_string(pub_cards_num) + BUCKET_FILE_EXT);
+                + std::to_string(pub_cards_num) + BUCKET_FILE_EXT
+        );
         ifile_ = dir / file;
 
         num_clusters_ = num_pub_clusters;
@@ -445,7 +469,8 @@ public:
         }
     };
 
-    void run() override {
+    void run() override
+    {
         bool overwrite = false;
         std::filesystem::path dir(BULLDOG_DIR_DATA_ABS);
         if (num_public_ == 3) {
@@ -461,16 +486,19 @@ public:
 
         std::filesystem::path pub_file("hierarchical_pub_" +
                                        std::to_string(num_clusters_) + "_" +
-                                       std::to_string(num_priv_) + "_3.txt");
+                                       std::to_string(num_priv_) + "_3.txt"
+        );
 
         std::filesystem::path
                 histo_file((num_public_ == 5 ? "features_equity_" : "features_hand_histo_") +
                            std::to_string(num_priv_) + "_" +
-                           std::to_string(num_public_) + ".bin");
+                           std::to_string(num_public_) + ".bin"
+        );
         cluster_private(dir / pub_file, dir / histo_file);
     }
 
-    void cluster_private(std::string pub_cluster_file, std::string feature_file) {
+    void cluster_private(std::string pub_cluster_file, std::string feature_file)
+    {
         //read public clusters
         std::map<int, std::vector<int>> pub_bucket_map;
         std::ifstream is(pub_cluster_file, std::ios::binary);
@@ -589,12 +617,14 @@ public:
         }
     }
 
-    void save_labels(int *labels) {
+    void save_labels(int *labels)
+    {
         std::filesystem::path dir(BULLDOG_DIR_DATA_ABS);
         std::filesystem::path file("hierarchical_pub_" +
                                    std::to_string(num_clusters_) + "_" +
                                    std::to_string(num_priv_) + "_" +
-                                   std::to_string(num_public_) + ".txt");
+                                   std::to_string(num_public_) + ".txt"
+        );
         std::ofstream os(dir / file, std::ios::binary | std::ios::trunc);
         if (os.is_open()) {
             os << "board,bucket" << std::endl;
@@ -606,7 +636,8 @@ public:
         }
     }
 
-    void cluster_public() {
+    void cluster_public()
+    {
         int pub_states = pub_boards_.size();
         logger::info("clustering %d public states into %d clusters", pub_states, num_clusters_);
         //initialize with kmeans++
@@ -686,7 +717,8 @@ public:
         delete[] labels;
     }
 
-    void load_distance_table(std::string dist_file) {
+    void load_distance_table(std::string dist_file)
+    {
         std::ifstream is(dist_file, std::ios::binary);
         std::string line;
         std::getline(is, line);
@@ -700,7 +732,8 @@ public:
         logger::info("loaded distance table %s", dist_file);
     }
 
-    void build_distance_table() {
+    void build_distance_table()
+    {
         std::filesystem::path dir(BULLDOG_DIR_DATA_ABS);
         std::filesystem::path file("hierarchical_distance_" + ifilemeta_ + ".txt");
         std::ofstream os(dir / file, std::ios::binary | std::ios::trunc);
@@ -716,7 +749,8 @@ public:
                 for (int k = 0; k < base_num_clusters_; k++) {
                     similarity += std::min(
                             transition_table_[i][k],
-                            transition_table_[j][k]);
+                            transition_table_[j][k]
+                    );
                 }
                 distance_[i][j] = (v_ - similarity) / v_;
                 os << i << "," << j << "," << distance_[i][j] << std::endl;
@@ -725,7 +759,8 @@ public:
         os.close();
     }
 
-    void build_transition_table() {
+    void build_transition_table()
+    {
         Bucket base_abs;
         base_abs.LoadClassicFromFile(ifile_);
 

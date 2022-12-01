@@ -181,14 +181,15 @@ int main(int argc, char *argv[])
             total += str;
             players +=
                     i ? ("|" + seatName[playerToSeat(game, player0Seat, i)]) : seatName[playerToSeat(game, player0Seat,
-                                                                                                     i)];
+                                                                                                     i
+                    )];
         }
         logger::info("%s:%s:%s", line, total, players);
         engines[0]->RefreshEngineState();
         engines[1]->RefreshEngineState();
-//    char state_str[1024];
-//    printState(game, &state.state, 1024, state_str);
-//    logger::info("%s", state_str);
+        //    char state_str[1024];
+        //    printState(game, &state.state, 1024, state_str);
+        //    logger::info("%s", state_str);
 
         //next hand
         id++;

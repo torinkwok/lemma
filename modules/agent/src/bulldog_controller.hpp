@@ -24,50 +24,69 @@
 // SOFTWARE.
 //
 
-#pragma once 
+#pragma once
 
 #include <bulldog/engine.h>
 #include "basic_controller.hpp"
 
 using namespace cfx;
 
-struct EnginePack {
-  Engine* engine_;
-  std::chrono::steady_clock::time_point last_access_timestamp_;
+struct EnginePack
+{
+    Engine *engine_;
+    std::chrono::steady_clock::time_point last_access_timestamp_;
 };
 
-class BulldogController : public BasicController, Controller {
+class BulldogController : public BasicController, Controller
+{
 public:
 
-    BulldogController() : BasicController() {
-      bucket_pool_ = new BucketPool();
-      blueprint_pool_ = new StrategyPool();
+    BulldogController()
+            : BasicController()
+    {
+        bucket_pool_ = new BucketPool();
+        blueprint_pool_ = new StrategyPool();
     }
-    ~BulldogController() {
-      delete bucket_pool_;
-      delete blueprint_pool_;
+
+    ~BulldogController()
+    {
+        delete bucket_pool_;
+        delete blueprint_pool_;
     }
+
     void handleGet(http_request request) override;
+
     void handlePut(http_request request) override;
+
     void handlePost(http_request request) override;
+
     void handlePatch(http_request request) override;
+
     void handleDelete(http_request request) override;
+
     void handleHead(http_request request) override;
+
     void handleOptions(http_request request) override;
+
     void handleTrace(http_request request) override;
+
     void handleConnect(http_request request) override;
+
     void handleMerge(http_request request) override;
+
     void initRestOpHandlers() override;
 
     bool LoadDefault(std::string engine_file_name, std::string game_conf);
+
     bool Cleanup();
- private:
-    static json::value responseNotImpl(const http::method & method);
+
+private:
+    static json::value responseNotImpl(const http::method &method);
 
     std::string default_engine_conf_;
     Game default_normalized_game_;
-    StrategyPool* blueprint_pool_; //todo: not smart, currently hardcoded
-    BucketPool* bucket_pool_;
+    StrategyPool *blueprint_pool_; //todo: not smart, currently hardcoded
+    BucketPool *bucket_pool_;
     std::unordered_map<std::string, EnginePack> sessions_;
     unsigned long max_capacity_ = 3;
     std::mutex mutex_;

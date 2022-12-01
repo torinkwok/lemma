@@ -113,7 +113,8 @@ int DelayAction(std::chrono::system_clock::time_point start_time, int milli_avai
 {
     srand(time(NULL));
     auto duration_milli = std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::system_clock::now() - start_time).count();
+            std::chrono::system_clock::now() - start_time
+    ).count();
     int milli_remaining = milli_available - duration_milli;
     if (milli_remaining > buffer) {
         auto random = ((double) rand() / (RAND_MAX)); // random between 0 and 1

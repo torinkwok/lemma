@@ -55,7 +55,8 @@ public:
                           c2,
                           round,
                           board_cards_ending_round,
-                          buckets_[round]->type_);
+                          buckets_[round]->type_
+            );
             board->Print();
             exit(1);
         }

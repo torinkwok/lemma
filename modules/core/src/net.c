@@ -153,7 +153,8 @@ int connectTo(char *hostname, uint16_t port)
     if (connect(sock, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
 
         fprintf(stderr, "ERROR: could not connect to %s:%"PRIu16"\n",
-                hostname, port);
+                hostname, port
+        );
         return -1;
     }
 

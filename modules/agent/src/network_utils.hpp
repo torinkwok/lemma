@@ -32,28 +32,36 @@
 using namespace boost::asio;
 using namespace boost::asio::ip;
 
-namespace cfx {
-   
-   using HostInetInfo = tcp::resolver::iterator;
+namespace cfx
+{
 
-   class NetworkUtils {
-   private:
-      static HostInetInfo queryHostInetInfo();
-      static std::string hostIP(unsigned short family);
-   public:
-      // gets the host IP4 string formatted
-      static std::string hostIP4() {
-         return hostIP(AF_INET);
-      }
+using HostInetInfo = tcp::resolver::iterator;
 
-      // gets the host IP6 string formatted
-      static std::string hostIP6() {
+class NetworkUtils
+{
+private:
+    static HostInetInfo queryHostInetInfo();
 
-         return hostIP(AF_INET6);
-      }
-      static std::string hostName() {
-         return ip::host_name();
-      }
-   };
-      
+    static std::string hostIP(unsigned short family);
+
+public:
+    // gets the host IP4 string formatted
+    static std::string hostIP4()
+    {
+        return hostIP(AF_INET);
+    }
+
+    // gets the host IP6 string formatted
+    static std::string hostIP6()
+    {
+
+        return hostIP(AF_INET6);
+    }
+
+    static std::string hostName()
+    {
+        return ip::host_name();
+    }
+};
+
 }

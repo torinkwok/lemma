@@ -4,67 +4,81 @@
 #define BULLDOG_MODULES_ENGINE_SRC_KMEANS_H_
 
 #include "bucket.h"
+
 extern "C" {
 #include "emd.h"
 };
 
-class KMeans {
- public:
-  enum InitMode {
-    InitRandom,
-    InitCheckpoint,
-    InitUniform,
-    InitManual,
-    InitPlusPlus,
-  };
+class KMeans
+{
+public:
+    enum InitMode
+    {
+        InitRandom,
+        InitCheckpoint,
+        InitUniform,
+        InitManual,
+        InitPlusPlus,
+    };
 
-  struct sRawData{
-    double *data_;
-    int *cache_key_;
-    unsigned int *index_;
-    std::string prefix_;
-  };
+    struct sRawData
+    {
+        double *data_;
+        int *cache_key_;
+        unsigned int *index_;
+        std::string prefix_;
+    };
 
-  KMeans(int dimNum, int clusterNum, int num_threads);
-  ~KMeans();
+    KMeans(int dimNum, int clusterNum, int num_threads);
 
-  void SetInitMode(int i) { m_initMode = i; }
-  void SetMaxIterNum(int i) { m_maxIterNum = i; }
-  void SetEndError(double f) { m_endError = f; }
-  void SetCacheSize(int i) { cache_size_ = i; }
+    ~KMeans();
 
-  double** GetMeans(){ return m_means; }
+    void SetInitMode(int i) { m_initMode = i; }
 
-  void Init(const sRawData& raw_data, int N);
-  void Cluster(const sRawData& raw_data, int N);
-  void SaveBuckets(const std::string& prefix);
+    void SetMaxIterNum(int i) { m_maxIterNum = i; }
 
-  static double CalcDistance(const double *x, const double *u, int dimNum);
- private:
-  int m_dimNum;
-  int m_clusterNum;
-  double **m_means;
+    void SetEndError(double f) { m_endError = f; }
 
-  int m_initMode;
-  int m_maxIterNum;        // The stopping criterion regarding the number of iterations
-  double m_endError;        // The stopping criterion regarding the error
+    void SetCacheSize(int i) { cache_size_ = i; }
 
-  int num_threads_;
-  pthread_t *thread_pool_;
-  pthread_mutex_t mutex_;
+    double **GetMeans() { return m_means; }
 
-  std::map<unsigned int, unsigned short> bucket_map_;
-  std::map<std::vector<double>, std::array<double, 2>> cache_;
-  double *dist_cache_;
-  int *label_cache_;
-  int cache_size_;
+    void Init(const sRawData &raw_data, int N);
 
-  double GetLabel(const double *x, int *label);
-  static double EuclideanDistance(const double *x, const double *u, int dimNum);
-  static double EarthMoversDistance(const double *x, const double *u, int dimNum);
+    void Cluster(const sRawData &raw_data, int N);
 
-  void SaveCheckpoint(const std::string& prefix);
-  void LoadCheckpoint(const std::string& prefix);
+    void SaveBuckets(const std::string &prefix);
+
+    static double CalcDistance(const double *x, const double *u, int dimNum);
+
+private:
+    int m_dimNum;
+    int m_clusterNum;
+    double **m_means;
+
+    int m_initMode;
+    int m_maxIterNum;        // The stopping criterion regarding the number of iterations
+    double m_endError;        // The stopping criterion regarding the error
+
+    int num_threads_;
+    pthread_t *thread_pool_;
+    pthread_mutex_t mutex_;
+
+    std::map<unsigned int, unsigned short> bucket_map_;
+    std::map<std::vector<double>, std::array<double, 2>> cache_;
+    double *dist_cache_;
+    int *label_cache_;
+    int cache_size_;
+
+    double GetLabel(const double *x, int *label);
+
+    static double EuclideanDistance(const double *x, const double *u, int dimNum);
+
+    static double EarthMoversDistance(const double *x, const double *u, int dimNum);
+
+    void SaveCheckpoint(const std::string &prefix);
+
+    void LoadCheckpoint(const std::string &prefix);
 };
 
 #endif //BULLDOG_MODULES_ENGINE_SRC_KMEANS_H_

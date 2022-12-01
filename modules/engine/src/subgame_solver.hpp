@@ -6,7 +6,8 @@
 #include "cfr.h"
 #include "cfr_state.h"
 
-enum SUBGAME_BUILT_CODE {
+enum SUBGAME_BUILT_CODE
+{
     UNSUPPORTED_SUBGAME,
     SOLVE_ON_NEW_ROUND_HERO_FIRST,
     SOLVE_ON_NEW_ROUND_OPPO_FIRST,
@@ -23,15 +24,18 @@ inline std::map<int, std::string> SubgameBuiltCodeMap{
         {RESOLVING_WITH_PRIOR_ACTION,   "RESOLVING_WITH_PRIOR_ACTION"}
 };
 
-struct SubgameSolver {
-    virtual ~SubgameSolver() {
+struct SubgameSolver
+{
+    virtual ~SubgameSolver()
+    {
         delete cfr_;
         delete ag_builder_;
         delete convergence_state_;
         delete action_chooser_;
     }
 
-    SubgameSolver() {
+    SubgameSolver()
+    {
         convergence_state_ = new sCFRState();
         action_chooser_ = new ActionChooser();
     }
@@ -65,28 +69,39 @@ struct SubgameSolver {
      *  - then bet_seq
      *  - then off_tree
      */
-    bool CheckTriggerCondition(NodeMatchResult &condition) const {
+    bool CheckTriggerCondition(NodeMatchResult &condition) const
+    {
         if (condition.matched_node_->GetRound() == active_round) {
             if (condition.matched_node_->GetSumPot() >= active_sumpot_min) {
                 logger::info("    [SGS %s] : 💥triggered by sumpot %d", name_, condition.matched_node_->GetSumPot());
                 return true;
             } else {
-                logger::info("        [SGS %s] : node_sum_pot=%d, sgs_conf_active_sumpot_min=%d", name_, condition.matched_node_->GetSumPot(), active_sumpot_min);
+                logger::info("        [SGS %s] : node_sum_pot=%d, sgs_conf_active_sumpot_min=%d", name_,
+                             condition.matched_node_->GetSumPot(), active_sumpot_min
+                );
             }
             if (condition.bet_similarity_dist_ >= active_bet_seq_min) {
-                logger::info("    [SGS %s] : 💥triggered by bet sequence pattern distance %d", name_, condition.bet_similarity_dist_);
+                logger::info("    [SGS %s] : 💥triggered by bet sequence pattern distance %d", name_,
+                             condition.bet_similarity_dist_
+                );
                 return true;
             } else {
-                logger::info("        [SGS %s] : node_bet_similarity_dist_=%d, sgs_conf_active_bet_seq_min=%d", name_, condition.bet_similarity_dist_, active_bet_seq_min);
+                logger::info("        [SGS %s] : node_bet_similarity_dist_=%d, sgs_conf_active_bet_seq_min=%d", name_,
+                             condition.bet_similarity_dist_, active_bet_seq_min
+                );
             }
             if (condition.off_tree_dist_ >= active_offtree_min) {
                 logger::info("    [SGS %s] : 💥triggered by offtree distance %f", name_, condition.off_tree_dist_);
                 return true;
             } else {
-                logger::info("        [SGS %s] : node_off_tree_dist_=%f, sgs_active_offtree_min=%f", name_, condition.off_tree_dist_, active_offtree_min);
+                logger::info("        [SGS %s] : node_off_tree_dist_=%f, sgs_active_offtree_min=%f", name_,
+                             condition.off_tree_dist_, active_offtree_min
+                );
             }
         } else {
-            logger::info("        [SGS %s] : node_round=%d, sgs_active_round=%d", name_, condition.matched_node_->GetRound(), active_round);
+            logger::info("        [SGS %s] : node_round=%d, sgs_active_round=%d", name_,
+                         condition.matched_node_->GetRound(), active_round
+            );
         }
         logger::info("    [SGS %s] : not triggered.", name_);
         return false;
@@ -108,7 +123,8 @@ struct SubgameSolver {
     int BuildSubgame(AbstractGame *ag_out,
                      Strategy *last_strategy,
                      NodeMatchResult &match_result,
-                     MatchState *ref_match_state) const {
+                     MatchState *ref_match_state) const
+    {
         State &ref_state = ref_match_state->state;
         auto round = ref_state.round;
 
@@ -116,7 +132,10 @@ struct SubgameSolver {
         if (round == HOLDEM_ROUND_PREFLOP) {
             // TODO(kwok): If we don't panic here, an `EXC_BAD_ACCESS` exception would be thrown by `Node::GetRound()` anyway.
             // TODO(kwok): Recover from it elegantly.
-            logger::critical("    [SGS %s] : according to 10.1126/science.aay2400 (https://www.science.org/doi/10.1126/science.aay2400), we don't do sub-game solve in pre-flop", name_);
+            logger::critical(
+                    "    [SGS %s] : according to 10.1126/science.aay2400 (https://www.science.org/doi/10.1126/science.aay2400), we don't do sub-game solve in pre-flop",
+                    name_
+            );
             return UNSUPPORTED_SUBGAME;
         }
 
@@ -132,7 +151,8 @@ struct SubgameSolver {
         if (action_kth == 0) {
             logger::debug("    [SGS %s] : built subgame [step back 0] for new round for [round = %d] [action_kth = %d]",
                           name_, round,
-                          action_kth);
+                          action_kth
+            );
             ag_builder_->Build(ag_out, &ref_state, nullptr, cfr_->cfr_param_.depth_limited);
             return SOLVE_ON_NEW_ROUND_HERO_FIRST;
         }
@@ -172,10 +192,12 @@ struct SubgameSolver {
             nsteps_to_reverse =
                     action_kth - last_strategy->ag_->root_state_.numActions[this_round]; // n-steps to the last root.
             logger::debug("    [SGS %s] : needs to step back to the last root. steps to reverse = ", name_,
-                          nsteps_to_reverse);
+                          nsteps_to_reverse
+            );
         } else {
             logger::debug("    [SGS %s] : skipping resolve to street root cuz %d < %d", name_, last_root_pot,
-                          resolve_last_root_sumpot_min);
+                          resolve_last_root_sumpot_min
+            );
             // If `last_strategy` belongs to the prior round, resolve to the root of the current street.
             // This is not very likely to happen though.
             nsteps_to_reverse = 1;
@@ -191,7 +213,8 @@ struct SubgameSolver {
         return (nsteps_to_reverse > 1) ? RESOLVING_WITH_PRIOR_ACTION : RESOLVING_NONE_PRIOR_ACTION;
     }
 
-    void ConfigWithJson(const char *config_file, BucketPool *bucket_pool) {
+    void ConfigWithJson(const char *config_file, BucketPool *bucket_pool)
+    {
         std::filesystem::path dir(BULLDOG_DIR_CFG_ENG);
         std::filesystem::path filename(config_file);
         std::ifstream sgs_file(dir / filename);
@@ -248,7 +271,8 @@ struct SubgameSolver {
         /* Required options: */ {
             logger::require_warn(sgs_trigger.has_field("active_round"),
                                  "must specify round for sgs",
-                                 nullptr);
+                                 nullptr
+            );
             active_round = sgs_trigger.at("active_round").as_integer();
         }
 
@@ -289,14 +313,16 @@ private:
     /*
      * Build a sub-game with `steps_to_reverse` steps back.
      */
-    bool BuildResolvingSubgame_(AbstractGame *ag_out, MatchState *ref_match_state, int steps_to_reverse) const {
+    bool BuildResolvingSubgame_(AbstractGame *ag_out, MatchState *ref_match_state, int steps_to_reverse) const
+    {
         State &ref_state = ref_match_state->state;
         auto *step_back_state = new State;
 
         if (StepBackAction(ag_builder_->game_, &ref_state, step_back_state, steps_to_reverse) == -1) {
             logger::warn(
                     "    [SGS %s] : stepping too many steps. you may have an empty state or invalid state. return false",
-                    name_);
+                    name_
+            );
             return false;
         }
 
@@ -308,7 +334,8 @@ private:
         ag_builder_->Build(ag_out, step_back_state, &ref_state, cfr_->cfr_param_.depth_limited);
         delete step_back_state;
         logger::debug("    [SGS %s] : built subgame [step back %d] for r = %d", name_, steps_to_reverse,
-                      ref_state.round);
+                      ref_state.round
+        );
         return true;
     }
 };

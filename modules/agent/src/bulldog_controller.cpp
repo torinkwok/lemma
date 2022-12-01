@@ -225,7 +225,8 @@ void BulldogController::handlePost(http_request request)
             for (auto iter = sessions_.begin(); iter != sessions_.end();) {
                 auto time_idle =
                         std::chrono::duration_cast<std::chrono::seconds>(
-                                now - iter->second.last_access_timestamp_).count();
+                                now - iter->second.last_access_timestamp_
+                        ).count();
                 if (time_idle > 10) {
                     delete iter->second.engine_;
                     logger::info("SERVER deleted %s (idle overtime)", iter->first);
@@ -252,7 +253,8 @@ void BulldogController::handlePost(http_request request)
             sessions_[session_id].engine_ = new Engine(default_engine_conf_.c_str(),
                                                        &default_normalized_game_,
                                                        bucket_pool_,
-                                                       blueprint_pool_);
+                                                       blueprint_pool_
+            );
             sessions_[session_id].engine_->engine_name_ += "_" + session_id.substr(0, 8);
             sessions_[session_id].last_access_timestamp_ = std::chrono::steady_clock::now();
             TableContext session;

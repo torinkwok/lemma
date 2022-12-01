@@ -39,7 +39,8 @@ struct CfrCommandWrapper
     CfrCommandWrapper(int trigger_iter, CFR_COMMAND type, int steps)
             : trigger_iter_(trigger_iter), type_(type), steps_(steps) {}
 
-    CfrCommandWrapper(int iter, CFR_COMMAND type) : trigger_iter_(iter), type_(type) {};
+    CfrCommandWrapper(int iter, CFR_COMMAND type)
+            : trigger_iter_(iter), type_(type) {};
 
     inline bool operator<(const CfrCommandWrapper &that) const
     {
@@ -51,7 +52,8 @@ struct CfrCommandWrapper
     void Print() const
     {
         logger::info("triggering iter = %d || steps = %d || command = %s", trigger_iter_, steps_,
-                      CfrCommandName[type_]);
+                     CfrCommandName[type_]
+        );
     }
 
     void Log(int current_iter, int cmd_time, int total_time) const
@@ -60,7 +62,8 @@ struct CfrCommandWrapper
                      current_iter,
                      CfrCommandName[type_],
                      cmd_time,
-                     total_time);
+                     total_time
+        );
     }
 };
 

@@ -37,9 +37,11 @@ std::stack<int> Node::GetPathFromRoot() const
 void Node::SortChildNodes()
 {
     //sort the actions so they are in order in the strategy index
-    std::sort(children.begin(), children.end(), [](Node *a, Node *b) {
-        return a->GetLastActionCode() < b->GetLastActionCode();
-    });
+    std::sort(children.begin(), children.end(), [](Node *a, Node *b)
+              {
+                  return a->GetLastActionCode() < b->GetLastActionCode();
+              }
+    );
 
     //set their sibling idx
     for (auto a = 0; a < (int) children.size(); a++) {

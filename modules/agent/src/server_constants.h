@@ -1,5 +1,6 @@
 #ifndef BULLDOG_MODULES_AGENT_SRC_SERVER_CONSTANTS_H_
 #define BULLDOG_MODULES_AGENT_SRC_SERVER_CONSTANTS_H_
+
 #include <string>
 #include <vector>
 
@@ -21,9 +22,9 @@ static utility::string_t PATH_NEW_HAND = U("newhand");
 static utility::string_t PATH_END_HAND = U("endhand");
 
 static std::vector<utility::string_t> ENDPOINT_CANDIDATES{
-    WOLO001_DEFAULT_ENDPOINT,
-    CARMEN_MBP_DEFAULT_ENDPOINT,
-    ISAAC_MBP_DEFAULT_ENDPOINT
+        WOLO001_DEFAULT_ENDPOINT,
+        CARMEN_MBP_DEFAULT_ENDPOINT,
+        ISAAC_MBP_DEFAULT_ENDPOINT
 };
 /*
  * PARAM

@@ -86,7 +86,8 @@ void LoadAG(Strategy *target, const std::string &prefix, BucketPool *bucket_pool
                 logger::critical("%s diff in kernel check file. file = %d while rebuilt ag = %d",
                                  new_name,
                                  assert_map[base + std::to_string(i)],
-                                 kernel->nmax_by_r_[i]);
+                                 kernel->nmax_by_r_[i]
+                );
             }
         }
         logger::debug("load AG success");

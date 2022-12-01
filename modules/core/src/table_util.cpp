@@ -172,6 +172,7 @@ TableAction MapToTableAction(Game *game, State &state, Action &action)
                                    if (lhs.first < rhs.first) return true;
                                    if (lhs.first > rhs.first) return false;
                                    return lhs.second < rhs.second;
-                               });
+                               }
+    );
     return it->second;
 }

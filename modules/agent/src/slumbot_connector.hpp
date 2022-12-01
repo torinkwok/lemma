@@ -13,7 +13,8 @@
  * bb100 = ltotal / lhands
  * baseline_bb100 = lbtotal / lhands
  */
-struct sSlumbotMatchState {
+struct sSlumbotMatchState
+{
     unsigned short int p1_; //1 if you are player 1, else 0
     std::string holes_;
     std::string board_;
@@ -48,7 +49,8 @@ struct sSlumbotMatchState {
     std::string token;
 };
 
-class SlumbotConnector : public BaseConnector {
+class SlumbotConnector : public BaseConnector
+{
 public:
     SlumbotConnector(const std::vector<std::string> &params);
 
@@ -58,7 +60,7 @@ public:
 
     int connect() override;
 
-    int connectWithSession(const std::string& session_key);
+    int connectWithSession(const std::string &session_key);
 
     int send() override;
 
@@ -76,7 +78,7 @@ public:
 private:
     const char *username_{};
     const char *password_{};
-//  const int port_ = 80;
+    //  const int port_ = 80;
     const char *base_url_ = "http://www.slumbot.com";
     const char *cgi_uri_ = "cgi-bin/cgi_middleman";
     long int sid_{};
@@ -88,11 +90,13 @@ private:
 
     web::http::client::http_client_config _http_client_config{};
 
-    bool has_showed_down() {
+    bool has_showed_down()
+    {
         return this->previous_act_result_json_.is_null() || this->previous_act_result_json_.has_field(U("winnings"));
     }
 
-    void reset_hand() {
+    void reset_hand()
+    {
         this->previous_act_result_json_ = web::json::value();
     }
 };

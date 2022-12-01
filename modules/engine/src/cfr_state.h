@@ -76,7 +76,6 @@ struct sCFRState
     void addToWindow(double expl)
     {
         std::vector<double> &v = this->window_expl;
-
         //hard coded window size
         if (v.size() == 10) {
             v.erase(v.begin());

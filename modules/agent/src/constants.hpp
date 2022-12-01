@@ -3,10 +3,11 @@
 
 #include <map>
 
-enum ConnectorEnum{
-  acpc,
-  slumbot,
-  pokerstar,
+enum ConnectorEnum
+{
+    acpc,
+    slumbot,
+    pokerstar,
 };
 
 #endif //BULLDOG_MODULES_AGENT_INCLUDE_CONSTANTS_HPP_
