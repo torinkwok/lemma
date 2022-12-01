@@ -772,7 +772,7 @@ bool Engine::EngineStateStaleCheck(MatchState *new_match_state)
     // check game state continuity.
     // FIXME(kwok): Is the logic here proper?
     if (!playbook_stack_.empty() && InSameMatch(normalized_game_, &last_matchstate_, new_match_state) > 0) {
-        logger::warn("    [ENGINE %s]: match state not continuted. force set new hand", engine_name_);
+        logger::warn("    [ENGINE %s]: 🚨match state not continuted. force set new hand", engine_name_);
         return false;
     }
     return true;
