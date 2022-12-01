@@ -82,7 +82,7 @@ int CFR::Solve(Strategy *blueprint,
                                  thread_local_current_progress.iteration, convergence.iteration
                     );
                     if (thread_local_current_progress < convergence) {
-                        sThreadSharedOutput merged_result;
+                        sThreadSharedCfrWorkerOutput merged_result;
                         ThreadedCfrSolve(blueprint,
                                          strategy,
                                          local_cfr_param,
@@ -108,7 +108,7 @@ int CFR::Solve(Strategy *blueprint,
                 }
                 case CMD_VECTOR_PROFILING : {
                     auto profiler_cfr_param = sCfrParam();
-                    sThreadSharedOutput br;
+                    sThreadSharedCfrWorkerOutput br;
                     profiler_cfr_param = local_cfr_param;
                     profiler_cfr_param.ProfileModeOn();
                     if (!cfr_param_.depth_limited) {
@@ -429,7 +429,7 @@ void CFR::ThreadedCfrSolve(Strategy *blueprint,
                            Strategy *strategy,
                            sCfrParam &cfr_param,
                            int steps,
-                           sThreadSharedOutput &merged_result,
+                           sThreadSharedCfrWorkerOutput &merged_result,
                            std::vector<int> *thread_board,
                            std::vector<Board_t> *pub_bucket_flop_boards,
                            pthread_t *thread_pool,

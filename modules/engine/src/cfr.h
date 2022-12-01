@@ -77,7 +77,7 @@ struct sThreadLocalCfrWorkerOutput
     }
 };
 
-struct sThreadSharedOutput
+struct sThreadSharedCfrWorkerOutput
 {
     double avg_ = 0.0;
     double max_ = -99999999999;
@@ -189,7 +189,7 @@ public:
 
 private:
     static void ThreadedCfrSolve(Strategy *blueprint, Strategy *strategy, sCfrParam &cfr_param, int steps,
-                                 sThreadSharedOutput &merged_result, std::vector<int> *thread_board,
+                                 sThreadSharedCfrWorkerOutput &merged_result, std::vector<int> *thread_board,
                                  std::vector<Board_t> *pub_bucket_flop_boards, pthread_t *thread_pool,
                                  const std::atomic_bool &cancelled);
 
