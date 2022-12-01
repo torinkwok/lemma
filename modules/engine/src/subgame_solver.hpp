@@ -4,7 +4,7 @@
 #include "strategy.h"
 #include "ag_builder.hpp"
 #include "cfr.h"
-#include "cfr_state.h"
+#include "cfr_progress.h"
 
 enum SUBGAME_BUILT_CODE
 {
@@ -36,7 +36,7 @@ struct SubgameSolver
 
     SubgameSolver()
     {
-        convergence_state_ = new sCFRState();
+        convergence_state_ = new sCFRProgress();
         action_chooser_ = new ActionChooser();
     }
 
@@ -58,7 +58,7 @@ struct SubgameSolver
     // Actors
     AGBuilder *ag_builder_ = nullptr;
     CFR *cfr_ = nullptr;
-    sCFRState *convergence_state_;
+    sCFRProgress *convergence_state_;
     ActionChooser *action_chooser_;
     STRATEGY_TYPE strategy_type = STRATEGY_REG; //default at reg
 

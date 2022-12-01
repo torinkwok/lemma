@@ -1,7 +1,7 @@
 #ifndef BULLDOG_MODULES_ENGINE_SRC_CFR_WORKER_H_
 #define BULLDOG_MODULES_ENGINE_SRC_CFR_WORKER_H_
 
-#include "cfr_state.h"
+#include "cfr_progress.h"
 #include <pthread.h>
 #include <vector>
 #include "strategy.h"

@@ -20,7 +20,7 @@ TEST_CASE("cfr async termination") {
   strategy->SetAg(ag);
   strategy->InitMemoryAndValue(CFR_SCALAR_SOLVE);
   logger::debug("init strategy values...");
-  sCFRState converge_state;
+  sCFRProgress converge_state;
   converge_state.iteration = 10000000;
   std::atomic_bool cancellation_token = false;
   auto cfr_future = std::async(std::launch::async,
@@ -49,42 +49,42 @@ TEST_CASE("cfr async termination") {
 }
 
 TEST_CASE("cfr state") {
-  sCFRState converge_time{100, -1, -1, -1};
-  sCFRState converge_iter{-1, 100, -1, -1};
-  sCFRState converge_expl{-1, -1, 100, -1};
-  sCFRState converge_iter_time_expl{100, 100, 100, -1};
-  sCFRState converge_window_expl{-1, -1, -1, 100};
+  sCFRProgress converge_time{100, -1, -1, -1};
+  sCFRProgress converge_iter{-1, 100, -1, -1};
+  sCFRProgress converge_expl{-1, -1, 100, -1};
+  sCFRProgress converge_iter_time_expl{100, 100, 100, -1};
+  sCFRProgress converge_window_expl{-1, -1, -1, 100};
 
   SECTION("assert time condition") {
-    REQUIRE((sCFRState{10, -1, -1, -1} < converge_time) == true);
-    REQUIRE((sCFRState{100, -1, -1, -1} < converge_time) == false);
-    REQUIRE((sCFRState{1000, -1, -1, -1} < converge_time) == false);
+    REQUIRE((sCFRProgress{10, -1, -1, -1} < converge_time) == true);
+    REQUIRE((sCFRProgress{100, -1, -1, -1} < converge_time) == false);
+    REQUIRE((sCFRProgress{1000, -1, -1, -1} < converge_time) == false);
   }
 
   SECTION("assert iter condition") {
-    REQUIRE((sCFRState{10, 10, -1, -1} < converge_iter) == true);
-    REQUIRE((sCFRState{1000, 100, -1, -1} < converge_iter) == false);
-    REQUIRE((sCFRState{1000, 1000, -1, -1} < converge_iter) == false);
+    REQUIRE((sCFRProgress{10, 10, -1, -1} < converge_iter) == true);
+    REQUIRE((sCFRProgress{1000, 100, -1, -1} < converge_iter) == false);
+    REQUIRE((sCFRProgress{1000, 1000, -1, -1} < converge_iter) == false);
   }
 
   SECTION("assert expl condition") {
-    REQUIRE((sCFRState{10, -1, 99, -1} < converge_expl) == false);
-    REQUIRE((sCFRState{10, -1, 100, -1} < converge_expl) == false);
-    REQUIRE((sCFRState{1000, -1, 1011, -1} < converge_expl) == true);
+    REQUIRE((sCFRProgress{10, -1, 99, -1} < converge_expl) == false);
+    REQUIRE((sCFRProgress{10, -1, 100, -1} < converge_expl) == false);
+    REQUIRE((sCFRProgress{1000, -1, 1011, -1} < converge_expl) == true);
   }SECTION("assert all condition") {
-    REQUIRE((sCFRState{100, 100, 100, -1} < converge_iter_time_expl) == false);
-    REQUIRE((sCFRState{99, 99, 99, -1} < converge_iter_time_expl) == false);
-    REQUIRE((sCFRState{99, 99, 101, -1} < converge_iter_time_expl) == true);
-    REQUIRE((sCFRState{101, 99, 101, -1} < converge_iter_time_expl) == false);
-    REQUIRE((sCFRState{99, 99, 101, -1} < converge_iter_time_expl) == true);
-    REQUIRE((sCFRState{99, 101, 101, -1} < converge_iter_time_expl) == false);
-    REQUIRE((sCFRState{99, 99, 101, -1} < converge_iter_time_expl) == true);
+    REQUIRE((sCFRProgress{100, 100, 100, -1} < converge_iter_time_expl) == false);
+    REQUIRE((sCFRProgress{99, 99, 99, -1} < converge_iter_time_expl) == false);
+    REQUIRE((sCFRProgress{99, 99, 101, -1} < converge_iter_time_expl) == true);
+    REQUIRE((sCFRProgress{101, 99, 101, -1} < converge_iter_time_expl) == false);
+    REQUIRE((sCFRProgress{99, 99, 101, -1} < converge_iter_time_expl) == true);
+    REQUIRE((sCFRProgress{99, 101, 101, -1} < converge_iter_time_expl) == false);
+    REQUIRE((sCFRProgress{99, 99, 101, -1} < converge_iter_time_expl) == true);
   }
 
   SECTION("assert expl standard deviation") {
-    REQUIRE((sCFRState{100, 100, 100, 101} < converge_window_expl) == true);
+    REQUIRE((sCFRProgress{100, 100, 100, 101} < converge_window_expl) == true);
 
-    sCFRState state;
+    sCFRProgress state;
     state.addToWindow(1);
     state.addToWindow(2);
     state.addToWindow(3);

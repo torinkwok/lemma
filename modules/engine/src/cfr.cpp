@@ -7,7 +7,7 @@
 
 int CFR::Solve(Strategy *blueprint,
                Strategy *strategy,
-               const sCFRState &convergence,
+               const sCFRProgress &convergence,
                const std::atomic_bool &cancelled,
                int starting_checkpoint)
 {
@@ -54,7 +54,7 @@ int CFR::Solve(Strategy *blueprint,
 
     // NOTE(kwok): The Grand CFR loop.
 
-    sCFRState current_state;
+    sCFRProgress current_state;
 
     /*
      * Run all commands by default,
@@ -424,7 +424,7 @@ void CFR::AllocateFlops(std::vector<Board_t> *pub_flop_boards,
 void CFR::ThreadedCfrSolve(Strategy *blueprint,
                            Strategy *strategy,
                            sCfrParam &cfr_param,
-                           sCFRState &current_state,
+                           sCFRProgress &current_state,
                            int steps,
                            sTotalThreadOutput &total_result,
                            std::vector<int> *thread_board,
@@ -517,7 +517,7 @@ void CFR::ThreadedCfrSolve(Strategy *blueprint,
 int CFR::AsyncCfrSolving(CFR *cfr,
                          Strategy *new_strategy,
                          Strategy *blueprint,
-                         sCFRState *convergence_state,
+                         sCFRProgress *convergence_state,
                          const std::atomic_bool &cancelled,
                          int cfr_checkpoint)
 {

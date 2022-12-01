@@ -13,12 +13,11 @@
 #include <shared_mutex>
 #include <numeric>
 
-struct sCFRState
+struct sCFRProgress
 {
-    // TODO(kwok): Rename as `sCFRProgress`.
-    sCFRState() = default;
+    sCFRProgress() = default;
 
-    sCFRState(double time_milli_seconds, int iteration, double exploitability, double expl_std)
+    sCFRProgress(double time_milli_seconds, int iteration, double exploitability, double expl_std)
             : time_milli_seconds(time_milli_seconds),
               iteration(iteration),
               exploitability(exploitability),
@@ -32,7 +31,7 @@ struct sCFRState
 
     std::optional<uint64_t> timeout_ms;
 
-    virtual ~sCFRState() = default;
+    virtual ~sCFRProgress() = default;
 
     void UpdateState(int iter_increment, double time, double explt)
     {
@@ -46,7 +45,7 @@ struct sCFRState
         addToWindow(explt);
     }
 
-    bool operator<(const sCFRState &that)
+    bool operator<(const sCFRProgress &that)
     {
         bool time_flag = that.time_milli_seconds == -1 || this->time_milli_seconds < that.time_milli_seconds;
         // TODO(kwok): Justify it.

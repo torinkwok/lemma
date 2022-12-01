@@ -134,7 +134,7 @@ void train(const cxxopts::ParseResult &result)
         logger::debug("init strategy values...");
     }
 
-    sCFRState converge_state;
+    sCFRProgress converge_state;
     auto conv_config = cfr.cfr_param_.raw_.at("cfr").at("convergence");
     converge_state.iteration =
             conv_config.has_field("max_iter") ? conv_config.at("max_iter").as_integer() : converge_state.iteration;
