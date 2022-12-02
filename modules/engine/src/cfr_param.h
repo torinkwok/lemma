@@ -4,6 +4,8 @@
 #include <string>
 #include <map>
 #include <cpprest/json.h>
+#include <optional>
+
 #include "filesystem"
 
 /*
