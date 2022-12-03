@@ -215,10 +215,11 @@ int SlumbotConnector::connect()
             );
     std::cerr << 9 << std::endl;
     try {
-        loginRequestJson.wait();
         std::cerr << 10 << std::endl;
-    } catch (const std::exception &e) {
+        loginRequestJson.wait();
         std::cerr << 11 << std::endl;
+    } catch (const std::exception &e) {
+        std::cerr << 12 << std::endl;
         logger::error("error: %s, session: %s", e.what(), this->slumbot_match_state_->token);
         std::cerr << 12 << std::endl;
         return EXIT_FAILURE;
