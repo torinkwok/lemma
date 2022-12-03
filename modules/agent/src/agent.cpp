@@ -106,8 +106,6 @@ int main(int argc, char *argv[])
     // FIXME(kwok): What the hell is this?
     //  game->use_state_stack = 1;
 
-    std::cerr << 1 << std::endl;
-
     // Run Sessions.
     for (int i = 1; i <= result["sessions"].as<int>(); i++) {
         logger::info(" [AGENT]: RUNNING SESSION %d\n", i);
@@ -123,7 +121,6 @@ int main(int argc, char *argv[])
                 break;
             }
             case slumbot: {
-                std::cerr << 2 << std::endl;
                 // TODO(kwok): Make this logic more elegant.
                 if (is_proxy_validated) {
                     auto http_config = web::http::client::http_client_config();
@@ -134,23 +131,15 @@ int main(int argc, char *argv[])
                 } else {
                     connector = new SlumbotConnector(result["connector_params"].as<std::vector<std::string>>());
                 }
-                std::cerr << 3 << std::endl;
                 if (slumbot_session_key.empty()) {
-                    std::cerr << 3.1 << std::endl;
                     if (connector->connect()) {
-                        std::cerr << 3.2 << std::endl;
                         logger::info("[AGENT]: Slumbot API logged in");
                     } else {
-                        std::cerr << 3.3 << std::endl;
                         logger::critical(" [AGENT]: failed to login on Slumbot");
                     }
-                    std::cerr << 3.4 << std::endl;
                 } else {
-                    std::cerr << 3.5 << std::endl;
                     ((SlumbotConnector *) connector)->connectWithSession(slumbot_session_key);
-                    std::cerr << 3.6 << std::endl;
                 }
-                std::cerr << 4 << std::endl;
                 break;
             }
             default: {
@@ -158,14 +147,12 @@ int main(int argc, char *argv[])
             }
         }
 
-        std::cerr << 5 << std::endl;
         int session_total = 0;
 
         /*should get the raw feed from remote server, parse it into typed objects game_feed,
          * then parse the typed objects into the poker_engine
          * */
         while (connector->get()) {
-            std::cerr << 6 << std::endl;
             /* Read the incoming match state */
             MatchState match_state;
             // TODO: Handle `-1` properly.
@@ -173,7 +160,6 @@ int main(int argc, char *argv[])
                 logger::error(" [AGENT]: failed to parse into game state");
                 break;
             }
-            std::cerr << 7 << std::endl;
 
             /* Ignoring game-over message */ // FIXME(kwok): Check if the `finished` state has been set correctly.
             if (stateFinished(&match_state.state)) {
@@ -197,8 +183,6 @@ int main(int argc, char *argv[])
                     }
                 }
 
-                std::cerr << 8 << std::endl;
-
                 auto full_match_str = std::string(line) + ":" + outcome + ":" + player_names;
                 logger::info(" [AGENT]: %s", full_match_str);
 
@@ -214,8 +198,6 @@ int main(int argc, char *argv[])
                 engine->RefreshEngineState();
                 continue;
             }
-
-            std::cerr << 9 << std::endl;
 
             /* Ignore states that we are not acting in */
             // FIXME(kwok): Is this guardian code necessary?
