@@ -136,13 +136,19 @@ int main(int argc, char *argv[])
                 }
                 std::cerr << 3 << std::endl;
                 if (slumbot_session_key.empty()) {
+                    std::cerr << 3.1 << std::endl;
                     if (connector->connect()) {
+                        std::cerr << 3.2 << std::endl;
                         logger::info("[AGENT]: Slumbot API logged in");
                     } else {
+                        std::cerr << 3.3 << std::endl;
                         logger::critical(" [AGENT]: failed to login on Slumbot");
                     }
+                    std::cerr << 3.4 << std::endl;
                 } else {
+                    std::cerr << 3.5 << std::endl;
                     ((SlumbotConnector *) connector)->connectWithSession(slumbot_session_key);
+                    std::cerr << 3.6 << std::endl;
                 }
                 std::cerr << 4 << std::endl;
                 break;
