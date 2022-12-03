@@ -221,13 +221,13 @@ int SlumbotConnector::connect()
     } catch (const std::exception &e) {
         std::cerr << 12 << std::endl;
         logger::error("error: %s, session: %s", e.what(), this->slumbot_match_state_->token);
-        std::cerr << 12 << std::endl;
+        std::cerr << 13 << std::endl;
         return EXIT_FAILURE;
     }
     return EXIT_FAILURE;
 }
 
-int SlumbotConnector::connectWithSession(const std::string &session_key)
+void SlumbotConnector::connectWithSession(const std::string &session_key)
 {
     this->token_ = session_key;
 }

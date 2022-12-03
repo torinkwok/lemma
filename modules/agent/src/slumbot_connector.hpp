@@ -60,7 +60,7 @@ public:
 
     int connect() override;
 
-    int connectWithSession(const std::string &session_key);
+    void connectWithSession(const std::string &session_key);
 
     int send() override;
 

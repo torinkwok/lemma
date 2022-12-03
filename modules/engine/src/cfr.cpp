@@ -193,7 +193,7 @@ int CFR::Solve(Strategy *blueprint,
                 }
             }
 #if DEV > 1
-            cmd.Log(thread_local_current_progress.iteration.has_value() ? thread_local_current_progress.iteration.value() : -1,
+            cmd.Log(thread_local_current_progress.iteration,
                     cmd_timer.GetLapseFromBegin(),
                     timer.GetLapseFromBegin());
 #endif
