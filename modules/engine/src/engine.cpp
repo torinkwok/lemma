@@ -159,10 +159,11 @@ Engine::Engine(const char *engine_conf_file, Game *game, BucketPool *bucket_pool
     /*
       * configure action
       */
-    if (data.has_field("random_action"))
+    if (data.has_field("random_action")) {
         random_action_ = data.at("random_action").as_bool();
+    }
 
-    if (data.has_field("blueprint")) {
+    if (data.has_field("blueprint") && !random_action_) {
         auto blueprint_conf = data.at("blueprint");
         if (blueprint_conf.has_field("action_chooser")) {
             auto action_conf = blueprint_conf.at("action_chooser");
