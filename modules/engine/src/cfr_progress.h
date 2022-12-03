@@ -10,6 +10,7 @@
 #include <autodidact/logger.hpp>
 #include <shared_mutex>
 #include <numeric>
+#include <optional>
 
 struct sCFRProgress
 {
