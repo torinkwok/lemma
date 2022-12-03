@@ -62,14 +62,15 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${HOME_DIR}/3rdparty/Catch2/contrib/")
 
-# NOTE(kwok): To fix linker craps such as:
-#
-#       * /lib64/libm.so.6: version `GLIBC_2.29' not found (required by release-min/agent)
-#       * /lib64/libstdc++.so.6: version `GLIBCXX_3.4.26' not found
-#
-# https://stackoverflow.com/a/46811527
-set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++ -static")
-set(CMAKE_SHARED_LINKER_FLAGS "-static-libgcc -static-libstdc++ -static")
+if (UNIX AND NOT APPLE)
+    # NOTE(kwok): To fix linker craps on Linux like this (https://stackoverflow.com/a/46811527):
+    #
+    #       * /lib64/libm.so.6: version `GLIBC_2.29' not found (required by release-min/agent)
+    #       * /lib64/libstdc++.so.6: version `GLIBCXX_3.4.26' not found
+    #
+    set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++ -static")
+    set(CMAKE_SHARED_LINKER_FLAGS "-static-libgcc -static-libstdc++ -static")
+endif ()
 
 # Add submodule dependencies
 add_subdirectory(3rdparty/Catch2)
