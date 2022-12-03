@@ -33,12 +33,12 @@ endif ()
 set(INSTALL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE}")
 
 # Set file paths
-add_definitions(-DAUTODIDACT_DIR_LOG="${CMAKE_CURRENT_SOURCE_DIR}/logs")
-add_definitions(-DAUTODIDACT_DIR_DATA_ABS="${CMAKE_CURRENT_SOURCE_DIR}/data/abstraction")
-add_definitions(-DAUTODIDACT_DIR_DATA_STG="${CMAKE_CURRENT_SOURCE_DIR}/data/strategy")
-add_definitions(-DAUTODIDACT_DIR_DATA_LAB="${CMAKE_CURRENT_SOURCE_DIR}/data/lab")
-add_definitions(-DAUTODIDACT_DIR_CFG_GAME="${CMAKE_CURRENT_SOURCE_DIR}/config/games")
-add_definitions(-DAUTODIDACT_DIR_CFG_ENG="${CMAKE_CURRENT_SOURCE_DIR}/config/engine")
+add_definitions(-DAUTODIDACT_DIR_LOG="logs")
+add_definitions(-DAUTODIDACT_DIR_DATA_ABS="data/abstraction")
+add_definitions(-DAUTODIDACT_DIR_DATA_STG="data/strategy")
+add_definitions(-DAUTODIDACT_DIR_DATA_LAB="data/lab")
+add_definitions(-DAUTODIDACT_DIR_CFG_GAME="config/games")
+add_definitions(-DAUTODIDACT_DIR_CFG_ENG="config/engine")
 if (CMAKE_BUILD_TYPE MATCHES Debug)
     add_definitions(-DDEV=2)
     #    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
@@ -63,7 +63,7 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${HOME_DIR}/3rdparty/Catch2/contrib/")
 
 if (UNIX AND NOT APPLE)
-    # NOTE(kwok): To fix linker craps on Linux like this (https://stackoverflow.com/a/46811527):
+    # NOTE(kwok): To fix linker craps on Linux like these (https://stackoverflow.com/a/46811527):
     #
     #       * /lib64/libm.so.6: version `GLIBC_2.29' not found (required by release-min/agent)
     #       * /lib64/libstdc++.so.6: version `GLIBCXX_3.4.26' not found
