@@ -8,8 +8,7 @@
 #include <cstdlib>
 #include <cstdio>
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     // argument parser
     // ./agent engine=acpc params=localhost,51000
     cxxopts::Options options("Game Agent", "Manages connection with Poker Sites and executes Engine actions");
@@ -121,17 +120,14 @@ int main(int argc, char *argv[])
                 break;
             }
             case slumbot: {
+                web::http::client::http_client_config http_config;
+                http_config.set_validate_certificates(false);
                 // TODO(kwok): Make this logic more elegant.
                 if (is_proxy_validated) {
-                    auto http_config = web::http::client::http_client_config();
                     http_config.set_proxy(web::web_proxy(validated_proxy_uri));
-                    http_config.set_validate_certificates(false);
-                    connector = new SlumbotConnector(result["connector_params"].as<std::vector<std::string>>(),
-                                                     http_config
-                    );
-                } else {
-                    connector = new SlumbotConnector(result["connector_params"].as<std::vector<std::string>>());
                 }
+                connector = new SlumbotConnector(result["connector_params"].as<std::vector<std::string>>(),
+                                                 http_config);
                 if (slumbot_session_key.empty()) {
                     if (connector->connect()) {
                         logger::info("[AGENT]: Slumbot API logged in");
