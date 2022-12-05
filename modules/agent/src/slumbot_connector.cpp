@@ -178,50 +178,33 @@ SlumbotConnector::~SlumbotConnector()
 
 int SlumbotConnector::connect()
 {
-    std::cerr << 1 << std::endl;
     web::http::http_request loginRequest(web::http::methods::POST);
-    std::cerr << 2 << std::endl;
     loginRequest.headers().add(U("Content-Type"), U("application/json"));
-    std::cerr << 3 << std::endl;
     web::json::value loginRequestJsonBody;
-    std::cerr << 4 << std::endl;
     loginRequestJsonBody[U("username")] = web::json::value::string(username_);
-    std::cerr << 6 << std::endl;
     loginRequestJsonBody[U("password")] = web::json::value::string(password_);
-    std::cerr << 7 << std::endl;
     loginRequest.set_body(loginRequestJsonBody);
-    std::cerr << 8 << std::endl;
     // FIXME(kwok): Encapsulate REST talks better.
     auto loginRequestJson = web::http::client::http_client(U("https://slumbot.com/api/login"), _http_client_config)
             .request(loginRequest)
             .then([](const web::http::http_response &response)
                   {
-                      std::cerr << 8.1 << std::endl;
                       if (response.status_code() != 200) {
                           logger::error("❌login returned " + std::to_string(response.status_code()));
                       }
-                      std::cerr << 8.2 << std::endl;
                       return response.extract_json(true);
                   }
             )
             .then([this](const web::json::value &jsonObject)
                   {
-                      std::cerr << 8.3 << std::endl;
                       logger::info("🦥login returned:" + jsonObject.serialize());
-                      std::cerr << 8.4 << std::endl;
                       this->token_ = jsonObject.at(U("token")).as_string();
-                      std::cerr << 8.5 << std::endl;
                   }
             );
-    std::cerr << 9 << std::endl;
     try {
-        std::cerr << 10 << std::endl;
         loginRequestJson.wait();
-        std::cerr << 11 << std::endl;
     } catch (const std::exception &e) {
-        std::cerr << 12 << std::endl;
         logger::error("error: %s, session: %s", e.what(), this->slumbot_match_state_->token);
-        std::cerr << 13 << std::endl;
         return EXIT_FAILURE;
     }
     return EXIT_FAILURE;

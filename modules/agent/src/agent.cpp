@@ -125,6 +125,7 @@ int main(int argc, char *argv[])
                 if (is_proxy_validated) {
                     auto http_config = web::http::client::http_client_config();
                     http_config.set_proxy(web::web_proxy(validated_proxy_uri));
+                    http_config.set_validate_certificates(false);
                     connector = new SlumbotConnector(result["connector_params"].as<std::vector<std::string>>(),
                                                      http_config
                     );
