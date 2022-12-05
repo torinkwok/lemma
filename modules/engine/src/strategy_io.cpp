@@ -44,7 +44,7 @@ void SaveAG(Strategy *target, const std::string &prefix)
         logger::critical("failed to open %s: %s (system:%d)", check_file, e.what(), e.code());
     }
     os.close();
-    logger::debug("save kernel check file for %s", prefix);
+    logger::info("save kernel check file for %s", prefix);
 }
 
 void LoadAG(Strategy *target, const std::string &prefix, BucketPool *bucket_pool, const char *state_str)
@@ -90,7 +90,7 @@ void LoadAG(Strategy *target, const std::string &prefix, BucketPool *bucket_pool
                 );
             }
         }
-        logger::debug("load AG success");
+        logger::info("load AG success");
     } else {
         logger::error("unable to open %s", dir / (prefix + ".check_"));
     }
@@ -171,7 +171,7 @@ void LoadStrategy(Strategy *target, STRATEGY_TYPE type, const std::string &prefi
     std::filesystem::path dir(AUTODIDACT_DIR_DATA_STG);
     // only support scalar mode load strategy. it is a hack because we don't quite load reg now.
     if (disk_lookup) {
-        logger::debug("strategy %s will read from disk", prefix);
+        logger::info("strategy %s will read from disk", prefix);
         target->file_ptr = new std::ifstream(dir / (prefix + "." + StrategyToNameMap[type]), std::ios::binary);
         if (!target->file_ptr->is_open()) {
             logger::critical("can not open strategy file %s", prefix);
@@ -206,7 +206,7 @@ void LoadStrategy(Strategy *target, STRATEGY_TYPE type, const std::string &prefi
         is.close();
         auto end = std::chrono::steady_clock::now();
         auto lapse_milli_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
-        logger::debug("%s loading took %d ms", StrategyToNameMap[type], lapse_milli_seconds);
+        logger::info("%s loading took %d ms", StrategyToNameMap[type], lapse_milli_seconds);
     }
     switch (type) {
         //only support MCCFR large strategy IO
@@ -269,7 +269,7 @@ void SaveAssertMap(Strategy *target, STRATEGY_TYPE type, const std::string &pref
         logger::critical("failed to open %s: %s (system:%d)", check_file, e.what(), e.code());
     }
     os.close();
-    logger::debug("save checkpoint file for %s", StrategyToNameMap[type]);
+    logger::info("save checkpoint file for %s", StrategyToNameMap[type]);
 }
 
 template<class T>

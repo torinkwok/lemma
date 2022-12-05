@@ -128,7 +128,7 @@ struct sRNBAKernel
         {
             int size = 16; // assuming using pure strategy, 2 * 8 bytes
             auto m = (double) (max_index_ * size / (1024.0 * 1024.0));
-            logger::breaker();
+            logger::info("==========================================================================");
             logger::info("VECTOR: entries = %d || bytes/entry %d || memory = %f (mb)", max_index_, size, m);
         }
         {
@@ -149,7 +149,7 @@ struct sRNBAKernel
                     round_index_0_[i]
             );
         }
-        logger::breaker();
+        logger::info("==========================================================================");
     }
 
     [[nodiscard]] RNBA MaxIndex() const

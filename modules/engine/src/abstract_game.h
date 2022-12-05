@@ -142,10 +142,10 @@ public:
 
     void Print() const
     {
-        logger::breaker();
+        logger::info("==========================================================================");
         logger::info("abstract game <- print()");
         kernel_->Print();
-        logger::breaker();
+        logger::info("==========================================================================");
     }
 
     void IndexBettingTree(Node *this_node = nullptr);

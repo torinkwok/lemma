@@ -126,7 +126,7 @@ int CFR::Solve(Strategy *blueprint,
                                                   br.avg_ + br.std_dev_, br.avg_ - br.std_dev_};
                         profiling_writer_.WriteToFile(br_tuple);
                     }
-                    logger::debug("PROFILER: br[%f] at iter [%d]", br.avg_, thread_local_current_progress.iteration);
+                    logger::info("PROFILER: br[%f] at iter [%d]", br.avg_, thread_local_current_progress.iteration);
                     // In the case of blueprint training, inspect the strategy over time
                     if (strategy->ag_->root_node_->GetRound() == HOLDEM_ROUND_PREFLOP) {
                         auto name = strategy->ag_->name_ + "_" + local_cfr_param.name.substr(0, 7) + "_"
@@ -178,9 +178,9 @@ int CFR::Solve(Strategy *blueprint,
                 }
                 case CMD_PRINT_ROOT_STG: {
                     STRATEGY_TYPE calc_mode = STRATEGY_WAVG;
-                    logger::debug("🔬%s printing the inspection of the root subgame with %s",
-                                  profiling_writer_.prefix_,
-                                  StrategyToNameMap[calc_mode]
+                    logger::info("🔬%s printing the inspection of the root subgame with %s",
+                                 profiling_writer_.prefix_,
+                                 StrategyToNameMap[calc_mode]
                     );
                     strategy->InspectNode(strategy->ag_->root_node_, profiling_writer_.prefix_, calc_mode);
                     break;
@@ -395,9 +395,9 @@ void CFR::AllocateFlops(std::vector<Board_t> *pub_flop_boards,
                 }
             }
             if (suboptimal_assignment_flag) {
-                logger::debug("all threads have been assigned full amount, adding to thread %d (with least flops %d)",
-                              idx,
-                              tally[idx]
+                logger::info("all threads have been assigned full amount, adding to thread %d (with least flops %d)",
+                             idx,
+                             tally[idx]
                 );
                 thread_board[idx].push_back(pub);
                 tally[idx] += size;
@@ -421,7 +421,7 @@ void CFR::AllocateFlops(std::vector<Board_t> *pub_flop_boards,
     }
 
     for (int t = 0; t < num_thread; t++) {
-        logger::debug("thread %d was assigned %d public flops", t, thread_board[t].size());
+        logger::info("thread %d was assigned %d public flops", t, thread_board[t].size());
     }
 }
 
@@ -599,7 +599,7 @@ void CFR::Config(web::json::value data)
     }
 
     cfr_param_.rm_floor *= 100 * REGRET_SCALER; //todo hack
-    //  logger::debug("cfr solving with regret matching floor %f", cfr_param_.rm_floor);
+    //  logger::info("cfr solving with regret matching floor %f", cfr_param_.rm_floor);
 
     if (data.has_field("convergence")) {
         auto conv_config = data.at("convergence");
@@ -632,9 +632,9 @@ void CFR::Config(web::json::value data)
                 cfr_param_.depth_limited_cache_ = dls_conf.at("cache").as_bool();
             }
             if (cfr_param_.depth_limited) {
-                logger::debug("depth limit cfr [%d][reps %d]",
-                              cfr_param_.depth_limited,
-                              cfr_param_.depth_limited_rollout_reps_
+                logger::info("depth limit cfr [%d][reps %d]",
+                             cfr_param_.depth_limited,
+                             cfr_param_.depth_limited_rollout_reps_
                 );
             }
         }

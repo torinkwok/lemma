@@ -22,7 +22,7 @@ struct StrategyPool
         }
 
         if (pool_.size() == 1) {
-            logger::debug("picked blueprint with depth %d",
+            logger::info("picked blueprint with depth %d",
                           GameDefaultStackDepth(&pool_.at(0)->ag_->game_));
             return pool_.at(0);
         }
@@ -58,14 +58,14 @@ struct StrategyPool
                                });
         Strategy *rtn_strategy;
         if (it == pool_.end()) {
-            // None matched, return the hightest one.
-            logger::debug("no blueprint with >= stackdepth found. use the highest one");
+            // None matched, return the highest one.
+            logger::info("no blueprint with >= stack-depth found. use the highest one");
             rtn_strategy = pool_.back();
         } else {
             rtn_strategy = (*it);
         }
 
-        logger::debug("picked blueprint with depth %d", GameDefaultStackDepth(&rtn_strategy->ag_->game_));
+        logger::info("picked blueprint with depth %d", GameDefaultStackDepth(&rtn_strategy->ag_->game_));
         return rtn_strategy;
     }
 
