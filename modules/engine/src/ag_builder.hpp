@@ -91,10 +91,7 @@ public:
         logger::info("ag_builder -> building kernel...");
         {
             ag_out->BuildKernelFromRootNode(bucket_count_by_round);
-            //default if in new game.
-#ifdef DEV
             ag_out->Print();
-#endif
         }
     }
 
