@@ -42,7 +42,7 @@ struct SubgameSolver
 
     std::string name_ = "default_sgs";
 
-    // Outer triggers:  default to be matching by ronud, unless distances are specified
+    // Outer triggers:  default to be matching by round, unless distances are specified
     int active_round = -1;
 
     // Only use in bigpot solver for now
@@ -169,11 +169,11 @@ struct SubgameSolver
 
         // Check which trigger activated sub-game resolving: off-tree or pot-limit?
         if (match_result.off_tree_dist_ >= resolve_offtree_min) {
-            logger::debug("    [SGS %s]: subgame resolving activated by off_tree_dist", name_);
+            logger::info("    [SGS %s]: subgame resolving activated by off_tree_dist", name_);
         } else if ((ref_state.spent[0] + ref_state.spent[1]) >= resolve_sumpot_min) {
-            logger::debug("    [SGS %s]: subgame resolving activated by min_pot", name_);
+            logger::info("    [SGS %s]: subgame resolving activated by min_pot", name_);
         } else {
-            logger::debug("    [SGS %s]: skip resolving subgame. resolving requirement not met", name_);
+            logger::info("    [SGS %s]: skip resolving subgame. resolving requirement not met", name_);
             return SKIP_RESOLVING_SUBGAME;
         }
 
@@ -186,17 +186,17 @@ struct SubgameSolver
                                             && last_root_pot >= resolve_last_root_sumpot_min;
 
         // Firstly we need to figure out how many steps to take back.
-        uint8_t nsteps_to_reverse;
+        uint8_t nsteps_to_reverse = 0;
         if (needs_step_back_to_last_root) {
-            // If `last_startegy` belongs to the same round, resolve to the root of `last_strategy`.
+            // If `last_strategy` belongs to the same round, resolve to the root of `last_strategy`.
             nsteps_to_reverse =
                     action_kth - last_strategy->ag_->root_state_.numActions[this_round]; // n-steps to the last root.
-            logger::debug("    [SGS %s]: needs to step back to the last root. steps to reverse = ", name_,
-                          nsteps_to_reverse
+            logger::info("    [SGS %s]: needs to step back to the last root. steps to reverse = ", name_,
+                         nsteps_to_reverse
             );
         } else {
-            logger::debug("    [SGS %s]: skipping resolve to street root cuz %d < %d", name_, last_root_pot,
-                          resolve_last_root_sumpot_min
+            logger::info("    [SGS %s]: skipping resolve to street root cuz %d < %d", name_, last_root_pot,
+                         resolve_last_root_sumpot_min
             );
             // If `last_strategy` belongs to the prior round, resolve to the root of the current street.
             // This is not very likely to happen though.
@@ -204,7 +204,7 @@ struct SubgameSolver
         }
 
         // TODO(kwok): To uncomment this line of code.
-        // logger::debug("    [SGS %s]: resolving takes [step back %d]", name_, nsteps_to_reverse);
+        // logger::info("    [SGS %s]: resolving takes [step back %d]", name_, nsteps_to_reverse);
         if (!this->BuildResolvingSubgame_(ag_out, ref_match_state, nsteps_to_reverse)) {
             return SKIP_RESOLVING_SUBGAME;
         }

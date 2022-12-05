@@ -61,6 +61,6 @@ void sPrivateHandBelief::PrintNonZeroBelief()
                 output += std::to_string(belief_[i]) + " | ";
             }
         }
-        logger::debug(output);
+        logger::info(output);
     }
 }
