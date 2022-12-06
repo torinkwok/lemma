@@ -94,9 +94,6 @@ public:
 
     TableContext table_context_;
 private:
-    /*
-     * META, by configuration
-     */
     Game *normalized_game_;
 
     BucketPool *bucket_pool_ = nullptr;
@@ -105,36 +102,33 @@ private:
     ActionChooser *default_action_chooser_ = nullptr;
     //todo: why not use std::vector?
     SubgameSolver *subgame_solvers_ = nullptr;
+
     int sgs_size_ = 0;
+
     bool is_daemon_engine = false;
     bool random_action_ = false;
     bool busy_flag_;
-    //
     bool owning_pool_ = false;
 
-    /*
-     * HAND SESSION STATE
-     */
-    MatchState last_matchstate_;
+    MatchState last_match_state_;
     std::vector<PlayBook> playbook_stack_;
     std::vector<Strategy *> sgs_strategy_stack_;
 
     std::atomic_bool sgs_cancel_token_;
     std::atomic_bool daemon_cancel_token_;
 
-    void AsynStartDaemonSolving(SubgameSolver *sgs, int checkpoint);
+    void AsyncStartDaemonSolving(SubgameSolver *sgs, int checkpoint);
 
-    void AsynStopDaemonSolving();
+    void AsyncStopDaemonSolving();
 
-    void AsynStopCFRSolving();
+    void AsyncStopCFRSolving();
 
-    int AsynStartCFRSolving(SubgameSolver *selected_sgs, Strategy *&new_strategy);
+    int AsyncStartCFRSolving(SubgameSolver *selected_sgs, Strategy *&new_strategy);
 
     bool InputSanityCheck(MatchState *new_match_state);
 
     bool EngineStateStaleCheck(MatchState *new_match_state);
 
-    //helper functions
     bool IsNestedSgsStarted();
 
     int GetRandomAction(MatchState *new_match_state, Action &r_action);

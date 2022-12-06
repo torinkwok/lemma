@@ -146,7 +146,7 @@ int CFR::Solve(Strategy *blueprint,
                 }
                 case CMD_DISCOUNTING : {
                     int step = (thread_local_current_progress.iteration / local_cfr_param.rm_disc_interval) + 1;
-                    //def of LCFR, (3/2, 2)
+                    // def of LCFR, (3/2, 2)
                     auto regret_factor =
                             (double) pow(step, local_cfr_param.lcfr_alpha) /
                             (double) (pow(step, local_cfr_param.lcfr_alpha) + 1);
@@ -158,7 +158,7 @@ int CFR::Solve(Strategy *blueprint,
                     break;
                 }
                 case CMD_SAVE_REG_WAVG : {
-                    // Assuming CFR name beginning with either "cfrv" or "cfrs"
+                    // Assuming CFR name beginning with either "cfr-vector" or "cfr-scalar"
                     auto name = strategy->ag_->name_ + "_" + local_cfr_param.name.substr(0, 7) + "_"
                                 + std::to_string(thread_local_current_progress.iteration);
                     SaveAG(strategy, name);
@@ -618,7 +618,7 @@ void CFR::Config(web::json::value data)
     if (data.has_field("depth_limited")) {
         auto dls_conf = data.at("depth_limited");
         cfr_param_.depth_limited = dls_conf.at("on").as_bool();
-        //only cfrs and sidewalk
+        //only cfr-scalar and sidewalk
         if (cfr_param_.depth_limited) {
             if (cfr_param_.cfr_mode_ != CFR_SCALAR_SOLVE) {
                 logger::critical("depth limit solving only supports scalar mode");
@@ -687,7 +687,7 @@ void CFR::BuildCMDPipeline()
 
             CFR_COMMAND exec_cmd = CMD_VECTOR_PROFILING;
 
-            //starting from where we trun on wavg, if the profiler strategy is wavg
+            // starting from where we trun on wavg, if the profiler strategy is wavg
             int offset = 0;
             if (cfr_param_.profiling_strategy_ == STRATEGY_WAVG) {
                 if (regret_matching.has_field("avg_update_on")) {

@@ -265,9 +265,9 @@ int Engine::GetAction(MatchState *current_acpc_match_state, Action &r_action)
         return GetRandomAction(current_acpc_match_state, r_action);
     }
 
-    /* STOP prior unfinished solvings. */
-    AsynStopDaemonSolving();
-    AsynStopCFRSolving();
+    /* STOP prior unfinished solving */
+    AsyncStopDaemonSolving();
+    AsyncStopCFRSolving();
     logger::info("===== [ENGINE %s]: handle get action request =====", engine_name_);
 
     if (!InputSanityCheck(current_acpc_match_state)) {
@@ -278,12 +278,12 @@ int Engine::GetAction(MatchState *current_acpc_match_state, Action &r_action)
         RefreshEngineState();   //force reset new Hand
     }
 
-    /* Pre GetAction. */
+    /* Pre GetAction */
     busy_flag_ = true;
     SimpleTimer timer;
-    last_matchstate_ = *current_acpc_match_state;
+    last_match_state_ = *current_acpc_match_state;
 
-    /* ASSEMBLE offline strategies. */
+    /* ASSEMBLE offline strategies */
     if (playbook_stack_.empty()) {
         auto *blueprint = blueprint_pool_->FindStrategy(current_acpc_match_state, normalized_game_);
         // NOTE(kwok): Offline strategies should always been zipped.
@@ -299,7 +299,7 @@ int Engine::GetAction(MatchState *current_acpc_match_state, Action &r_action)
         );
     }
 
-    /* ASSEMBLE online strategies. */
+    /* ASSEMBLE online strategies */
     SubgameSolver *selected_sgs = nullptr;
     int cfr_return_code = -1;
     auto candidate_match_results = playbook_stack_.back().strategy_->FindSortedMatchedNodes(
@@ -316,13 +316,13 @@ int Engine::GetAction(MatchState *current_acpc_match_state, Action &r_action)
         /*
          * trying to build new playbook
          * todo:
-         * do ASYN
+         * do ASYNC
          * - gen multi subgame
          * - solve and gen multiple pending_playbook
          * - select the best (indicator? step back) from the valid playbooks.
          */
 
-        /* Step 1: Subgame building. */
+        /* Step 1: Subgame building */
         auto *sgs_ag = new AbstractGame();
         // TODO: The pot requirement is by the match state, not by the new root. Change it?
         int subgame_built_code = selected_sgs->BuildSubgame(sgs_ag,
@@ -330,7 +330,7 @@ int Engine::GetAction(MatchState *current_acpc_match_state, Action &r_action)
                                                             best_match_result,
                                                             current_acpc_match_state
         );
-        // Do nothing if the sub-game gets skipped.
+        // do nothing if the sub-game gets skipped
         if (subgame_built_code == SKIP_RESOLVING_SUBGAME) {
             logger::info("    [ENGINE %sg_i]: build subgame skipped [code %sg_i]",
                          engine_name_,
@@ -340,7 +340,7 @@ int Engine::GetAction(MatchState *current_acpc_match_state, Action &r_action)
             break;
         }
 
-        /* Step 2: Nested range estimation. */
+        /* Step 2: Nested range estimation */
         bool estimate_success;
 
         // TODO(kwok): std::reverse(playbook_stack_.begin(), playbook_stack_.end())
@@ -360,20 +360,20 @@ int Engine::GetAction(MatchState *current_acpc_match_state, Action &r_action)
             break;
         }
 
-        /* Step 3: Async CFR subgame solving. */
+        /* Step 3: Async CFR subgame solving */
         sgs_strategy_stack_.push_back(new Strategy(sgs_ag));
 
         Strategy *&new_strategy = sgs_strategy_stack_.back();
         new_strategy->name_ = selected_sgs->name_;  // To make the destruction recognizable.
         new_strategy->InitMemoryAndValue(selected_sgs->cfr_->cfr_param_.cfr_mode_);
 
-        cfr_return_code = AsynStartCFRSolving(selected_sgs, new_strategy);
+        cfr_return_code = AsyncStartCFRSolving(selected_sgs, new_strategy);
         if (cfr_return_code < 0) {
             logger::error("    [ENGINE %sg_i]: 💢cfr solving error in subgame", engine_name_);
             return GET_ACTION_FAILURE;
         }
 
-        /* Step 4: Validate the pending playbook. */
+        /* Step 4: Validate the pending playbook */
         auto pending_playbook = PlayBook{sgs_strategy_stack_.back(),
                                          selected_sgs->action_chooser_,
                                          selected_sgs->strategy_type};
@@ -387,7 +387,7 @@ int Engine::GetAction(MatchState *current_acpc_match_state, Action &r_action)
         break;
     }
 
-    /* GET ACTION from the last playbook, descendingly. */
+    /* GET ACTION from the last playbook, condescendingly */
     int pb_depth = playbook_stack_.size();
     for (int pb_i = pb_depth - 1; pb_i >= 0; pb_i--) { // FIXME(kwok): If pb_i is of size_t, pb_i-- will underflow.
         // Try to find from this playbook.
@@ -459,7 +459,7 @@ int Engine::GetAction(MatchState *current_acpc_match_state, Action &r_action)
 
     // If everything's going fine, the execution flow would never reach this point.
     logger::error("💢not a single action any history playbook valid. extremely wrong");
-    AsynStartDaemonSolving(selected_sgs, cfr_return_code);
+    AsyncStartDaemonSolving(selected_sgs, cfr_return_code);
     // this->RefreshEngineState();
     return GET_ACTION_FAILURE;
 }
@@ -471,8 +471,8 @@ int Engine::RefreshEngineState()
                  engine_name_,
                  playbook_stack_.size(),
                  sgs_strategy_stack_.size());
-    AsynStopDaemonSolving();
-    AsynStopCFRSolving();
+    AsyncStopDaemonSolving();
+    AsyncStopCFRSolving();
     busy_flag_ = false;
     playbook_stack_.clear();
     for (auto s: sgs_strategy_stack_) {
@@ -523,7 +523,7 @@ void Engine::EvalShowdown(MatchState &match_state)
 
     /* Conduct eval for all playbooks except blueprint. */
     for (auto pb_it = playbook_stack_.size() - 1; pb_it > 0; pb_it--) {
-        // Estimate by connonical group.
+        // Estimate by canonical group.
         auto pb_strategy = playbook_stack_.at(pb_it).strategy_;
         auto strategy_root_round = pb_strategy->ag_->root_state_.round;
 
@@ -565,7 +565,7 @@ void Engine::EvalShowdown(MatchState &match_state)
         pb_strategy->ag_->root_node_->PrintState("    strategy root: ");
         logger::info("    [strategy %s] [%s %f] [weight %f] [bucket_sum %f] [all_buckets_count %d]",
                      pb_strategy->name_,
-                     opp_hand_belief > 0 ? "hit": "miss",
+                     opp_hand_belief > 0 ? "hit" : "miss",
                      opp_hand_belief,
                      real_b_canon_sum * seen_bucket.size(),
                      real_b_canon_sum,
@@ -630,10 +630,10 @@ int Engine::GetActionBySession(MatchState &normalized_match_state, Action &r_act
      * need to do translation in any case.
      */
 
-    // TODO: Put the bet scaler into table context?
-    double bet_scaler = (double) BigBlind(normalized_game_) / BigBlind(&table_context_.session_game);
+    // TODO: Put the bet scale into table context?
+    double bet_scale = (double) BigBlind(normalized_game_) / BigBlind(&table_context_.session_game);
     if (r_action.type == a_raise) {
-        int adjusted_raise = (int) round(r_action.size / bet_scaler);
+        int adjusted_raise = (int) round(r_action.size / bet_scale);
         r_action.size = adjusted_raise;
     }
 
@@ -644,14 +644,14 @@ int Engine::GetActionBySession(MatchState &normalized_match_state, Action &r_act
 int Engine::TranslateToNormState(const std::string &match_state_str, MatchState &normalized_match_state)
 {
     logger::info("    [ENGINE %s]:     real match state = %s", engine_name_, match_state_str);
-    //real match state should be translated with the game def of the session. or u may have invalid betting ctions
+    //real match state should be translated with the game def of the session. or u may have invalid betting actions
     MatchState real_match_state;
     if (readMatchState(match_state_str.c_str(), &table_context_.session_game, &real_match_state) == -1)
         return MATCH_STATE_PARSING_FAILURE;
 
-    double bet_scaler = (double) BigBlind(normalized_game_) / BigBlind(&table_context_.session_game);
-    if (bet_scaler == 0) {
-        logger::error("    [ENGINE %s]: invalid betting scaler in translation == 0", engine_name_);
+    double bet_scale = (double) BigBlind(normalized_game_) / BigBlind(&table_context_.session_game);
+    if (bet_scale == 0) {
+        logger::error("    [ENGINE %s]: invalid betting scale in translation == 0", engine_name_);
         return MATCH_STATE_PARSING_FAILURE;
     }
 
@@ -659,21 +659,21 @@ int Engine::TranslateToNormState(const std::string &match_state_str, MatchState 
      * construct the normalized match state
      */
     normalized_match_state.viewingPlayer = real_match_state.viewingPlayer;
-    //init a state, like anything else, would not copy the stack, as it should be stakc-aware
+    //init a state, like anything else, would not copy the stack, as it should be stack-aware
     initState(normalized_game_, 0, &normalized_match_state.state);
     //copy table info (handID, hold cards and board cards)
     StateTableInfoCopy(normalized_game_, &real_match_state.state, &normalized_match_state.state);
     //scale the stack
-    normalized_match_state.state.stackPlayer[0] *= bet_scaler;
-    normalized_match_state.state.stackPlayer[1] *= bet_scaler;
+    normalized_match_state.state.stackPlayer[0] *= bet_scale;
+    normalized_match_state.state.stackPlayer[1] *= bet_scale;
 
-    //copy all actions over but scale with bet_scaler
+    //copy all actions over but scale with bet_scale
     int round = real_match_state.state.round;
     for (int r = 0; r <= round; r++)
         for (int a = 0; a < real_match_state.state.numActions[r]; a++) {
             auto real_action = real_match_state.state.action[r][a];
             if (real_action.type == a_raise) {
-                real_action.size *= bet_scaler; // check if the type conversion makes problem
+                real_action.size *= bet_scale; // check if the type conversion makes problem
             }
             doAction(normalized_game_, &real_action, &normalized_match_state.state);
         }
@@ -689,7 +689,7 @@ int Engine::TranslateToNormState(const std::string &match_state_str, MatchState 
  * solve it the subgame solving is on
  * and the last strategy is not yet converged (all command finished)
  */
-void Engine::AsynStartDaemonSolving(SubgameSolver *sgs, int checkpoint)
+void Engine::AsyncStartDaemonSolving(SubgameSolver *sgs, int checkpoint)
 {
     if (is_daemon_engine) {
         if (checkpoint < CFR_SOLVING_TERMINATED_ASYNC) {
@@ -733,10 +733,10 @@ void Engine::AsynStartDaemonSolving(SubgameSolver *sgs, int checkpoint)
     }
 }
 
-void Engine::AsynStopDaemonSolving()
+void Engine::AsyncStopDaemonSolving()
 {
     if (is_daemon_engine && !daemon_cancel_token_) {
-        logger::info("    [ENGINE %s]: asyn stopping DAEMON solving", engine_name_);
+        logger::info("    [ENGINE %s]: async stopping DAEMON solving", engine_name_);
         daemon_cancel_token_ = true;
         //sleep for 200ms to make sure the DAEMON solving ended before proceeding
         logger::info("thread sleeping for 100 ms to wait for DAEMON graceful finishing");
@@ -761,7 +761,7 @@ bool Engine::IsNestedSgsStarted()
 }
 
 //if the last sgs solves to the ALL_COMMAND_FINISH,then sgs_cancel token would be true.
-void Engine::AsynStopCFRSolving()
+void Engine::AsyncStopCFRSolving()
 {
     if (!sgs_cancel_token_) {
         logger::info("🛑stopping async MCCFR solving");
@@ -774,8 +774,10 @@ bool Engine::EngineStateStaleCheck(MatchState *new_match_state)
 {
     // check game state continuity.
     // FIXME(kwok): Is the logic here proper?
-    if (!playbook_stack_.empty() && InSameMatch(normalized_game_, &last_matchstate_, new_match_state) > 0) {
-        logger::info("    [ENGINE %s]: 🥁match state not continued. starting a new hand...", engine_name_);
+    if (!playbook_stack_.empty() && InSameMatch(normalized_game_, &last_match_state_, new_match_state) > 0) {
+        logger::info("    [ENGINE %s]: 🥁match state of new hand detected. refreshing the engine for it...",
+                     engine_name_
+        );
         return false;
     }
     return true;
@@ -818,7 +820,7 @@ bool Engine::ValidatePlaybook(PlayBook &playbook, MatchState *new_match_state, i
                                                                    new_match_state
         );
         logger::require_warn(inited,
-                             "🚨uninited node in playbook_pending [sgs %s] [subgame_built_code %s]",
+                             "🚨uninitialized node in playbook_pending [sgs %s] [subgame_built_code %s]",
                              playbook.strategy_->name_,
                              SubgameBuiltCodeMap[subgame_built_code]
         );
@@ -852,9 +854,9 @@ bool Engine::ValidatePlaybook(PlayBook &playbook, MatchState *new_match_state, i
     return false;
 }
 
-int Engine::AsynStartCFRSolving(SubgameSolver *selected_sgs, Strategy *&new_strategy)
+int Engine::AsyncStartCFRSolving(SubgameSolver *selected_sgs, Strategy *&new_strategy)
 {
-    sgs_cancel_token_ = false; //safegaurding
+    sgs_cancel_token_ = false; // safeguarding code
     auto cfr_result_future = std::async(
             std::launch::async,
             CFR::AsyncCfrSolving,
@@ -878,7 +880,7 @@ int Engine::AsynStartCFRSolving(SubgameSolver *selected_sgs, Strategy *&new_stra
             // FIXME(kwok): count == async_span_count won't be respected.
             if (count == async_span_count) {
                 // interrupt when time's up
-                AsynStopCFRSolving();
+                AsyncStopCFRSolving();
             }
         }
         if (count == async_span_count) {
