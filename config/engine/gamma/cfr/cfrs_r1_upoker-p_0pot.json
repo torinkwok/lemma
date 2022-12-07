@@ -1,10 +1,10 @@
 {
   "cfr": {
-    "num_threads": 72,
+    "num_threads": 36,
     "algo": "scalar",
     "depth_limited": {
       "on": true,
-      "reps": 150,
+      "reps": 100,
       "cache": false
     },
     "rollout": {
@@ -24,8 +24,8 @@
       }
     },
     "convergence": {
-      "max_iter": 120000,
-      "timeout_ms": 30000
+      "max_iter": 200000,
+      "timeout_ms": 60000
     }
   }
 }
