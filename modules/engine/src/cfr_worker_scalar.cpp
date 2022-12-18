@@ -17,7 +17,9 @@ double ScalarCfrWorker::Solve(Board_t board)
     }
 
     double sum_cfus = 0.0;
-    static const int n_priv_hand_samples = 1; // TODO(kwok): What about blueprint computing?
+    // FIXME(kwok): What about blueprint computing?
+    // TODO(kwok): See `n_priv_hand_samples` also as a hyper-parameter.
+    static const int n_priv_hand_samples = 1;
     for (int i = 0; i < n_priv_hand_samples; i++) {
         // NOTE(kwok): On each iteration, we start by sampling all of chance’s actions: the public chance
         // events visible to each player, as well as the private chance events that are visible to only a
@@ -61,6 +63,7 @@ double ScalarCfrWorker::Solve(Board_t board)
         }
     }
 
+    // FIXME(kwok): The number of players is not supposed to be fixed to 2.
     sum_cfus /= (n_priv_hand_samples * 2 * ag->GetBigBlind());
 
     for (auto b: local_root_beliefs) {
@@ -92,8 +95,8 @@ double ScalarCfrWorker::EvalTermNode(int trainee, Node *this_node, sPrivateHands
 {
     if (this_node->IsShowdown()) {
         int stake = this_node->GetStake(trainee);
-        int payoff = hand_info.payoff_[trainee];
-        stake *= payoff; // tie 0, win 1, lose -1
+        int payoff = hand_info.payoff_[trainee]; // payoff ⊃ {-1, 0, 1}, where 0 denotes tie, 1 win, and, -1 lose
+        stake *= payoff;
         return (double) stake;
     } else {
         // fold
@@ -118,6 +121,7 @@ double ScalarCfrWorker::EvalLeafRootNode(int trainee, Node *leaf_root_node, sPri
      * (PREFLOP) RAM cache from file
      * (FLOP) rollout/NN cache if needed
      */
+    // FIXME(kwok): The number of players is not supposed to be fixed to 2.
     auto b0 = 0;
     auto b1 = 0;
     if (cfr_param_->depth_limited_cache_) {
