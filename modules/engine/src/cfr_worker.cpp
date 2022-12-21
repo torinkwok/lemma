@@ -75,9 +75,16 @@ double VectorCfrWorker::Solve(Board_t board)
                 // FIXME(kwok): The number of players is not supposed to be fixed to 2.
                 auto opp_local_root_belief = local_root_belief[1 - trainee];
                 opp_local_root_belief.Scale(REGRET_SCALER);
-                sPrivateHandBelief *cfu_p = WalkTree_Alternate(ag->root_node_, trainee, &opp_local_root_belief);
-                cfu_p->DotMultiply(&local_root_belief[trainee]);  // illegal parts are 0, so it is fine.
-                sum_cfus += cfu_p->BeliefSum();
+                sPrivateHandBelief best_response_u(0.0);
+                sPrivateHandBelief *cfu_p = WalkTree_Alternate(ag->root_node_, trainee, &opp_local_root_belief,
+                                                               &best_response_u, true
+                );
+                // cfu_p->DotMultiply(&local_root_belief[trainee]);  // illegal parts are 0, so it is fine.
+                // sum_cfus += cfu_p->BeliefSum();
+                // printf("\t\t\t\t\t\t\tcfu_p=%g, bu=%g\n", cfu_p->BeliefSum(), best_response_u.BeliefSum());
+                best_response_u.DotMultiply(&local_root_belief[trainee]);
+                printf("\t\t\t\t\t\t\ttrainee = %d, bru = %g\n", trainee, best_response_u.BeliefSum());
+                sum_cfus += best_response_u.BeliefSum();
                 delete cfu_p;
             }
             break;
@@ -94,7 +101,11 @@ double VectorCfrWorker::Solve(Board_t board)
 
 // TODO(kwok): Adding back the pruned is necessary.
 // We ignore those pruned hands anyway, hence no need to set -1. The program won't panic.
-sPrivateHandBelief *VectorCfrWorker::WalkTree_Alternate(Node *this_node, int trainee, sPrivateHandBelief *opp_belief)
+sPrivateHandBelief *VectorCfrWorker::WalkTree_Alternate(Node *this_node,
+                                                        int trainee,
+                                                        sPrivateHandBelief *opp_belief,
+                                                        sPrivateHandBelief *best_response,
+                                                        bool is_sgs_root)
 {
     if (opp_belief->AllZero()) {
         return new sPrivateHandBelief(0.0);
@@ -107,11 +118,15 @@ sPrivateHandBelief *VectorCfrWorker::WalkTree_Alternate(Node *this_node, int tra
                                                             this_node->IsShowdown());
         return cfu;
     }
-    return EvalChoiceNode_Alternate(this_node, trainee, opp_belief);
+    return EvalChoiceNode_Alternate(this_node, trainee, opp_belief, best_response, is_sgs_root);
 }
 
 sPrivateHandBelief *
-VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivateHandBelief *opp_belief)
+VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node,
+                                          int trainee,
+                                          sPrivateHandBelief *opp_belief,
+                                          sPrivateHandBelief *best_response,
+                                          bool is_sgs_root)
 {
     auto a_max = this_node->GetAmax();
     bool is_my_turn = trainee == this_node->GetActingPlayer();
@@ -144,7 +159,9 @@ VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivate
     for (int a = 0; a < a_max; a++) {
         auto *child_node = this_node->children[a];
         auto *child_node_reach_range = child_reach_ranges[a];
-        children_cfus.emplace_back(WalkTree_Alternate(child_node, trainee, child_node_reach_range));
+        children_cfus.emplace_back(
+                WalkTree_Alternate(child_node, trainee, child_node_reach_range, best_response)
+        );
     }
 
     /*
@@ -153,7 +170,7 @@ VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivate
 
     // Precompute strategy only if it's my turn. Range rollout is fine, it is computed on the fly.
     float *all_belief_distr_1dim = nullptr;
-    if (is_my_turn) {
+    if (is_my_turn || is_sgs_root) {
         // unless we have pruning, we don't need to skip any one. it is a bit wasteful but makes it more accurate.
         all_belief_distr_1dim = new float[FULL_HAND_BELIEF_SIZE * a_max];
         for (auto &i: priv_hand_kernel->valid_priv_hand_vector_idxes) {
@@ -173,6 +190,9 @@ VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivate
                                     : cfr_param_->cfu_compute_opponent;
     // FIXME(kwok): `all_belief_distr_1dim` may point to deallocated memory.
     ComputeCfu(this_node, child_reach_ranges, children_cfus, this_node_cfu, compute_mode, all_belief_distr_1dim);
+    if (is_sgs_root && best_response) {
+        ComputeCfu(this_node, child_reach_ranges, children_cfus, best_response, BEST_RESPONSE, all_belief_distr_1dim);
+    }
 
     /*
      * REGRET LEARNING
@@ -575,7 +595,7 @@ void VectorCfrWorker::ComputeCfu(Node *this_node,
                     }
                 }
                 // todo: if computing the expl at this node.
-                // weighted with weights, need to reweight with 1/ 1000, cuz it scales 1000 both on my reach and opp reach
+                // weighted with weights, need to re-weight with 1/ 1000, cuz it scales 1000 both on my reach and opp reach
                 // final_value *= reach_ranges->ranges_[my_pos].belief_[i] / 1000.0;
                 if (fabs(final_value + 999999999) < 0.001) {
                     //it means they are all pruned. probably the next node is the first node of a street. board crashes.

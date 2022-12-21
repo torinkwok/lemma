@@ -462,10 +462,10 @@ int Strategy::EstimateReachProbAtNode(MatchState *last_match_state,
                 action_prob = rnb_avg[action_idx];
             } else {
                 //what?
-                logger::warn(
-                        "🚨Weirdly uniform strategy for %d during the transition. The reach should already be 0 and filtered at start.",
-                        i
-                );
+                // logger::warn(
+                //         "🚨Weirdly uniform strategy for %d during the transition. The reach should already be 0 and filtered at start.",
+                //         i
+                // );
             }
 
             //perform heuristically pruning in bayesian estimation. incomplete convergence.

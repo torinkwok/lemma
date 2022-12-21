@@ -295,7 +295,7 @@ void *CFR::CfrSolve(void *thread_args)
         SampleSequentialFullBoard(ag->root_state_, &ag->game_, board, cur_flop_idx, worker->my_flops_);
         // board.Print();
         double local_util = worker->Solve(board);
-        printf("remaining_iterm=%d, expl=%g\n", remaining_iter, local_util);
+        printf("remaining_iter=%d, expl=%g\n", remaining_iter, local_util);
         args->output_->AddIterResult(local_util);
     }
 

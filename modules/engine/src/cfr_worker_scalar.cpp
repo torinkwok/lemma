@@ -19,7 +19,7 @@ double ScalarCfrWorker::Solve(Board_t board)
     double sum_cfus = 0.0;
     // FIXME(kwok): What about blueprint computing?
     // TODO(kwok): See `n_priv_hand_samples` also as a hyper-parameter.
-    static const int n_priv_hand_samples = 1;
+    static const int n_priv_hand_samples = 10;
     for (int i = 0; i < n_priv_hand_samples; i++) {
         // NOTE(kwok): On each iteration, we start by sampling all of chance’s actions: the public chance
         // events visible to each player, as well as the private chance events that are visible to only a
