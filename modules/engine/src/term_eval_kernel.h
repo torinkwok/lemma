@@ -3,7 +3,8 @@
 
 #include "hand_belief.h"
 
-static const int REGRET_SCALER = 1000; // turn into milli big blind. also counter the regret integer rounding problem
+// turn into milli big blind. also counter the regret integer rounding problem
+static const int REGRET_SCALE_FACTOR = 1000;
 
 struct sPrivHandRank
 {

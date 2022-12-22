@@ -160,13 +160,13 @@ struct sPrivateHandBelief
     {
         for (auto i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {
             if (!IsPruned(i)) {
-                auto a = belief_[i];
+                auto a = this->belief_[i];
                 auto b = that->belief_[i];
                 if (std::fabs(a - b) >= 0.0001) {
-                    logger::debug("🚨🚨🚨 this = %.15f, while that = %.15f || idx = %d",
-                                  a,
-                                  b,
-                                  i
+                    logger::info("🚨this->belief = %.15f, while that->belief = %.15f || idx = %d",
+                                 a,
+                                 b,
+                                 i
                     );
                     return false;
                 }
@@ -185,7 +185,7 @@ struct sPrivateHandBelief
 
     void DotMultiply(sPrivateHandBelief *that)
     {
-        // NOTE(kwok): They must be topologically same
+        // they must be topologically same
         for (auto i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {
             if (!IsPruned(i) && !that->IsPruned(i)) {
                 belief_[i] *= that->belief_[i];
@@ -215,7 +215,7 @@ struct sPrivateHandBelief
     void Scale(double factor)
     {
         for (auto i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {
-            if (!IsPruned(i)) { // skip 0 and -1
+            if (!IsPruned(i)) {
                 belief_[i] *= factor;
             }
         }

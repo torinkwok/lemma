@@ -25,10 +25,12 @@ public:
 
     CfrWorker(Strategy *blueprint,
               Strategy *strategy,
+              Strategy *br_strategy,
               sCfrParam *cfr_param,
               std::vector<Board_t> &my_flops,
               unsigned long long seed)
-            : blueprint_(blueprint), strategy_(strategy), cfr_param_(cfr_param), my_flops_(my_flops)
+            : blueprint_(blueprint), strategy(strategy), br_strategy(br_strategy), cfr_param_(cfr_param),
+              my_flops_(my_flops)
     {
         gen.seed(seed);
         std::uniform_int_distribution<int> distr(std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
@@ -41,7 +43,8 @@ public:
     virtual ~CfrWorker() = default;
 
     Strategy *blueprint_;
-    Strategy *strategy_;
+    Strategy *strategy;
+    Strategy *br_strategy;
     sCfrParam *cfr_param_;
     std::vector<Board_t> &my_flops_;
     std::mt19937 gen;
@@ -174,11 +177,12 @@ class ScalarCfrWorker : public CfrWorker
 public:
     ScalarCfrWorker(Strategy *blueprint,
                     Strategy *strategy,
+                    Strategy *br_strategy,
                     sCfrParam *cfr_param,
                     std::vector<Board_t> &my_flops,
                     unsigned long long seed)
             :
-            CfrWorker(blueprint, strategy, cfr_param, my_flops, seed)
+            CfrWorker(blueprint, strategy, nullptr, cfr_param, my_flops, seed)
     {
     }
 
@@ -211,10 +215,11 @@ public:
 
     VectorCfrWorker(Strategy *blueprint,
                     Strategy *strategy,
+                    Strategy *br_strategy,
                     sCfrParam *cfr_param,
                     std::vector<Board_t> &my_flops, unsigned long long seed)
             :
-            CfrWorker(blueprint, strategy, cfr_param, my_flops, seed)
+            CfrWorker(blueprint, strategy, nullptr, cfr_param, my_flops, seed)
     {
     }
 
@@ -240,26 +245,23 @@ public:
                     const float *all_belief_distr_1dim) const;
 
     void
-    RangeRollout(Node *this_node, sPrivateHandBelief *belief_distr, std::vector<sPrivateHandBelief *> &child_ranges);
+    CalcReachRange(Node *this_node, sPrivateHandBelief *belief,
+                   std::vector<sPrivateHandBelief *> &child_ranges, Strategy *target_strategy);
 
     void ConditionalPrune();
 
     void
-    CollectRegrets(Node *this_node, std::vector<sPrivateHandBelief *> child_cfus, sPrivateHandBelief *this_node_cfu);
+    CollectRegrets(Node *this_node, std::vector<sPrivateHandBelief *> child_cfus,
+                   sPrivateHandBelief *this_node_cfu, Strategy *target_strategy);
 
     std::vector<sPrivateHandBelief *> ExtractBeliefs(std::vector<Ranges *> &ranges, int pos);
 
-    sPrivateHandBelief *WalkTree_Alternate(Node *this_node,
-                                           int trainee,
-                                           sPrivateHandBelief *opp_belief,
-                                           sPrivateHandBelief *best_response = nullptr,
-                                           bool is_sgs_root = false);
+    sPrivateHandBelief *WalkTree_Alternate(Node *this_node, int trainee, sPrivateHandBelief *opp_belief,
+                                           Strategy *target_strategy,
+                                           std::optional<CFU_COMPUTE_MODE> compute_node = std::optional<CFU_COMPUTE_MODE>());
 
-    sPrivateHandBelief *EvalChoiceNode_Alternate(Node *this_node,
-                                                 int trainee,
-                                                 sPrivateHandBelief *opp_belief,
-                                                 sPrivateHandBelief *best_response = nullptr,
-                                                 bool is_sgs_root = false);
+    sPrivateHandBelief *EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivateHandBelief *opp_belief,
+                                                 Strategy *target_strategy, CFU_COMPUTE_MODE compute_mode);
 };
 
 #endif //AUTODIDACT_MODULES_ENGINE_SRC_CFR_WORKER_H_
