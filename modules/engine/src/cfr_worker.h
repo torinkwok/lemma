@@ -25,11 +25,10 @@ public:
 
     CfrWorker(Strategy *blueprint,
               Strategy *strategy,
-              Strategy *br_strategy,
               sCfrParam *cfr_param,
               std::vector<Board_t> &my_flops,
               unsigned long long seed)
-            : blueprint_(blueprint), strategy(strategy), br_strategy(br_strategy), cfr_param_(cfr_param),
+            : blueprint_(blueprint), strategy(strategy), cfr_param_(cfr_param),
               my_flops_(my_flops)
     {
         gen.seed(seed);
@@ -44,7 +43,6 @@ public:
 
     Strategy *blueprint_;
     Strategy *strategy;
-    Strategy *br_strategy;
     sCfrParam *cfr_param_;
     std::vector<Board_t> &my_flops_;
     std::mt19937 gen;
@@ -53,7 +51,7 @@ public:
     CFR_MODE mode_;
 
     // return exploitability mbb/g
-    virtual double Solve(Board_t board) = 0;
+    virtual double Solve(Board_t board, bool calc_bru) = 0;
 
     static double ClampRegret(double old_reg, double diff, double floor)
     {
@@ -177,16 +175,15 @@ class ScalarCfrWorker : public CfrWorker
 public:
     ScalarCfrWorker(Strategy *blueprint,
                     Strategy *strategy,
-                    Strategy *br_strategy,
                     sCfrParam *cfr_param,
                     std::vector<Board_t> &my_flops,
                     unsigned long long seed)
             :
-            CfrWorker(blueprint, strategy, nullptr, cfr_param, my_flops, seed)
+            CfrWorker(blueprint, strategy, cfr_param, my_flops, seed)
     {
     }
 
-    double Solve(Board_t board) override;
+    double Solve(Board_t board, bool calc_bru) override;
 
     double WalkTree(int trainee, Node *this_node, sPrivateHandsInfo &hand_info);
 
@@ -215,11 +212,10 @@ public:
 
     VectorCfrWorker(Strategy *blueprint,
                     Strategy *strategy,
-                    Strategy *br_strategy,
                     sCfrParam *cfr_param,
                     std::vector<Board_t> &my_flops, unsigned long long seed)
             :
-            CfrWorker(blueprint, strategy, nullptr, cfr_param, my_flops, seed)
+            CfrWorker(blueprint, strategy, cfr_param, my_flops, seed)
     {
     }
 
@@ -228,7 +224,9 @@ public:
         delete priv_hand_kernel;
     };
 
-    double Solve(Board_t board) override;
+    double Solve(Board_t board, bool calc_bru) override;
+
+    std::pair<double, double> SolveWithBRU(Board_t board, bool calc_bru);
 
     Ranges *WalkTree_Pairwise(Node *this_node, Ranges *reach_ranges);
 
@@ -242,27 +240,34 @@ public:
                     std::vector<sPrivateHandBelief *> child_cfus,
                     sPrivateHandBelief *this_node_cfu,
                     CFU_COMPUTE_MODE cfu_compute_mode,
-                    const float *all_belief_distr_1dim) const;
+                    const float *belief_distr) const;
 
     void
     CalcReachRange(Node *this_node, sPrivateHandBelief *belief,
-                   std::vector<sPrivateHandBelief *> &child_ranges, Strategy *target_strategy);
+                   std::vector<sPrivateHandBelief *> &child_ranges, Strategy *target_strategy,
+                   STRATEGY_TYPE strategy_type);
 
     void ConditionalPrune();
 
     void
-    CollectAndLearnFromRegrets(Node *this_node, std::vector<sPrivateHandBelief *> child_cfus,
-                               sPrivateHandBelief *this_node_cfu, Strategy *target_strategy);
+    CollectChildBRUs(Node *this_node, std::vector<sPrivateHandBelief *> child_brus,
+                     sPrivateHandBelief *this_node_bru, Strategy *target_strategy);
+
+    void
+    CollectRegrets(Node *this_node, std::vector<sPrivateHandBelief *> child_cfus,
+                   sPrivateHandBelief *this_node_cfu, Strategy *target_strategy);
 
     std::vector<sPrivateHandBelief *> ExtractBeliefs(std::vector<Ranges *> &ranges, int pos);
 
     sPrivateHandBelief *WalkTree_Alternate(Node *this_node, int trainee, sPrivateHandBelief *opp_belief,
                                            Strategy *target_strategy,
-                                           std::optional<CFU_COMPUTE_MODE> compute_node_hint = std::optional<CFU_COMPUTE_MODE>());
+                                           std::optional<CFU_COMPUTE_MODE> cfu_compute_node_hint,
+                                           std::optional<STRATEGY_TYPE> strategy_type_hint, bool learn);
 
     sPrivateHandBelief *EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivateHandBelief *opp_belief,
                                                  Strategy *target_strategy,
-                                                 std::optional<CFU_COMPUTE_MODE> compute_mode_hint);
+                                                 std::optional<CFU_COMPUTE_MODE> cfu_compute_mode_hint,
+                                                 std::optional<STRATEGY_TYPE> strategy_type_hint, bool learn);
 };
 
 #endif //AUTODIDACT_MODULES_ENGINE_SRC_CFR_WORKER_H_

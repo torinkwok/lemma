@@ -1,7 +1,12 @@
 #include "cfr_worker.h"
 #include "node.h"
 
-double VectorCfrWorker::Solve(Board_t board)
+double VectorCfrWorker::Solve(Board_t board, bool calc_bru)
+{
+    return SolveWithBRU(board, calc_bru).second;
+}
+
+std::pair<double, double> VectorCfrWorker::SolveWithBRU(Board_t board, bool calc_bru)
 {
     auto *ag = strategy->ag_;
     auto starting_round = ag->root_state_.round;
@@ -19,15 +24,16 @@ double VectorCfrWorker::Solve(Board_t board)
     ConditionalPrune();
 
     // TODO(kwok): Cache the results for RIVER sub-games.
-    sPrivateHandBelief local_root_belief[2]; // FIXME(kwok): The number of players is not supposed to be fixed to 2.
+    sPrivateHandBelief root_belief[2]; // FIXME(kwok): The number of players is not supposed to be fixed to 2.
     auto active_players = ag->GetActivePlayerNum();
     for (int p = 0; p < active_players; p++) {
         // preparations
-        local_root_belief[p].CopyValue(&ag->root_hand_beliefs_for_all_[p]);
-        local_root_belief[p].NormalizeExcludeBoard(board);
+        root_belief[p].CopyValue(&ag->root_hand_beliefs_for_all_[p]);
+        root_belief[p].NormalizeExcludeBoard(board);
     }
 
     double sum_cfus = 0.0;
+    double sum_brus = 0.0;
 
     // NOTE(kwok): There are three different methods of sampling chance events that have slower iterations,
     // but do more work on each iteration:
@@ -57,15 +63,15 @@ double VectorCfrWorker::Solve(Board_t board)
         case CFR_VECTOR_PAIRWISE_SOLVE: {
             Ranges starting_ranges{active_players};
             for (int p = 0; p < starting_ranges.num_player_; p++) {
-                starting_ranges.beliefs_[p].CopyValue(&local_root_belief[p]);
+                starting_ranges.beliefs_[p].CopyValue(&root_belief[p]);
                 starting_ranges.beliefs_[p].Scale(REGRET_SCALE_FACTOR);
             }
             auto cfu = WalkTree_Pairwise(ag->root_node_, &starting_ranges);
             for (int p = 0; p < starting_ranges.num_player_; p++) {
-                cfu->beliefs_[p].DotMultiply(&local_root_belief[p]);
+                cfu->beliefs_[p].DotMultiply(&root_belief[p]);
             }
             sum_cfus = cfu->ValueSum();
-            // logger::debug("%f | %f", local_root_belief[0].BeliefSum(), local_root_belief[1].BeliefSum());
+            // logger::debug("%f | %f", root_belief[0].BeliefSum(), root_belief[1].BeliefSum());
             delete cfu;
             break;
         }
@@ -73,13 +79,38 @@ double VectorCfrWorker::Solve(Board_t board)
             // walk down training tree alternatively, sampling all nodes
             for (int trainee = 0; trainee < active_players; trainee++) {
                 // FIXME(kwok): The number of players is not supposed to be fixed to 2.
-                auto opp_local_root_belief = local_root_belief[1 - trainee];
-                opp_local_root_belief.Scale(REGRET_SCALE_FACTOR);
-                sPrivateHandBelief *cfu_p =
-                        WalkTree_Alternate(ag->root_node_, trainee, &opp_local_root_belief, strategy);
-                cfu_p->DotMultiply(&local_root_belief[trainee]);
+                sPrivateHandBelief opp_belief = root_belief[1 - trainee];
+                opp_belief.Scale(REGRET_SCALE_FACTOR);
+                sPrivateHandBelief *cfu_p = WalkTree_Alternate(
+                        ag->root_node_, trainee, &opp_belief, strategy,
+                        std::optional<CFU_COMPUTE_MODE>(), std::optional<STRATEGY_TYPE>(), true
+                );
+                cfu_p->DotMultiply(&root_belief[trainee]);
                 sum_cfus += cfu_p->BeliefSum();
                 delete cfu_p;
+            }
+            if (calc_bru) {
+                for (int trainee = 0; trainee < active_players; trainee++) {
+                    // FIXME(kwok): The number of players is not supposed to be fixed to 2.
+                    sPrivateHandBelief opp_belief = root_belief[1 - trainee];
+                    opp_belief.Scale(REGRET_SCALE_FACTOR);
+                    WalkTree_Alternate(
+                            ag->root_node_, trainee, &opp_belief, strategy,
+                            BEST_RESPONSE, std::optional<STRATEGY_TYPE>(), true
+                    );
+                }
+                for (int trainee = 0; trainee < active_players; trainee++) {
+                    // FIXME(kwok): The number of players is not supposed to be fixed to 2.
+                    sPrivateHandBelief opp_belief = root_belief[1 - trainee];
+                    opp_belief.Scale(REGRET_SCALE_FACTOR);
+                    sPrivateHandBelief *bru_p = WalkTree_Alternate(
+                            ag->root_node_, trainee, &opp_belief, strategy,
+                            std::optional<CFU_COMPUTE_MODE>(), STRATEGY_BEST_RESPONSE, false
+                    );
+                    bru_p->DotMultiply(&root_belief[trainee]);
+                    sum_brus += bru_p->BeliefSum();
+                    delete bru_p;
+                }
             }
             break;
         }
@@ -90,16 +121,18 @@ double VectorCfrWorker::Solve(Board_t board)
 
     // FIXME(kwok): The number of players is not supposed to be fixed to 2.
     double avg_cfu = sum_cfus / (2 * ag->GetBigBlind());
-    return avg_cfu;
+    double avg_bru = sum_brus / (2 * ag->GetBigBlind());
+    printf("avg_cfu=%g, avg_bru=%g\n", avg_cfu, avg_bru);
+    return std::tuple(avg_cfu, avg_bru);
 }
 
 // TODO(kwok): Adding back the pruned is necessary.
 // We ignore those pruned hands anyway, hence no need to set -1. The program won't panic.
-sPrivateHandBelief *VectorCfrWorker::WalkTree_Alternate(Node *this_node,
-                                                        int trainee,
-                                                        sPrivateHandBelief *opp_belief,
+sPrivateHandBelief *VectorCfrWorker::WalkTree_Alternate(Node *this_node, int trainee, sPrivateHandBelief *opp_belief,
                                                         Strategy *target_strategy,
-                                                        std::optional<CFU_COMPUTE_MODE> compute_node_hint)
+                                                        std::optional<CFU_COMPUTE_MODE> cfu_compute_node_hint,
+                                                        std::optional<STRATEGY_TYPE> strategy_type_hint,
+                                                        bool learn)
 {
     if (opp_belief->AllZero()) {
         return new sPrivateHandBelief(0.0);
@@ -112,21 +145,40 @@ sPrivateHandBelief *VectorCfrWorker::WalkTree_Alternate(Node *this_node,
                                                             this_node->IsShowdown());
         return cfu;
     }
-    return EvalChoiceNode_Alternate(this_node, trainee, opp_belief, target_strategy, compute_node_hint);
+    return EvalChoiceNode_Alternate(
+            this_node, trainee, opp_belief, target_strategy, cfu_compute_node_hint, strategy_type_hint, learn
+    );
 }
 
 sPrivateHandBelief *
 VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivateHandBelief *opp_belief,
                                           Strategy *target_strategy,
-                                          std::optional<CFU_COMPUTE_MODE> compute_mode_hint)
+                                          std::optional<CFU_COMPUTE_MODE> cfu_compute_mode_hint,
+                                          std::optional<STRATEGY_TYPE> strategy_type_hint,
+                                          bool learn)
 {
     auto a_max = this_node->GetAmax();
     bool is_trainee_turn = trainee == this_node->GetActingPlayer();
 
+    CFU_COMPUTE_MODE resolved_compute_mode;
+    if (is_trainee_turn && cfu_compute_mode_hint.has_value()) {
+        resolved_compute_mode = cfu_compute_mode_hint.value();
+    } else {
+        resolved_compute_mode = is_trainee_turn ? cfr_param_->cfu_compute_acting_playing
+                                                : cfr_param_->cfu_compute_opponent;
+    }
+
+    STRATEGY_TYPE resolved_strategy_type;
+    if (is_trainee_turn && strategy_type_hint.has_value()) {
+        resolved_strategy_type = strategy_type_hint.value();
+    } else {
+        resolved_strategy_type = cfr_param_->strategy_cal_mode_;
+    }
+
     /* (0) calc reach range */
 
     // copy the reach_ranges to child ranges
-    std::vector<sPrivateHandBelief *> child_reach_ranges;
+    std::vector<sPrivateHandBelief *> child_reach_ranges; // curr_node_reach_ranges
     child_reach_ranges.reserve(a_max);
     if (is_trainee_turn) {
         for (int a = 0; a < a_max; a++) {
@@ -136,7 +188,7 @@ VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivate
         for (int a = 0; a < a_max; a++) {
             child_reach_ranges.emplace_back(new sPrivateHandBelief(opp_belief)); // deep copy
         }
-        CalcReachRange(this_node, opp_belief, child_reach_ranges, target_strategy);
+        CalcReachRange(this_node, opp_belief, child_reach_ranges, target_strategy, cfr_param_->strategy_cal_mode_);
     }
 
     /* (1) collect CFUs from children */
@@ -147,51 +199,50 @@ VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivate
         auto *child_node = this_node->children[a];
         auto *child_node_reach_range = child_reach_ranges[a]; // will turn into `opp_belief` for child node
         children_cfus.emplace_back(
-                // be careful not to pass `compute_mode` as is. let the method decide on its own.
-                WalkTree_Alternate(child_node, trainee, child_node_reach_range, target_strategy, compute_mode_hint)
+                WalkTree_Alternate(
+                        child_node, trainee, child_node_reach_range, target_strategy,
+                        cfu_compute_mode_hint, strategy_type_hint, learn
+                )
         );
     }
 
     /* (2) assemble CFU of the current node */
 
     // precompute strategy only if it is trainee's turn. range rollout is fine, which is computed on the fly
-    float *all_belief_distr_1dim = nullptr;
-    if (is_trainee_turn) {
-        // unless we have pruning, we don't need to skip any one. it is a bit wasteful but makes it more accurate.
-        all_belief_distr_1dim = new float[FULL_HAND_BELIEF_SIZE * a_max];
-        for (auto &priv_hand_idx: priv_hand_kernel->valid_priv_hand_vector_idxes) {
-            int offset = a_max * priv_hand_idx;
-            auto b = priv_hand_kernel->GetBucket(this_node->GetRound(), priv_hand_idx);
-            target_strategy->ComputeStrategy(this_node, b, all_belief_distr_1dim + offset,
-                                             cfr_param_->strategy_cal_mode_
-            );
-        }
-    } else {
-        // FIXME(kwok): `all_belief_distr_1dim` may point to unallocated memory.
+    float *belief_distr = nullptr;
+    // if (is_trainee_turn) {
+    // unless we have pruning, we don't need to skip any one. it is a bit wasteful but makes it more accurate.
+    belief_distr = new float[FULL_HAND_BELIEF_SIZE * a_max];
+    for (auto &priv_hand_idx: priv_hand_kernel->valid_priv_hand_vector_idxes) {
+        int offset = a_max * priv_hand_idx;
+        auto b = priv_hand_kernel->GetBucket(this_node->GetRound(), priv_hand_idx);
+        target_strategy->ComputeStrategy(this_node, b, belief_distr + offset, resolved_strategy_type);
     }
-
-    CFU_COMPUTE_MODE resolved_compute_mode;
-    if (compute_mode_hint.has_value()) {
-        resolved_compute_mode = compute_mode_hint.value();
-    } else {
-        resolved_compute_mode = is_trainee_turn
-                                ? cfr_param_->cfu_compute_acting_playing
-                                : cfr_param_->cfu_compute_opponent;
-    }
+    // } else {
+    //     // FIXME(kwok): `belief_distr` may point to unallocated memory.
+    // }
 
     // NOTE(kwok): A utility of +1 is given for a win, and −1 for a loss.
     auto this_node_cfu = new sPrivateHandBelief(0.0);
-    // FIXME(kwok): `all_belief_distr_1dim` may point to unallocated memory.
-    ComputeCfu(this_node, child_reach_ranges, children_cfus, this_node_cfu, resolved_compute_mode,
-               all_belief_distr_1dim
+    // FIXME(kwok): `belief_distr` may point to unallocated memory.
+    ComputeCfu(
+            this_node, child_reach_ranges, children_cfus, this_node_cfu, resolved_compute_mode, belief_distr
     );
 
     /* (3) learn from regrets */
 
     // only trainee learns from regrets
     if (cfr_param_->regret_learning_on) {
-        if (is_trainee_turn) {
-            CollectAndLearnFromRegrets(this_node, children_cfus, this_node_cfu, target_strategy);
+        if (is_trainee_turn && learn) {
+            switch (resolved_compute_mode) {
+                case WEIGHTED_RESPONSE:
+                case SUM_RESPONSE:
+                    CollectRegrets(this_node, children_cfus, this_node_cfu, target_strategy);
+                    break;
+                case BEST_RESPONSE:
+                    CollectChildBRUs(this_node, children_cfus, this_node_cfu, target_strategy);
+                    break;
+            }
         }
     }
 
@@ -203,9 +254,9 @@ VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivate
         }
     }
 
-    if (is_trainee_turn) {
-        delete[] all_belief_distr_1dim;
-    }
+    // if (is_trainee_turn) {
+    delete[] belief_distr;
+    // }
 
     return this_node_cfu;
 }
@@ -264,7 +315,7 @@ Ranges *VectorCfrWorker::EvalChoiceNode_Pairwise(Node *this_node, Ranges *reach_
     //only need to roll out the acting_player
     int actor = this_node->GetActingPlayer();
     auto actor_child_beliefs = ExtractBeliefs(child_reach_ranges, actor);
-    CalcReachRange(this_node, &reach_ranges->beliefs_[actor], actor_child_beliefs, strategy);
+    CalcReachRange(this_node, &reach_ranges->beliefs_[actor], actor_child_beliefs, strategy, UNKNOWN);
 
     /*
      * WALK TREE RECURSE DOWN
@@ -302,7 +353,7 @@ Ranges *VectorCfrWorker::EvalChoiceNode_Pairwise(Node *this_node, Ranges *reach_
      */
     //only on actor
     if (cfr_param_->regret_learning_on) {
-        CollectAndLearnFromRegrets(this_node, actor_child_cfu, &cfu->beliefs_[actor], strategy);
+        CollectRegrets(this_node, actor_child_cfu, &cfu->beliefs_[actor], strategy);
     }
 
     //delete the util belief from child nodes
@@ -319,8 +370,8 @@ Ranges *VectorCfrWorker::EvalChoiceNode_Pairwise(Node *this_node, Ranges *reach_
 ///     * belief updating and pruning
 ///     * WAVG updating
 void VectorCfrWorker::CalcReachRange(Node *this_node, sPrivateHandBelief *belief,
-                                     std::vector<sPrivateHandBelief *> &child_ranges,
-                                     Strategy *target_strategy)
+                                     std::vector<sPrivateHandBelief *> &child_ranges, Strategy *target_strategy,
+                                     STRATEGY_TYPE strategy_type)
 {
     auto r = this_node->GetRound();
     auto a_max = this_node->GetAmax();
@@ -336,7 +387,7 @@ void VectorCfrWorker::CalcReachRange(Node *this_node, sPrivateHandBelief *belief
         auto b = priv_hand_kernel->GetBucket(r, priv_hand_i);
         auto rnb0 = target_strategy->ag_->kernel_->hash_rnba(r, sibling_i, b, 0);
         float distr_rnb[a_max]; // strategy if private hand is priv_hand_i
-        target_strategy->ComputeStrategy(this_node, b, distr_rnb, cfr_param_->strategy_cal_mode_);
+        target_strategy->ComputeStrategy(this_node, b, distr_rnb, strategy_type);
         /* update WAVG, if not frozen */
         if (cfr_param_->rm_avg_update == AVG_CLASSIC && b != frozen_b) {
             double reach_i = belief->belief_[priv_hand_i] * pow(10, this_node->reach_adjustment[b]);
@@ -498,7 +549,7 @@ void VectorCfrWorker::ComputeCfu(Node *this_node,
                                  std::vector<sPrivateHandBelief *> child_cfus,
                                  sPrivateHandBelief *this_node_cfu,
                                  CFU_COMPUTE_MODE cfu_compute_mode,
-                                 const float *all_belief_distr_1dim) const
+                                 const float *belief_distr) const
 {
     int a_max = this_node->GetAmax();
     for (auto &priv_hand_idx: priv_hand_kernel->valid_priv_hand_vector_idxes) {
@@ -517,7 +568,7 @@ void VectorCfrWorker::ComputeCfu(Node *this_node,
                         continue;
                     }
                     // FIXME(kwok): `all_belief_distr_1dim` may point to unallocated memory.
-                    float weight = all_belief_distr_1dim[offset + a];
+                    float weight = belief_distr[offset + a];
                     if (weight > 0.0) {
                         expected_utility += weight * child_cfus[a]->belief_[priv_hand_idx];
                     }
@@ -542,12 +593,11 @@ void VectorCfrWorker::ComputeCfu(Node *this_node,
                 break;
             }
             case BEST_RESPONSE : {
-                // NOTE(kwok): The best response is a strategy for a player that is optimal against the opponent
-                // strategy profile.
+                // the best response is a strategy for a player that is optimal against the opponent strategy
                 expected_utility = -std::numeric_limits<double>::infinity();
                 int offset = priv_hand_idx * a_max;
                 for (int a = 0; a < a_max; a++) {
-                    if (all_belief_distr_1dim[offset + a] > 0) {
+                    if (belief_distr[offset + a] > 0) {
                         // pruning will never happen in the BEST_RESPONSE mode.
                         auto utility = child_cfus[a]->belief_[priv_hand_idx];
                         if (utility != kBeliefPrunedFlag && utility > expected_utility) {
@@ -577,40 +627,73 @@ void VectorCfrWorker::ConditionalPrune()
 }
 
 void
-VectorCfrWorker::CollectAndLearnFromRegrets(Node *this_node,
-                                            std::vector<sPrivateHandBelief *> child_cfus,
-                                            sPrivateHandBelief *this_node_cfu,
-                                            Strategy *target_strategy)
+VectorCfrWorker::CollectChildBRUs(Node *this_node,
+                                  std::vector<sPrivateHandBelief *> child_brus,
+                                  sPrivateHandBelief *this_node_bru,
+                                  Strategy *target_strategy)
+{
+    auto a_max = this_node->GetAmax();
+    auto r = this_node->GetRound();
+    auto n = this_node->GetN();
+    // iterate all legal private hands within the current infoset for `this_node`
+    for (auto &priv_hand_i: priv_hand_kernel->valid_priv_hand_vector_idxes) {
+        // skip pruned hands
+        if (this_node_bru->IsPruned(priv_hand_i)) {
+            continue;
+        }
+        auto b = priv_hand_kernel->GetBucket(r, priv_hand_i);
+        auto rnb0 = target_strategy->ag_->kernel_->hash_rnba(r, n, b, 0);
+        for (int a = 0; a < a_max; a++) {
+            if (child_brus[a]->IsPruned(priv_hand_i)) {
+                continue;
+            }
+            double bru_child_a = child_brus[a]->belief_[priv_hand_i];
+            target_strategy->double_bru->insert(rnb0 + a);
+            target_strategy->double_bru->update_fn(
+                    rnb0 + a,
+                    [&](auto &bru)
+                    {
+                        bru = bru_child_a;
+                    }
+            );
+        }
+    }
+}
+
+void
+VectorCfrWorker::CollectRegrets(Node *this_node,
+                                std::vector<sPrivateHandBelief *> child_cfus,
+                                sPrivateHandBelief *this_node_cfu,
+                                Strategy *target_strategy)
 {
     auto a_max = this_node->GetAmax();
     auto r = this_node->GetRound();
     auto n = this_node->GetN();
     auto frozen_b = this_node->frozen_b;
-
-    // iterate all possible private hands within the current infoset for `this_node`
+    // iterate all legal private hands within the current infoset for `this_node`
     for (auto &priv_hand_i: priv_hand_kernel->valid_priv_hand_vector_idxes) {
-        // no need to update pruned hands
+        // skip pruned hands
         if (this_node_cfu->IsPruned(priv_hand_i)) {
             continue;
         }
-        auto b_priv_hand_i = priv_hand_kernel->GetBucket(r, priv_hand_i);
-        // if frozen, no need to update regret
-        if (b_priv_hand_i == frozen_b) {
+        auto b = priv_hand_kernel->GetBucket(r, priv_hand_i);
+        // once frozen, no regret update is needed
+        if (b == frozen_b) {
             continue;
         }
-        auto rnb0_priv_hand_i = target_strategy->ag_->kernel_->hash_rnba(r, n, b_priv_hand_i, 0);
-        double cfu_priv_hand_i = this_node_cfu->belief_[priv_hand_i];
-        // NOTE(kwok): Update the regrets, assuming the opponent's holding `priv_hand_i`
+        auto rnb0 = target_strategy->ag_->kernel_->hash_rnba(r, n, b, 0);
+        double cfu_this_node = this_node_cfu->belief_[priv_hand_i];
+        // update regrets, assuming opponent is holding `priv_hand_i`
         for (int a = 0; a < a_max; a++) {
-            // already pruned, no need to update regret for this child node
+            // pruned nodes won't participate into regret update
             if (child_cfus[a]->IsPruned(priv_hand_i)) {
                 continue;
             }
             double cfu_child_a = child_cfus[a]->belief_[priv_hand_i];
-            double diff = cfu_child_a - cfu_priv_hand_i; // naive regret
+            double diff = cfu_child_a - cfu_this_node; // naive regret
 #ifdef DEBUG_EAGER_LOOKUP
             // TODO(kwok): 🦊
-            double old_reg = strategy_->eager_double_regret_[rnb0_priv_hand_i + a];
+            double old_reg = strategy_->eager_double_regret_[rnb0 + a];
             double new_reg = ClampRegret(old_reg, diff, cfr_param_->rm_floor);
             if (old_reg > pow(10, 15) || new_reg > pow(10, 15)) {
                 logger::critical(
@@ -623,12 +706,12 @@ VectorCfrWorker::CollectAndLearnFromRegrets(Node *this_node,
                         this_node_cfu
                 );
             }
-            strategy_->eager_double_regret_[rnb0_priv_hand_i + a] = new_reg;
+            strategy_->eager_double_regret_[rnb0 + a] = new_reg;
 #endif
             // TODO(kwok): 🐦
-            target_strategy->double_regret_->insert(rnb0_priv_hand_i + a);
+            target_strategy->double_regret_->insert(rnb0 + a);
             target_strategy->double_regret_->update_fn(
-                    rnb0_priv_hand_i + a,
+                    rnb0 + a,
                     [&](auto &regret)
                     {
                         double old_reg = regret;

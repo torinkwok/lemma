@@ -1,6 +1,6 @@
 #include "cfr_worker.h"
 
-double ScalarCfrWorker::Solve(Board_t board)
+double ScalarCfrWorker::Solve(Board_t board, bool calc_bru)
 {
     auto ag = strategy->ag_;
     auto active_players = AbstractGame::GetActivePlayerNum();

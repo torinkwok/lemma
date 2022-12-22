@@ -542,7 +542,8 @@ Bucket_t Strategy::GetBucketFromMatchState(MatchState *match_state) const
 void Strategy::AllocateMemory(STRATEGY_TYPE type, CFR_MODE cfr_mode)
 {
     RNBA size = ag_->kernel_->MaxIndex();
-    int bytesize = 1;
+    int byte_num = 1;
+    double_bru = new cuckoohash_map<size_t, DOUBLE_REGRET>;
     switch (type) {
         case STRATEGY_REG:
             if (cfr_mode == CFR_VECTOR_ALTERNATE_SOLVE || cfr_mode == CFR_VECTOR_PAIRWISE_SOLVE) {
@@ -551,14 +552,14 @@ void Strategy::AllocateMemory(STRATEGY_TYPE type, CFR_MODE cfr_mode)
                 eager_double_regret_ = new double[size];
 #endif
                 double_regret_ = new cuckoohash_map<size_t, DOUBLE_REGRET>;
-                bytesize = 8;
+                byte_num = 8;
             } else if (cfr_mode == CFR_SCALAR_SOLVE) {
                 // scalar. NOTE(kwok): for Monte Carlo CFR.
 #ifdef DEBUG_EAGER_LOOKUP
                 eager_int_regret_ = new int[size];
 #endif
                 int_regret_ = new cuckoohash_map<size_t, INT_REGRET>;
-                bytesize = 4;
+                byte_num = 4;
             } else {
                 logger::critical("unsupported cfr type now %d", cfr_mode);
             }
@@ -570,26 +571,26 @@ void Strategy::AllocateMemory(STRATEGY_TYPE type, CFR_MODE cfr_mode)
                 eager_ulong_wavg_ = new uint64_t[size];
 #endif
                 ulong_wavg_ = new cuckoohash_map<size_t, ULONG_WAVG>;
-                bytesize = 8;
+                byte_num = 8;
             } else if (cfr_mode == CFR_SCALAR_SOLVE) {
                 // scalar. NOTE(kwok): for Monte Carlo CFR.
 #ifdef DEBUG_EAGER_LOOKUP
                 eager_uint_wavg_ = new uint32_t[size];
 #endif
                 uint_wavg_ = new cuckoohash_map<size_t, UINT_WAVG>;
-                bytesize = 4;
+                byte_num = 4;
             } else {
                 logger::critical("unsupported cfr type now %d", cfr_mode);
             }
             break;
         case STRATEGY_ZIPAVG:
-            bytesize = 1;
+            byte_num = 1;
             zipavg_ = new ZIPAVG[size];
             break;
         default:
             logger::critical("unsupported strategy type %s", StrategyToNameMap[type]);
     }
-    double mem_size = (double) size * bytesize / (1024.0 * 1024.0);
+    double mem_size = (double) size * byte_num / (1024.0 * 1024.0);
     logger::info("would have allocated heap memory for %s || length = %d || size = %f (mb)",
                  StrategyToNameMap[type],
                  size,
@@ -749,6 +750,9 @@ int Strategy::ComputeStrategy(Round_t r,
                 return GetPolicy<INT_REGRET>(rnb_avg, a_max, int_regret_, rnb0);
             }
         }
+        case STRATEGY_BEST_RESPONSE: {
+            return GetPolicy<DOUBLE_REGRET>(rnb_avg, a_max, double_bru, rnb0);
+        }
         case STRATEGY_ZIPAVG: {
             if (zipavg_ != nullptr) {
                 return GetPolicy<ZIPAVG>(rnb_avg, a_max, zipavg_, rnb0);
@@ -769,7 +773,7 @@ int Strategy::ComputeStrategy(Round_t r,
             }
         }
         default: {
-            logger::critical("does not support this cal stratey mode %s", StrategyToNameMap[mode]);
+            logger::critical("does not support this cal strategy mode %s", StrategyToNameMap[mode]);
             break;
         }
     }

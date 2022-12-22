@@ -71,7 +71,8 @@ enum STRATEGY_TYPE
     UNKNOWN,
     STRATEGY_WAVG,
     STRATEGY_REG,
-    STRATEGY_ZIPAVG
+    STRATEGY_ZIPAVG,
+    STRATEGY_BEST_RESPONSE,
 };
 
 static std::map<std::string, STRATEGY_TYPE> StrategyMap{

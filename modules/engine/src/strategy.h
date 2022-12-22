@@ -43,23 +43,19 @@ public:
     UINT_WAVG *eager_uint_wavg_ = nullptr;
 #endif
 
-    // for cfr vecor
     cuckoohash_map<size_t, DOUBLE_REGRET> *double_regret_ = nullptr;
     cuckoohash_map<size_t, ULONG_WAVG> *ulong_wavg_ = nullptr;
 
-    // for mccfr
     cuckoohash_map<size_t, INT_REGRET> *int_regret_ = nullptr;
     cuckoohash_map<size_t, UINT_WAVG> *uint_wavg_ = nullptr;
+
+    cuckoohash_map<size_t, DOUBLE_REGRET> *double_bru = nullptr;
 
     std::ifstream *file_ptr = nullptr;
 
 public:
-
-    //constructor and dest
     explicit Strategy(AbstractGame *ag)
-            : ag_(ag)
-    {
-    }
+            : ag_(ag) {}
 
     Strategy() = default;
 
@@ -70,9 +66,7 @@ public:
             delete file_ptr;
             file_ptr = nullptr;
         }
-
         delete ag_;
-
 #ifdef DEBUG_EAGER_LOOKUP
         // TODO(kwok): 🦊
         delete[] eager_double_regret_;
@@ -80,25 +74,21 @@ public:
         delete[] eager_ulong_wavg_;
         delete[] eager_uint_wavg_;
 #endif
-
-        delete double_regret_;
-        delete int_regret_;
-        delete ulong_wavg_;
-        delete uint_wavg_;
-
+        {
+            delete double_regret_;
+            delete int_regret_;
+            delete ulong_wavg_;
+            delete uint_wavg_;
+        }
+        delete double_bru;
         delete zipavg_;
-
         logger::debug("strategy [%s] object gracefully shutting down", name_);
     }
 
-    void SetAg(AbstractGame *ag)
-    {
-        ag_ = ag;
-    }
+    void SetAg(AbstractGame *ag) { ag_ = ag; }
 
-    /*
-     * compute strategy
-     */
+    /* compute strategy */
+
 #ifdef DEBUG_EAGER_LOOKUP
     int ComputeFoxStrategy(Round_t r, Node_t n, Bucket_t b, Action_t a_max, float *rnb_avg, STRATEGY_TYPE mode) const;
 #endif
@@ -109,9 +99,8 @@ public:
 
     ZIPAVG GetZipAvg(RNBA idx) const;
 
-    /*
-     * strategy allocation
-     */
+    /* strategy allocation */
+
     void InitMemoryAndValue(CFR_MODE cfr_mode = CFR_UNKNOWN);
 
     void AllocateMemory(STRATEGY_TYPE type, CFR_MODE cfr_mode = CFR_UNKNOWN);
@@ -120,16 +109,13 @@ public:
 
     void DiscountStrategy(STRATEGY_TYPE type, double factor) const;
 
-    /*
-     * for the compressed strategy only
-     */
-    void ClearZipAvgMemory();
+    /* compressed strategy only */
 
+    void ClearZipAvgMemory();
     void ConvertWavgToZipAvg(pthread_t *thread_pool, unsigned int num_threads) const;
 
-    /*
-     * act and pick function
-     */
+    /* act and pick function */
+
     bool EstimateNewAgReach(AbstractGame *new_ag, MatchState *new_match_state, STRATEGY_TYPE type) const;
 
     int EstimateReachProbAtNode(MatchState *last_match_state,
@@ -146,9 +132,8 @@ public:
 
     Bucket_t GetBucketFromMatchState(MatchState *match_state) const;
 
-    /*
-     * inspection.
-     */
+    /* inspection */
+
     void InspectNode(Node *inspect_node, const std::string &prefix, STRATEGY_TYPE calc_mode);
 
     void PrintNodeStrategy(Node *node, Bucket_t b, STRATEGY_TYPE calc_mode) const;
@@ -165,8 +150,7 @@ public:
 
     bool IsStrategyInitializedForMyHand(Node *matched_node, STRATEGY_TYPE strategy_type, MatchState *match_state) const;
 
-    std::vector<NodeMatchResult>
-    FindSortedMatchedNodes(State &ref_state) const;
+    std::vector<NodeMatchResult> FindSortedMatchedNodes(State &ref_state) const;
 };
 
 struct sThreadInputZipavgConvert
@@ -175,8 +159,10 @@ struct sThreadInputZipavgConvert
             : strategy(strategy), b_begin(b_begin), b_end(b_end), round(round) {}
 
     const Strategy *strategy;
+
     Bucket_t b_begin;
     Bucket_t b_end;
+
     int round;
 };
 

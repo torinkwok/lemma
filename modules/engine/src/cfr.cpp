@@ -272,11 +272,11 @@ void *CFR::CfrSolve(void *thread_args)
     switch (args->cfr_param_.cfr_mode_) {
         case CFR_VECTOR_PAIRWISE_SOLVE:
         case CFR_VECTOR_ALTERNATE_SOLVE:
-            worker = new VectorCfrWorker(args->blueprint_, args->strategy_, nullptr, &args->cfr_param_, my_flops, args->seed_);
+            worker = new VectorCfrWorker(args->blueprint_, args->strategy_, &args->cfr_param_, my_flops, args->seed_);
             worker->SetWalkingMode(args->cfr_param_.cfr_mode_);
             break;
         case CFR_SCALAR_SOLVE:
-            worker = new ScalarCfrWorker(args->blueprint_, args->strategy_, nullptr, &args->cfr_param_, my_flops, args->seed_);
+            worker = new ScalarCfrWorker(args->blueprint_, args->strategy_, &args->cfr_param_, my_flops, args->seed_);
             break;
         default:
             logger::critical("unsupported cfr type");
@@ -294,8 +294,13 @@ void *CFR::CfrSolve(void *thread_args)
         // Rather, we're sampling all required public chance events in one breath.
         SampleSequentialFullBoard(ag->root_state_, &ag->game_, board, cur_flop_idx, worker->my_flops_);
         // board.Print();
-        double local_util = worker->Solve(board);
-        printf("remaining_iter=%d, expl=%g\n", remaining_iter, local_util);
+        // bool calc_bru = remaining_iter % 50 == 0;
+        bool calc_bru = true;
+        double local_util = worker->Solve(board, calc_bru);
+        if (calc_bru) {
+            // printf("remaining_iter=%d, expl=%g\n", remaining_iter, local_util);
+            printf("remaining_iter=%d: ", remaining_iter);
+        }
         args->output_->AddIterResult(local_util);
     }
 
