@@ -258,10 +258,11 @@ public:
 
     sPrivateHandBelief *WalkTree_Alternate(Node *this_node, int trainee, sPrivateHandBelief *opp_belief,
                                            Strategy *target_strategy,
-                                           std::optional<CFU_COMPUTE_MODE> compute_node = std::optional<CFU_COMPUTE_MODE>());
+                                           std::optional<CFU_COMPUTE_MODE> compute_node_hint = std::optional<CFU_COMPUTE_MODE>());
 
     sPrivateHandBelief *EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivateHandBelief *opp_belief,
-                                                 Strategy *target_strategy, CFU_COMPUTE_MODE compute_mode);
+                                                 Strategy *target_strategy,
+                                                 std::optional<CFU_COMPUTE_MODE> compute_mode_hint);
 };
 
 #endif //AUTODIDACT_MODULES_ENGINE_SRC_CFR_WORKER_H_

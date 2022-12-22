@@ -99,7 +99,7 @@ sPrivateHandBelief *VectorCfrWorker::WalkTree_Alternate(Node *this_node,
                                                         int trainee,
                                                         sPrivateHandBelief *opp_belief,
                                                         Strategy *target_strategy,
-                                                        std::optional<CFU_COMPUTE_MODE> compute_node)
+                                                        std::optional<CFU_COMPUTE_MODE> compute_node_hint)
 {
     if (opp_belief->AllZero()) {
         return new sPrivateHandBelief(0.0);
@@ -112,18 +112,13 @@ sPrivateHandBelief *VectorCfrWorker::WalkTree_Alternate(Node *this_node,
                                                             this_node->IsShowdown());
         return cfu;
     }
-    bool is_trainee_turn = trainee == this_node->GetActingPlayer();
-    if (!compute_node.has_value()) {
-        compute_node = is_trainee_turn
-                       ? cfr_param_->cfu_compute_acting_playing
-                       : cfr_param_->cfu_compute_opponent;
-    }
-    return EvalChoiceNode_Alternate(this_node, trainee, opp_belief, target_strategy, compute_node.value());
+    return EvalChoiceNode_Alternate(this_node, trainee, opp_belief, target_strategy, compute_node_hint);
 }
 
 sPrivateHandBelief *
 VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivateHandBelief *opp_belief,
-                                          Strategy *target_strategy, CFU_COMPUTE_MODE compute_mode)
+                                          Strategy *target_strategy,
+                                          std::optional<CFU_COMPUTE_MODE> compute_mode_hint)
 {
     auto a_max = this_node->GetAmax();
     bool is_trainee_turn = trainee == this_node->GetActingPlayer();
@@ -152,8 +147,8 @@ VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivate
         auto *child_node = this_node->children[a];
         auto *child_node_reach_range = child_reach_ranges[a]; // will turn into `opp_belief` for child node
         children_cfus.emplace_back(
-                // FIXME(kwok): Be careful that do not pass `compute_mode` as is
-                WalkTree_Alternate(child_node, trainee, child_node_reach_range, target_strategy)
+                // be careful not to pass `compute_mode` as is. let the method decide on its own.
+                WalkTree_Alternate(child_node, trainee, child_node_reach_range, target_strategy, compute_mode_hint)
         );
     }
 
@@ -175,10 +170,21 @@ VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivate
         // FIXME(kwok): `all_belief_distr_1dim` may point to unallocated memory.
     }
 
+    CFU_COMPUTE_MODE resolved_compute_mode;
+    if (compute_mode_hint.has_value()) {
+        resolved_compute_mode = compute_mode_hint.value();
+    } else {
+        resolved_compute_mode = is_trainee_turn
+                                ? cfr_param_->cfu_compute_acting_playing
+                                : cfr_param_->cfu_compute_opponent;
+    }
+
     // NOTE(kwok): A utility of +1 is given for a win, and −1 for a loss.
     auto this_node_cfu = new sPrivateHandBelief(0.0);
     // FIXME(kwok): `all_belief_distr_1dim` may point to unallocated memory.
-    ComputeCfu(this_node, child_reach_ranges, children_cfus, this_node_cfu, compute_mode, all_belief_distr_1dim);
+    ComputeCfu(this_node, child_reach_ranges, children_cfus, this_node_cfu, resolved_compute_mode,
+               all_belief_distr_1dim
+    );
 
     /* (3) learn from regrets */
 
@@ -188,6 +194,7 @@ VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivate
             CollectAndLearnFromRegrets(this_node, children_cfus, this_node_cfu, target_strategy);
         }
     }
+
     // delete child pop up this_node_cfu
     for (int a = 0; a < a_max; a++) {
         delete children_cfus[a];
@@ -195,6 +202,7 @@ VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivate
             delete child_reach_ranges[a];
         }
     }
+
     if (is_trainee_turn) {
         delete[] all_belief_distr_1dim;
     }
