@@ -294,7 +294,7 @@ Ranges *VectorCfrWorker::EvalChoiceNode_Pairwise(Node *this_node, Ranges *reach_
      */
     //only on actor
     if (cfr_param_->regret_learning_on) {
-        CollectRegrets(this_node, actor_child_cfu, &cfu->beliefs_[actor], strategy);
+        CollectAndLearnFromRegrets(this_node, actor_child_cfu, &cfu->beliefs_[actor], strategy);
     }
 
     //delete the util belief from child nodes
