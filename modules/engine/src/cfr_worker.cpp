@@ -178,17 +178,18 @@ VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivate
     /* (0) calc reach range */
 
     // copy the reach_ranges to child ranges
-    std::vector<sPrivateHandBelief *> child_reach_ranges; // curr_node_reach_ranges
-    child_reach_ranges.reserve(a_max);
+    std::vector<sPrivateHandBelief *> curr_node_reach_ranges;
+    curr_node_reach_ranges.reserve(a_max);
     if (is_trainee_turn) {
         for (int a = 0; a < a_max; a++) {
-            child_reach_ranges.emplace_back(opp_belief); // shallow copy
+            // current node's reach range if opponent chose action `a`
+            curr_node_reach_ranges.emplace_back(opp_belief); // shallow copy
         }
     } else {
         for (int a = 0; a < a_max; a++) {
-            child_reach_ranges.emplace_back(new sPrivateHandBelief(opp_belief)); // deep copy
+            curr_node_reach_ranges.emplace_back(new sPrivateHandBelief(opp_belief)); // deep copy
         }
-        CalcReachRange(this_node, opp_belief, child_reach_ranges, target_strategy, cfr_param_->strategy_cal_mode_);
+        CalcReachRange(this_node, opp_belief, curr_node_reach_ranges, target_strategy, resolved_strategy_type);
     }
 
     /* (1) collect CFUs from children */
@@ -197,7 +198,7 @@ VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivate
     children_cfus.reserve(a_max);
     for (int a = 0; a < a_max; a++) {
         auto *child_node = this_node->children[a];
-        auto *child_node_reach_range = child_reach_ranges[a]; // will turn into `opp_belief` for child node
+        auto *child_node_reach_range = curr_node_reach_ranges[a]; // will turn into `opp_belief` for child node
         children_cfus.emplace_back(
                 WalkTree_Alternate(
                         child_node, trainee, child_node_reach_range, target_strategy,
@@ -208,25 +209,26 @@ VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivate
 
     /* (2) assemble CFU of the current node */
 
-    // precompute strategy only if it is trainee's turn. range rollout is fine, which is computed on the fly
-    float *belief_distr = nullptr;
-    // if (is_trainee_turn) {
-    // unless we have pruning, we don't need to skip any one. it is a bit wasteful but makes it more accurate.
-    belief_distr = new float[FULL_HAND_BELIEF_SIZE * a_max];
-    for (auto &priv_hand_idx: priv_hand_kernel->valid_priv_hand_vector_idxes) {
-        int offset = a_max * priv_hand_idx;
-        auto b = priv_hand_kernel->GetBucket(this_node->GetRound(), priv_hand_idx);
-        target_strategy->ComputeStrategy(this_node, b, belief_distr + offset, resolved_strategy_type);
+    // precompute strategy only for trainee's turn. for opponent's turn, range rollout is fine.
+    float *all_belief_distr_1dim = nullptr;
+    if (is_trainee_turn) {
+        // unless we have pruning, we don't need to skip any one. it is a bit wasteful but makes it more accurate.
+        all_belief_distr_1dim = new float[FULL_HAND_BELIEF_SIZE * a_max];
+        for (auto &priv_hand_idx: priv_hand_kernel->valid_priv_hand_vector_idxes) {
+            int offset = a_max * priv_hand_idx;
+            auto b = priv_hand_kernel->GetBucket(this_node->GetRound(), priv_hand_idx);
+            target_strategy->ComputeStrategy(this_node, b, all_belief_distr_1dim + offset, resolved_strategy_type);
+        }
+    } else {
+        // FIXME(kwok): `all_belief_distr_1dim` may point to unallocated memory.
     }
-    // } else {
-    //     // FIXME(kwok): `belief_distr` may point to unallocated memory.
-    // }
 
     // NOTE(kwok): A utility of +1 is given for a win, and −1 for a loss.
     auto this_node_cfu = new sPrivateHandBelief(0.0);
-    // FIXME(kwok): `belief_distr` may point to unallocated memory.
+    // FIXME(kwok): `all_belief_distr_1dim` may point to unallocated memory.
     ComputeCfu(
-            this_node, child_reach_ranges, children_cfus, this_node_cfu, resolved_compute_mode, belief_distr
+            this_node, curr_node_reach_ranges, children_cfus, this_node_cfu, resolved_compute_mode,
+            all_belief_distr_1dim
     );
 
     /* (3) learn from regrets */
@@ -250,13 +252,13 @@ VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivate
     for (int a = 0; a < a_max; a++) {
         delete children_cfus[a];
         if (!is_trainee_turn) {
-            delete child_reach_ranges[a];
+            delete curr_node_reach_ranges[a];
         }
     }
 
-    // if (is_trainee_turn) {
-    delete[] belief_distr;
-    // }
+    if (is_trainee_turn) {
+        delete[] all_belief_distr_1dim;
+    }
 
     return this_node_cfu;
 }
@@ -549,7 +551,7 @@ void VectorCfrWorker::ComputeCfu(Node *this_node,
                                  std::vector<sPrivateHandBelief *> child_cfus,
                                  sPrivateHandBelief *this_node_cfu,
                                  CFU_COMPUTE_MODE cfu_compute_mode,
-                                 const float *belief_distr) const
+                                 const float *all_belief_distr_1dim) const
 {
     int a_max = this_node->GetAmax();
     for (auto &priv_hand_idx: priv_hand_kernel->valid_priv_hand_vector_idxes) {
@@ -568,9 +570,9 @@ void VectorCfrWorker::ComputeCfu(Node *this_node,
                         continue;
                     }
                     // FIXME(kwok): `all_belief_distr_1dim` may point to unallocated memory.
-                    float weight = belief_distr[offset + a];
-                    if (weight > 0.0) {
-                        expected_utility += weight * child_cfus[a]->belief_[priv_hand_idx];
+                    float strategy_weight = all_belief_distr_1dim[offset + a];
+                    if (strategy_weight > 0.0) {
+                        expected_utility += strategy_weight * child_cfus[a]->belief_[priv_hand_idx];
                     }
                 }
                 if (expected_utility > pow(10, 15)) {
@@ -597,7 +599,7 @@ void VectorCfrWorker::ComputeCfu(Node *this_node,
                 expected_utility = -std::numeric_limits<double>::infinity();
                 int offset = priv_hand_idx * a_max;
                 for (int a = 0; a < a_max; a++) {
-                    if (belief_distr[offset + a] > 0) {
+                    if (all_belief_distr_1dim[offset + a] > 0) {
                         // pruning will never happen in the BEST_RESPONSE mode.
                         auto utility = child_cfus[a]->belief_[priv_hand_idx];
                         if (utility != kBeliefPrunedFlag && utility > expected_utility) {

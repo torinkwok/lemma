@@ -240,7 +240,7 @@ public:
                     std::vector<sPrivateHandBelief *> child_cfus,
                     sPrivateHandBelief *this_node_cfu,
                     CFU_COMPUTE_MODE cfu_compute_mode,
-                    const float *belief_distr) const;
+                    const float *all_belief_distr_1dim) const;
 
     void
     CalcReachRange(Node *this_node, sPrivateHandBelief *belief,
