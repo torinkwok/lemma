@@ -251,8 +251,8 @@ public:
     void ConditionalPrune();
 
     void
-    CollectRegrets(Node *this_node, std::vector<sPrivateHandBelief *> child_cfus,
-                   sPrivateHandBelief *this_node_cfu, Strategy *target_strategy);
+    CollectAndLearnFromRegrets(Node *this_node, std::vector<sPrivateHandBelief *> child_cfus,
+                               sPrivateHandBelief *this_node_cfu, Strategy *target_strategy);
 
     std::vector<sPrivateHandBelief *> ExtractBeliefs(std::vector<Ranges *> &ranges, int pos);
 

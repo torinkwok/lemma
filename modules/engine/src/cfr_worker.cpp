@@ -185,7 +185,7 @@ VectorCfrWorker::EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivate
     // only trainee learns from regrets
     if (cfr_param_->regret_learning_on) {
         if (is_trainee_turn) {
-            CollectRegrets(this_node, children_cfus, this_node_cfu, target_strategy);
+            CollectAndLearnFromRegrets(this_node, children_cfus, this_node_cfu, target_strategy);
         }
     }
     // delete child pop up this_node_cfu
@@ -569,9 +569,10 @@ void VectorCfrWorker::ConditionalPrune()
 }
 
 void
-VectorCfrWorker::CollectRegrets(Node *this_node,
-                                std::vector<sPrivateHandBelief *> child_cfus, sPrivateHandBelief *this_node_cfu,
-                                Strategy *target_strategy)
+VectorCfrWorker::CollectAndLearnFromRegrets(Node *this_node,
+                                            std::vector<sPrivateHandBelief *> child_cfus,
+                                            sPrivateHandBelief *this_node_cfu,
+                                            Strategy *target_strategy)
 {
     auto a_max = this_node->GetAmax();
     auto r = this_node->GetRound();
