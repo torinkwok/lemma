@@ -334,6 +334,7 @@ void VectorCfrWorker::CalcReachRange(Node *this_node, sPrivateHandBelief *belief
             double reach_i = belief->belief_[priv_hand_i] * pow(10, this_node->reach_adjustment[b]);
             // adjustment adaptively goes up
             if (reach_i > 0.0 && reach_i < 100) {
+                // TODO(kwok): Refactor into using modern C++ thread API.
                 pthread_mutex_lock(&this_node->mutex_);
                 reach_i = belief->belief_[priv_hand_i] * pow(10, this_node->reach_adjustment[b]);
                 while (true) {
@@ -397,14 +398,14 @@ void VectorCfrWorker::CalcReachRange(Node *this_node, sPrivateHandBelief *belief
                 );
             }
             for (int a = 0; a < a_max; a++) {
-                double accu = reach_i * distr_rnb[a];
+                double accumulate = reach_i * distr_rnb[a];
 #ifdef DEBUG_EAGER_LOOKUP
                 // TODO(kwok): 🦊
-                double new_wavg = target_strategy->eager_ulong_wavg_[rnb0 + a] + accu;
+                double new_wavg = target_strategy->eager_ulong_wavg_[rnb0 + a] + accumulate;
                 target_strategy->eager_ulong_wavg_[rnb0 + a] = (ULONG_WAVG) new_wavg;
 #endif
                 // TODO(kwok): 🐦
-                target_strategy->ulong_wavg_->upsert(rnb0 + a, [&](auto &n) { n += accu; }, accu);
+                target_strategy->ulong_wavg_->upsert(rnb0 + a, [&](auto &n) { n += accumulate; }, accumulate);
 #ifdef DEBUG_EAGER_LOOKUP
                 if (target_strategy->eager_ulong_wavg_[rnb0 + a] != target_strategy->ulong_wavg_->find(rnb0 + a)) {
                     logger::warn("🦊%lu vs. 🐦%lu vs. %lu",
@@ -477,7 +478,7 @@ void VectorCfrWorker::CalcReachRange(Node *this_node, sPrivateHandBelief *belief
             // safe-guarding
             auto new_v = child_ranges[a]->belief_[priv_hand_i];
             if (new_v > 0.0 && new_v < pow(10, -14)) {
-                logger::warn("🚨reach is too small %.16f [r %d]", new_v, this_node->GetRound());
+                logger::warn("🚨reach of %.16f is considered too small for round %d", new_v, this_node->GetRound());
             }
         }
     }
