@@ -51,7 +51,7 @@ public:
     CFR_MODE mode_;
 
     // return exploitability mbb/g
-    virtual double Solve(Board_t board, bool calc_bru) = 0;
+    virtual double Solve(Board_t board, bool calc_bru_explo, double *out_bru_explo) = 0;
 
     static double ClampRegret(double old_reg, double diff, double floor)
     {
@@ -183,7 +183,7 @@ public:
     {
     }
 
-    double Solve(Board_t board, bool calc_bru) override;
+    double Solve(Board_t board, bool calc_bru_explo, double *out_bru_explo) override;
 
     double WalkTree(int trainee, Node *this_node, sPrivateHandsInfo &hand_info);
 
@@ -224,9 +224,9 @@ public:
         delete priv_hand_kernel;
     };
 
-    double Solve(Board_t board, bool calc_bru) override;
+    double Solve(Board_t board, bool calc_bru_explo, double *out_bru_explo) override;
 
-    std::pair<double, double> SolveWithBRU(Board_t board, bool calc_bru);
+    double CalcBRU(Board_t board);
 
     Ranges *WalkTree_Pairwise(Node *this_node, Ranges *reach_ranges);
 
@@ -261,13 +261,16 @@ public:
 
     sPrivateHandBelief *WalkTree_Alternate(Node *this_node, int trainee, sPrivateHandBelief *opp_belief,
                                            Strategy *target_strategy,
-                                           std::optional<CFU_COMPUTE_MODE> cfu_compute_node_hint,
-                                           std::optional<STRATEGY_TYPE> strategy_type_hint, bool learn);
+                                           std::optional<CFU_COMPUTE_MODE> trainee_cfu_compute_node_hint,
+                                           std::optional<STRATEGY_TYPE> trainee_strategy_type_hint, bool learn);
 
     sPrivateHandBelief *EvalChoiceNode_Alternate(Node *this_node, int trainee, sPrivateHandBelief *opp_belief,
                                                  Strategy *target_strategy,
-                                                 std::optional<CFU_COMPUTE_MODE> cfu_compute_mode_hint,
-                                                 std::optional<STRATEGY_TYPE> strategy_type_hint, bool learn);
+                                                 std::optional<CFU_COMPUTE_MODE> trainee_cfu_compute_mode_hint,
+                                                 std::optional<STRATEGY_TYPE> trainee_strategy_type_hint, bool learn);
+
+private:
+    std::pair<double, double> _Solve(Board_t board, bool calc_bru);
 };
 
 #endif //AUTODIDACT_MODULES_ENGINE_SRC_CFR_WORKER_H_

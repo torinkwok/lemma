@@ -294,12 +294,12 @@ void *CFR::CfrSolve(void *thread_args)
         // Rather, we're sampling all required public chance events in one breath.
         SampleSequentialFullBoard(ag->root_state_, &ag->game_, board, cur_flop_idx, worker->my_flops_);
         // board.Print();
-        // bool calc_bru = remaining_iter % 50 == 0;
-        bool calc_bru = true;
-        double local_util = worker->Solve(board, calc_bru);
-        if (calc_bru) {
+        bool calc_bru_explo = remaining_iter % 1 == 0;
+        double bru_explo = std::numeric_limits<double>::infinity();
+        double local_util = worker->Solve(board, calc_bru_explo, &bru_explo);
+        if (calc_bru_explo) {
             // printf("remaining_iter=%d, expl=%g\n", remaining_iter, local_util);
-            printf("remaining_iter=%d: ", remaining_iter);
+            fprintf(stderr, "remaining_iter = %d: ", remaining_iter);
         }
         args->output_->AddIterResult(local_util);
     }
@@ -604,7 +604,7 @@ void CFR::Config(web::json::value data)
         }
     }
 
-    cfr_param_.rm_floor *= 100 * REGRET_SCALE_FACTOR; //todo hack
+    // cfr_param_.rm_floor *= 100 * REGRET_SCALE_FACTOR; //todo hack
     //  logger::info("cfr solving with regret matching floor %f", cfr_param_.rm_floor);
 
     if (data.has_field("convergence")) {

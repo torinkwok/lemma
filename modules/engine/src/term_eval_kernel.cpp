@@ -124,7 +124,7 @@ void TermEvalKernel::FastShowdownEval(const double *opp_full_belief,
             // NOTE(kwok): the total net of all possible `c` ranked as `rank_id` after paired with another card
             double drift_for_priv_hand = 0.0;
             for (auto &c: sorted_infosets_by_rank[i]->GetHandPair()) {
-                // NOTE(kwok): card `c` will be repeatly picked, hence the recent lookup
+                // NOTE(kwok): card `c` will be repeatedly picked, hence the recent lookup
                 auto combo = ComboIdx(recent_skipping_ranks_for_card[c], c);
                 if (rank_id != skipping_ranks_of_combo[combo]) {
                     recent_skipping_ranks_for_card[c]++;
