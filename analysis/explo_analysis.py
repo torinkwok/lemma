@@ -16,7 +16,7 @@ p2_bru_explo_data = []
 moving_average_window_size = 50
 
 
-def running_agent():
+def run_agent(*, log=False):
     import re
     # remaining_iter = 12499950: avg_cfu = 734.506, bru_explo = (355.634 + 35.6298)/2 = 195.632
     explo_line_pattern = re.compile(
@@ -35,15 +35,21 @@ def running_agent():
         line = agent_proc.stderr.readline()
         if not line:
             break
-        print(line, end='')
+        if log:
+            print(line, end='')
         m = re.search(explo_line_pattern, line)
         if not m:
             continue
-        tup = tuple(map(lambda n: abs(float(n)), m.groups()[-3:]))
+        yield tuple(map(lambda n: abs(float(n)), m.groups()[-3:]))
+
+
+def run_agent_wrapper():
+    for tup in run_agent():
+        print(tup)
         buffer_queue.put(tup)
 
 
-def running_agent_mock():
+def run_agent_mock():
     while True:
         for n in np.random.random(100) * 100:
             buffer_queue.put(n)
@@ -80,7 +86,7 @@ if __name__ == '__main__':
     fig, ax = plt.subplots(figsize=(5, 2.7), layout='constrained')
     reset_ax()
 
-    agent_thread = threading.Thread(target=running_agent)
+    agent_thread = threading.Thread(target=run_agent_wrapper)
     agent_thread.start()
 
     anim = FuncAnimation(fig, pump_anim_frame, interval=1000, blit=True)
