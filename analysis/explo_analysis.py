@@ -18,9 +18,12 @@ moving_average_window_size = 50
 
 def run_agent(*, log=False):
     import re
-    # remaining_iter = 12499950: avg_cfu = 734.506, bru_explo = (355.634 + 35.6298)/2 = 195.632
+    # remaining_iter = 12499950: avg_cfu = 734.506, bru_explo = (-355.634 + 35.6298)/2 = 195.632
+    # remaining_iter = 12499965: avg_cfu = 0, bru_explo = (72.8961 + -2.53304)/2 = 35.1815
+    int_cap = r'(\d+)'
+    float_cap = r'(-?\d+(?:\.\d+)?)'
     explo_line_pattern = re.compile(
-        r'^remaining_iter = (\d+): avg_cfu = (\d+\.\d+), bru_explo = \((\d+\.\d+) \+ (\d+\.\d+)\)/2 = (\d+\.\d+)$'
+        rf'^remaining_iter = {int_cap}: avg_cfu = {float_cap}, bru_explo = \({float_cap} \+ {float_cap}\)/2 = {float_cap}$'
     )
     agent_exe_path = os.path.abspath(pathlib.Path() / '..' / 'bin/build/release-dbinfo/agent')
     os.chdir(pathlib.Path() / '..')
@@ -44,7 +47,7 @@ def run_agent(*, log=False):
 
 
 def run_agent_wrapper():
-    for tup in run_agent():
+    for tup in run_agent(log=True):
         print(tup)
         buffer_queue.put(tup)
 
