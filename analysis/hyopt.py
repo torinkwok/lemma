@@ -12,8 +12,8 @@ from common import run_agent
 def set_hy_params(hy_params):
     print(f'🚽{hy_params}')
     for pot in ['0pot', 'bigpot', 'midpot']:
-        # with open(f'config/engine/delta/cfr/cfrs_r2_upoker-p_{pot}.json', 'w') as fh:
-        with open(f'config/engine/delta/cfr/{datetime.now().timestamp()}.json', 'w') as fh:
+        # with open(f'config/engine/delta/cfr/{datetime.now().timestamp()}.json', 'w') as fh:
+        with open(f'config/engine/delta/cfr/cfrs_r2_upoker-p_{pot}.json', 'w') as fh:
             json.dump(hy_params, fh, indent='    ')
 
 
