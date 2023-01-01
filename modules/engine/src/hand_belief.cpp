@@ -53,14 +53,15 @@ void sPrivateHandBelief::Purify()
 
 void sPrivateHandBelief::PrintNonZeroBelief()
 {
-    // if (NonZeroBeliefCount() <= 100) {
-        std::string output = "hand belief (" + std::to_string(NonZeroBeliefCount()) + "): ";
-        for (auto i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {
-            if (belief_[i] > 0) {
-                output += VectorIdxToString(i) + " ~ ";
-                output += std::to_string(belief_[i]) + " | ";
-            }
+    if (NonZeroBeliefCount() > 100) {
+        return;
+    }
+    std::string output = "hand belief (" + std::to_string(NonZeroBeliefCount()) + "): ";
+    for (auto i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {
+        if (belief_[i] > 0) {
+            output += VectorIdxToString(i) + " ~ ";
+            output += std::to_string(belief_[i]) + " | ";
         }
-        logger::info(output);
-    // }
+    }
+    logger::info(output);
 }
