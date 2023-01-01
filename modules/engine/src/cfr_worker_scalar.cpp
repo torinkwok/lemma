@@ -62,8 +62,8 @@ double ScalarCfrWorker::Solve(Board_t board, bool calc_bru_explo, double *out_br
         int n_sidewalk_iters = 50;
         for (int i = 0; i < n_sidewalk_iters; i++) {
             private_hands_info.SamplePrivateHandsForAll(ag, local_root_beliefs);
-            for (int trainee_pos = 0; trainee_pos < active_players; trainee_pos++) {
-                WavgUpdateSideWalk(trainee_pos, ag->root_node_, private_hands_info, strategy);
+            for (int trainee = 0; trainee < active_players; trainee++) {
+                WavgUpdateSideWalk(ag->root_node_, trainee, private_hands_info, strategy);
             }
         }
     }
@@ -83,23 +83,23 @@ double ScalarCfrWorker::WalkTree(Node *this_node, int trainee, sPrivateHandsInfo
                                  std::optional<STRATEGY_TYPE> trainee_strategy_type_hint, bool learn)
 {
     if (this_node->IsTerminal()) {
-        return EvalTermNode(trainee, this_node, hand_info);
+        return EvalTermNode(this_node, trainee, hand_info);
     }
     // depth limited solving, till the local root of next round (rather than the local root of this round)
     if (this_node->IsLeafNode()) {
         // SimpleTimer timer;
-        auto result = EvalLeafRootNode(trainee, this_node, hand_info);
+        auto result = EvalLeafRootNode(this_node, trainee, hand_info);
         // timer.Checkpoint("🦃all " + std::to_string(cfr_param_->depth_limited_rollout_reps_) + " rollouts for round " +
         //                  std::to_string(this_node->GetRound() - 1));
         return result;
     }
-    return EvalInterNode(
-            trainee, this_node, hand_info, target_strategy, trainee_cfu_compute_mode_hint, trainee_strategy_type_hint,
-            learn
+    return EvalInterNode(this_node,
+                         trainee, hand_info, target_strategy, trainee_cfu_compute_mode_hint, trainee_strategy_type_hint,
+                         learn
     );
 }
 
-double ScalarCfrWorker::EvalTermNode(int trainee, Node *this_node, sPrivateHandsInfo &hand_info)
+double ScalarCfrWorker::EvalTermNode(Node *this_node, int trainee, sPrivateHandsInfo &hand_info)
 {
     if (this_node->IsShowdown()) {
         int stake = this_node->GetStake(trainee);
@@ -120,7 +120,7 @@ double ScalarCfrWorker::EvalTermNode(int trainee, Node *this_node, sPrivateHands
  * v3: cache preflop as file
  * v4: ...
  */
-double ScalarCfrWorker::EvalLeafRootNode(int trainee, Node *leaf_root_node, sPrivateHandsInfo &hand_info)
+double ScalarCfrWorker::EvalLeafRootNode(Node *leaf_root_node, int trainee, sPrivateHandsInfo &hand_info)
 {
     // should be the last round. it's the pluribus way
     auto r = leaf_root_node->GetRound() - 1;
@@ -289,7 +289,7 @@ void ScalarCfrWorker::CollectRegrets(Node *this_node, const double *children_cfu
 }
 
 double
-ScalarCfrWorker::EvalInterNode(int trainee, Node *this_node, sPrivateHandsInfo &hand_info, Strategy *target_strategy,
+ScalarCfrWorker::EvalInterNode(Node *this_node, int trainee, sPrivateHandsInfo &hand_info, Strategy *target_strategy,
                                std::optional<CFU_COMPUTE_MODE> trainee_cfu_compute_mode_hint,
                                std::optional<STRATEGY_TYPE> trainee_strategy_type_hint, bool learn)
 {
@@ -410,18 +410,16 @@ ScalarCfrWorker::EvalInterNode(int trainee, Node *this_node, sPrivateHandsInfo &
     }
 }
 
-double ScalarCfrWorker::RolloutWalkLeafTreeWithBiasFavor(int trainee,
-                                                         Node *this_node,
-                                                         sPrivateHandsInfo &hand_info,
+double ScalarCfrWorker::RolloutWalkLeafTreeWithBiasFavor(Node *this_node, int trainee, sPrivateHandsInfo &hand_info,
                                                          int *bias_favors_for_all)
 {
 #if 0
     this_node->PrintState("leaf node: ");
 #endif
     if (this_node->IsTerminal()) {
-        return EvalTermNode(trainee, this_node, hand_info);
+        return EvalTermNode(this_node, trainee, hand_info);
     }
-    return RolloutLeafInterNodeWithBiasFavor(trainee, this_node, hand_info, bias_favors_for_all);
+    return RolloutLeafInterNodeWithBiasFavor(this_node, trainee, hand_info, bias_favors_for_all);
 }
 
 double ScalarCfrWorker::RolloutLeafRootNode(Node *leaf_root_node, sPrivateHandsInfo &hand_info)
@@ -462,7 +460,7 @@ double ScalarCfrWorker::RolloutLeafRootNode(Node *leaf_root_node, sPrivateHandsI
 
     // NOTE(kwok): The fundamental structure of the following giant loop:
     //      3 rollout reps (assumed here)
-    //          2 trainees (a.k.a. traversers) FIXME(kwok): The number of players is not supposed to be fixed to 2.
+    //          2 trainees FIXME(kwok): The number of players is not supposed to be fixed to 2.
     //              4 continuation strategies (pre-computed, along with biased towards folding, calling, and raising respectively)
     // doing 3 x 2 x 4 = 24 probes in total
     // TODO(kwok): Separate this loop body into several testable functions.
@@ -512,8 +510,10 @@ double ScalarCfrWorker::RolloutLeafRootNode(Node *leaf_root_node, sPrivateHandsI
                 bias_favors_for_all[1 - trainee] = opp_bias_favor;
                 // NOTE(kwok): Fire a probe with the selected bias favor until reached a terminal. All nodes
                 // on the decision chain will be biased towards the specified bias favor.
-                trainee_bias_favor_cfus[trainee_bias_favor] = RolloutWalkLeafTreeWithBiasFavor(
-                        trainee, matched_node, subgame_priv_hands_info, bias_favors_for_all
+                trainee_bias_favor_cfus[trainee_bias_favor] = RolloutWalkLeafTreeWithBiasFavor(matched_node,
+                                                                                               trainee,
+                                                                                               subgame_priv_hands_info,
+                                                                                               bias_favors_for_all
                 );
             }
 
@@ -540,9 +540,7 @@ double ScalarCfrWorker::RolloutLeafRootNode(Node *leaf_root_node, sPrivateHandsI
     return rollout_final_cfus[0]; // only for player 0
 }
 
-double ScalarCfrWorker::RolloutLeafInterNodeWithBiasFavor(int trainee,
-                                                          Node *this_node,
-                                                          sPrivateHandsInfo &hand_info,
+double ScalarCfrWorker::RolloutLeafInterNodeWithBiasFavor(Node *this_node, int trainee, sPrivateHandsInfo &hand_info,
                                                           int *bias_favors_for_all)
 {
     auto r = this_node->GetRound();
@@ -615,12 +613,12 @@ double ScalarCfrWorker::RolloutLeafInterNodeWithBiasFavor(int trainee,
 #endif
 
     auto *sampled_child = this_node->children[sampled_a];
-    double cfu = RolloutWalkLeafTreeWithBiasFavor(trainee, sampled_child, hand_info, bias_favors_for_all);
+    double cfu = RolloutWalkLeafTreeWithBiasFavor(sampled_child, trainee, hand_info, bias_favors_for_all);
     return cfu;
 }
 
 /// Pluribus' way to update WAVG.
-void ScalarCfrWorker::WavgUpdateSideWalk(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info,
+void ScalarCfrWorker::WavgUpdateSideWalk(Node *this_node, int trainee, sPrivateHandsInfo &hand_info,
                                          Strategy *target_strategy)
 {
     if (this_node->IsTerminal()) {
@@ -631,14 +629,14 @@ void ScalarCfrWorker::WavgUpdateSideWalk(int trainee_pos, Node *this_node, sPriv
         return;
     }
 
-    bool is_my_turn = this_node->GetActingPlayer() == trainee_pos;
+    bool is_my_turn = this_node->GetActingPlayer() == trainee;
     auto a_max = this_node->GetAmax();
 
     if (is_my_turn) {
         // NOTE(kwok): The agent's turn.
         int r = this_node->GetRound();
         auto n = this_node->GetN();
-        Bucket_t b = hand_info.buckets_[trainee_pos][r];
+        Bucket_t b = hand_info.buckets_[trainee][r];
         float distr_rnb[a_max];
         target_strategy->ComputeStrategy(this_node, b, distr_rnb, cfr_param_->strategy_cal_mode_);
         int sampled_a = RndXorShift<float>(distr_rnb, a_max, x, y, z, (1 << 16));
@@ -654,11 +652,11 @@ void ScalarCfrWorker::WavgUpdateSideWalk(int trainee_pos, Node *this_node, sPriv
         // TODO(kwok): 🐦
         // TODO(kwok): Test if this operation blocks.
         target_strategy->uint_wavg_->upsert(rnba, [](auto &n) { n++; }, 1);
-        WavgUpdateSideWalk(trainee_pos, this_node->children[sampled_a], hand_info, target_strategy);
+        WavgUpdateSideWalk(this_node->children[sampled_a], trainee, hand_info, target_strategy);
     } else {
         // NOTE(kwok): The opponent's turn.
         for (auto a = 0; a < a_max; a++) {
-            WavgUpdateSideWalk(trainee_pos, this_node->children[a], hand_info, target_strategy);
+            WavgUpdateSideWalk(this_node->children[a], trainee, hand_info, target_strategy);
         }
     }
 }

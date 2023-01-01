@@ -189,14 +189,14 @@ public:
                     std::optional<CFU_COMPUTE_MODE> trainee_cfu_compute_mode_hint,
                     std::optional<STRATEGY_TYPE> trainee_strategy_type_hint, bool learn);
 
-    static double EvalTermNode(int trainee, Node *this_node, sPrivateHandsInfo &hand_info);
+    static double EvalTermNode(Node *this_node, int trainee, sPrivateHandsInfo &hand_info);
 
-    double EvalInterNode(int trainee, Node *this_node, sPrivateHandsInfo &hand_info, Strategy *target_strategy,
+    double EvalInterNode(Node *this_node, int trainee, sPrivateHandsInfo &hand_info, Strategy *target_strategy,
                          std::optional<CFU_COMPUTE_MODE> trainee_cfu_compute_mode_hint,
                          std::optional<STRATEGY_TYPE> trainee_strategy_type_hint, bool learn);
 
     // Depth-Limited Solving
-    double EvalLeafRootNode(int trainee, Node *leaf_root_node, sPrivateHandsInfo &hand_info);
+    double EvalLeafRootNode(Node *leaf_root_node, int trainee, sPrivateHandsInfo &hand_info);
 
     void ComputeCfu(Node *this_node, const double *children_cfus, double &out_this_node_cfu,
                     CFU_COMPUTE_MODE cfu_compute_mode, const float *distr_rnb, const bool *prune_flag) const;
@@ -207,15 +207,15 @@ public:
     void CollectRegrets(Node *this_node, const double *children_cfus, const double &this_node_cfu,
                         Strategy *target_strategy, const bool *prune_flag, sPrivateHandsInfo &hand_info);
 
-    void WavgUpdateSideWalk(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info,
+    void WavgUpdateSideWalk(Node *this_node, int trainee, sPrivateHandsInfo &hand_info,
                             Strategy *target_strategy);
 
-    double RolloutWalkLeafTreeWithBiasFavor(int trainee, Node *this_node, sPrivateHandsInfo &hand_info,
+    double RolloutWalkLeafTreeWithBiasFavor(Node *this_node, int trainee, sPrivateHandsInfo &hand_info,
                                             int *bias_favors_for_all);
 
     double RolloutLeafRootNode(Node *leaf_root_node, sPrivateHandsInfo &hand_info);
 
-    double RolloutLeafInterNodeWithBiasFavor(int trainee, Node *this_node, sPrivateHandsInfo &hand_info,
+    double RolloutLeafInterNodeWithBiasFavor(Node *this_node, int trainee, sPrivateHandsInfo &hand_info,
                                              int *bias_favors_for_all);
 };
 
