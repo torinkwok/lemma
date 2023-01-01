@@ -7,19 +7,29 @@ double ScalarCfrWorker::Solve(Board_t board, bool calc_bru_explo, double *out_br
     auto hands_info = sPrivateHandsInfo(active_players, board, gen);
 
     // NOTE(kwok): assemble local root private hand beliefs based on the given board
-    std::array<
-            sPrivateHandBelief *,
-            2 // FIXME(kwok): The number of players is not supposed to be fixed to 2.
-    > local_root_beliefs{};
+    // FIXME(kwok): The number of players is not supposed to be fixed to 2.
+    std::array<sPrivateHandBelief *, 2> root_beliefs{};
     for (int p = 0; p < active_players; p++) {
-        local_root_beliefs[p] = new sPrivateHandBelief(&ag->root_hand_beliefs_for_all_[p]);
-        local_root_beliefs[p]->NormalizeExcludeBoard(board);
+        root_beliefs[p] = new sPrivateHandBelief(&ag->root_hand_beliefs_for_all_[p]);
+        root_beliefs[p]->NormalizeExcludeBoard(board);
     }
 
-    double sum_cfus = 0.0;
+    double avg_cfu = 0.0;
+
     // FIXME(kwok): What about blueprint computing?
     // TODO(kwok): See `n_priv_hand_samples` also as a hyper-parameter.
-    static const int n_priv_hand_samples = 10;
+    static const int n_priv_hand_samples = 1;
+
+    double *brus = nullptr;
+    size_t brus_size = n_priv_hand_samples * 2;
+    if (calc_bru_explo) {
+        // FIXME(kwok): The number of players is not supposed to be fixed to 2.
+        brus = new double[brus_size];
+        for (int i = 0; i < n_priv_hand_samples; i++) {
+            brus[i] = std::numeric_limits<double>::infinity();
+        }
+    }
+
     for (int i = 0; i < n_priv_hand_samples; i++) {
         // NOTE(kwok): On each iteration, we start by sampling all of chance’s actions: the public chance
         // events visible to each player, as well as the private chance events that are visible to only a
@@ -29,7 +39,7 @@ double ScalarCfrWorker::Solve(Board_t board, bool calc_bru_explo, double *out_br
         // NOTE(kwok): Here we're sampling all the private chance events, i.e. the private hands of each player.
         // The public chance event, i.e. the public cards, has already been sampled by the outside invoker of
         // ScalarCfrWorker::Solve.
-        hands_info.SamplePrivateHandsForAll(ag, local_root_beliefs);
+        hands_info.SamplePrivateHandsForAll(ag, root_beliefs);
         if (cfr_param_->pruning_on && cfr_param_->rm_floor < 0) {
             iter_prune_flag = GenRndNumber(1, 100) <= cfr_param_->rollout_prune_prob * 100;
         }
@@ -44,16 +54,32 @@ double ScalarCfrWorker::Solve(Board_t board, bool calc_bru_explo, double *out_br
         // counterfactual value v ̃i(σ, I) for player i. At each choice node for player i, these values are all
         // that is needed to calculate the regret for each action and update the strategy.
         //
-        // Note that at a terminal node z ∈ Z, it takes O(1) work to determine the sum_cfus for player i, u_i(z).
+        // Note that at a terminal node z ∈ Z, it takes O(1) work to determine the avg_cfu for player i, u_i(z).
 
-        // NOTE(kwok): Walk down the training tree alternatively.
+        // walk down the training tree alternatively.
         for (int trainee = 0; trainee < active_players; trainee++) {
-            sum_cfus += WalkTree(ag->root_node_,
-                                 trainee, hands_info, strategy,
-                                 std::optional<CFU_COMPUTE_MODE>(),
-                                 std::optional<STRATEGY_TYPE>(),
-                                 true
+            avg_cfu += WalkTree(ag->root_node_,
+                                trainee, hands_info, strategy,
+                                std::optional<CFU_COMPUTE_MODE>(),
+                                std::optional<STRATEGY_TYPE>(),
+                                true
             );
+        }
+        if (calc_bru_explo) {
+            for (int trainee = 0; trainee < active_players; trainee++) {
+                // FIXME(kwok): The number of players is not supposed to be fixed to 2.
+                WalkTree(ag->root_node_, trainee, hands_info, strategy,
+                         BEST_RESPONSE, std::optional<STRATEGY_TYPE>(), true
+                );
+            }
+            for (int trainee = 0; trainee < active_players; trainee++) {
+                // FIXME(kwok): The number of players is not supposed to be fixed to 2.
+                double bru = WalkTree(
+                        ag->root_node_, trainee, hands_info, strategy,
+                        std::optional<CFU_COMPUTE_MODE>(), STRATEGY_BEST_RESPONSE, false
+                );
+                brus[i * active_players + trainee] = bru;
+            }
         }
     }
 
@@ -61,7 +87,7 @@ double ScalarCfrWorker::Solve(Board_t board, bool calc_bru_explo, double *out_br
     if (cfr_param_->avg_side_update_ && cfr_param_->rm_avg_update == AVG_CLASSIC) {
         int n_sidewalk_iters = 50;
         for (int i = 0; i < n_sidewalk_iters; i++) {
-            hands_info.SamplePrivateHandsForAll(ag, local_root_beliefs);
+            hands_info.SamplePrivateHandsForAll(ag, root_beliefs);
             for (int trainee = 0; trainee < active_players; trainee++) {
                 WavgUpdateSideWalk(ag->root_node_, trainee, hands_info, strategy);
             }
@@ -69,13 +95,28 @@ double ScalarCfrWorker::Solve(Board_t board, bool calc_bru_explo, double *out_br
     }
 
     // FIXME(kwok): The number of players is not supposed to be fixed to 2.
-    sum_cfus /= (n_priv_hand_samples * 2 * ag->GetBigBlind());
+    avg_cfu /= (n_priv_hand_samples * 2);
 
-    for (auto b: local_root_beliefs) {
+    for (auto b: root_beliefs) {
         delete b;
     }
 
-    return sum_cfus;
+    if (calc_bru_explo) {
+        assert(brus != nullptr);
+        double bru_per_sample = 0.0;
+        for (int i = 0; i < n_priv_hand_samples; i++) {
+            double bru_per_trainee = 0.0;
+            for (int trainee = 0; trainee < active_players; trainee++) {
+                bru_per_trainee += brus[i * active_players + trainee];
+            }
+            bru_per_sample += bru_per_trainee / active_players;
+        }
+        *out_bru_explo = bru_per_sample / n_priv_hand_samples;
+        delete[] brus;
+        fprintf(stderr, "avg_cfu = %g, bru_explo = (%g + %g)/2 = %g\n", avg_cfu, brus[0], brus[1], *out_bru_explo);
+    }
+
+    return avg_cfu;
 }
 
 double ScalarCfrWorker::WalkTree(Node *this_node, int trainee, sPrivateHandsInfo &hands_info, Strategy *target_strategy,
@@ -366,7 +407,7 @@ ScalarCfrWorker::EvalChoiceNode(Node *this_node, int trainee, sPrivateHandsInfo 
         target_strategy->ComputeStrategy(this_node, b, distr_rnb, resolved_strategy_type);
 
         double this_node_cfu = 0.0;
-        ComputeCfu(this_node, children_cfus, this_node_cfu, WEIGHTED_RESPONSE, distr_rnb, prune_flag);
+        ComputeCfu(this_node, children_cfus, this_node_cfu, resolved_cfu_compute_mode, distr_rnb, prune_flag);
 
         if (is_trainee_turn && learn) {
             switch (resolved_cfu_compute_mode) {

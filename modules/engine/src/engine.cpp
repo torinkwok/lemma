@@ -540,7 +540,7 @@ void Engine::EvalShowdown(MatchState &match_state)
         );
 
         double real_b_canon_sum = 0.0;
-        std::set<Bucket_t> seen_bucket;
+        std::set < Bucket_t > seen_bucket;
         for (auto i = 0; i < FULL_HAND_BELIEF_SIZE; i++) {
             double belief = pb_strategy->ag_->root_hand_beliefs_for_all_[opp_pos].belief_[i];
             // Skip belief values of 0.
@@ -856,6 +856,10 @@ bool Engine::ValidatePlaybook(PlayBook &playbook, MatchState *new_match_state, i
 
 int Engine::AsyncStartCFRSolving(SubgameSolver *selected_sgs, Strategy *&new_strategy)
 {
+    // this line will be feeding to our Python analysis script
+    // TODO(kwok): Make this communication protocol less primitive.
+    std::cerr << "🧠starting CFR solving with config: "
+              << selected_sgs->cfr_->cfr_param_.raw_ << std::endl;
     sgs_cancel_token_ = false; // safeguarding code
     auto cfr_result_future = std::async(
             std::launch::async,

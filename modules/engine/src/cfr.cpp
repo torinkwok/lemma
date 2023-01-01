@@ -370,7 +370,8 @@ void CFR::AllocateFlops(std::vector<Board_t> *pub_flop_boards,
     }
 
     // sort in descending order of number of flops in public bucket
-    std::sort(pub_flop_board_sortable.begin(), pub_flop_board_sortable.end(), [](const auto &l, const auto &r) -> bool
+    std::sort(pub_flop_board_sortable.begin(), pub_flop_board_sortable.end(),
+              [](const auto &l, const auto &r) -> bool
               {
                   return l.second > r.second;
               }
