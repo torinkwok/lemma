@@ -185,7 +185,7 @@ public:
 
     double Solve(Board_t board, bool calc_bru_explo, double *out_bru_explo) override;
 
-    double WalkTree(int trainee, Node *this_node, sPrivateHandsInfo &hand_info,
+    double WalkTree(Node *this_node, int trainee, sPrivateHandsInfo &hand_info,
                     std::optional<CFU_COMPUTE_MODE> trainee_cfu_compute_mode_hint,
                     std::optional<STRATEGY_TYPE> trainee_strategy_type_hint, bool learn);
 

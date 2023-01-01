@@ -48,11 +48,11 @@ double ScalarCfrWorker::Solve(Board_t board, bool calc_bru_explo, double *out_br
 
         // NOTE(kwok): Walk down the training tree alternatively.
         for (int trainee = 0; trainee < active_players; trainee++) {
-            sum_cfus += WalkTree(
-                    trainee, ag->root_node_, private_hands_info,
-                    std::optional<CFU_COMPUTE_MODE>(),
-                    std::optional<STRATEGY_TYPE>(),
-                    true
+            sum_cfus += WalkTree(ag->root_node_,
+                                 trainee, private_hands_info,
+                                 std::optional<CFU_COMPUTE_MODE>(),
+                                 std::optional<STRATEGY_TYPE>(),
+                                 true
             );
         }
     }
@@ -78,10 +78,9 @@ double ScalarCfrWorker::Solve(Board_t board, bool calc_bru_explo, double *out_br
     return sum_cfus;
 }
 
-double ScalarCfrWorker::WalkTree(int trainee, Node *this_node, sPrivateHandsInfo &hand_info,
+double ScalarCfrWorker::WalkTree(Node *this_node, int trainee, sPrivateHandsInfo &hand_info,
                                  std::optional<CFU_COMPUTE_MODE> trainee_cfu_compute_mode_hint,
-                                 std::optional<STRATEGY_TYPE> trainee_strategy_type_hint,
-                                 bool learn)
+                                 std::optional<STRATEGY_TYPE> trainee_strategy_type_hint, bool learn)
 {
     if (this_node->IsTerminal()) {
         return EvalTermNode(trainee, this_node, hand_info);
@@ -350,8 +349,8 @@ double ScalarCfrWorker::EvalInterNode(int trainee, Node *this_node, sPrivateHand
                     continue;
                 }
             }
-            children_cfus[a] = WalkTree(
-                    trainee, next_node, hand_info, resolved_cfu_compute_mode, resolved_strategy_type, learn
+            children_cfus[a] = WalkTree(next_node,
+                                        trainee, hand_info, resolved_cfu_compute_mode, resolved_strategy_type, learn
             );
         }
 
@@ -402,9 +401,9 @@ double ScalarCfrWorker::EvalInterNode(int trainee, Node *this_node, sPrivateHand
             strategy->uint_wavg_->upsert(rnb0 + sampled_a, [&](auto &n) { n++; }, 1);
         }
 
-        return WalkTree(
-                trainee, this_node->children[sampled_a], hand_info, resolved_cfu_compute_mode, resolved_strategy_type,
-                learn
+        return WalkTree(this_node->children[sampled_a],
+                        trainee, hand_info, resolved_cfu_compute_mode, resolved_strategy_type,
+                        learn
         );
     }
 }
