@@ -141,11 +141,11 @@ struct sPrivateHandsInfo
         // sample a private hand pair for player 1
         // FIXME(kwok): The number of players is not supposed to be fixed to 2.
         while (true) {
-            VectorIndex vidx_1 = root_hand_belief[1]->SampleHand(x, y, z);
+            VectorIndex v_idx_1 = root_hand_belief[1]->SampleHand(x, y, z);
             // and the new sampled pair must not crash with hand 0
-            if (!VectorIdxClash(internal_sampled_priv_hands_[0], vidx_1)) {
+            if (!VectorIdxClash(internal_sampled_priv_hands_[0], v_idx_1)) {
                 // we have got a legit private hand pair
-                internal_sampled_priv_hands_[1] = vidx_1;
+                internal_sampled_priv_hands_[1] = v_idx_1;
                 break;
             }
         }
@@ -185,37 +185,37 @@ public:
 
     double Solve(Board_t board, bool calc_bru_explo, double *out_bru_explo) override;
 
-    double WalkTree(Node *this_node, int trainee, sPrivateHandsInfo &hand_info, Strategy *target_strategy,
+    double WalkTree(Node *this_node, int trainee, sPrivateHandsInfo &hands_info, Strategy *target_strategy,
                     std::optional<CFU_COMPUTE_MODE> trainee_cfu_compute_mode_hint,
                     std::optional<STRATEGY_TYPE> trainee_strategy_type_hint, bool learn);
 
-    static double EvalTermNode(Node *this_node, int trainee, sPrivateHandsInfo &hand_info);
+    static double EvalTermNode(Node *this_node, int trainee, sPrivateHandsInfo &hands_info);
 
-    double EvalChoiceNode(Node *this_node, int trainee, sPrivateHandsInfo &hand_info, Strategy *target_strategy,
+    double EvalChoiceNode(Node *this_node, int trainee, sPrivateHandsInfo &hands_info, Strategy *target_strategy,
                           std::optional<CFU_COMPUTE_MODE> trainee_cfu_compute_mode_hint,
                           std::optional<STRATEGY_TYPE> trainee_strategy_type_hint, bool learn);
 
     // Depth-Limited Solving
-    double EvalLeafRootNode(Node *leaf_root_node, int trainee, sPrivateHandsInfo &hand_info);
+    double EvalLeafRootNode(Node *leaf_root_node, int trainee, sPrivateHandsInfo &hands_info);
 
     void ComputeCfu(Node *this_node, const double *children_cfus, double &out_this_node_cfu,
                     CFU_COMPUTE_MODE cfu_compute_mode, const float *distr_rnb, const bool *prune_flag) const;
 
     void CollectChildBRUs(Node *this_node, const double *children_brus, const double &this_node_bru,
-                          Strategy *target_strategy, const bool *prune_flag, sPrivateHandsInfo &hand_info);
+                          Strategy *target_strategy, const bool *prune_flag, sPrivateHandsInfo &hands_info);
 
     void CollectRegrets(Node *this_node, const double *children_cfus, const double &this_node_cfu,
-                        Strategy *target_strategy, const bool *prune_flag, sPrivateHandsInfo &hand_info);
+                        Strategy *target_strategy, const bool *prune_flag, sPrivateHandsInfo &hands_info);
 
-    void WavgUpdateSideWalk(Node *this_node, int trainee, sPrivateHandsInfo &hand_info,
+    void WavgUpdateSideWalk(Node *this_node, int trainee, sPrivateHandsInfo &hands_info,
                             Strategy *target_strategy);
 
-    double RolloutWalkLeafTreeWithBiasFavor(Node *this_node, int trainee, sPrivateHandsInfo &hand_info,
+    double RolloutWalkLeafTreeWithBiasFavor(Node *this_node, int trainee, sPrivateHandsInfo &hands_info,
                                             int *bias_favors_for_all);
 
-    double RolloutLeafRootNode(Node *leaf_root_node, sPrivateHandsInfo &hand_info);
+    double RolloutLeafRootNode(Node *leaf_root_node, sPrivateHandsInfo &hands_info);
 
-    double RolloutLeafInterNodeWithBiasFavor(Node *this_node, int trainee, sPrivateHandsInfo &hand_info,
+    double RolloutLeafInterNodeWithBiasFavor(Node *this_node, int trainee, sPrivateHandsInfo &hands_info,
                                              int *bias_favors_for_all);
 };
 
