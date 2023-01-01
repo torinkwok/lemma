@@ -93,7 +93,7 @@ double ScalarCfrWorker::WalkTree(Node *this_node, int trainee, sPrivateHandsInfo
         //                  std::to_string(this_node->GetRound() - 1));
         return result;
     }
-    return EvalInterNode(
+    return EvalChoiceNode(
             this_node, trainee, hand_info, target_strategy,
             trainee_cfu_compute_mode_hint, trainee_strategy_type_hint, learn
     );
@@ -289,10 +289,10 @@ void ScalarCfrWorker::CollectRegrets(Node *this_node, const double *children_cfu
 }
 
 double
-ScalarCfrWorker::EvalInterNode(Node *this_node, int trainee, sPrivateHandsInfo &hand_info, Strategy *target_strategy,
-                               std::optional<CFU_COMPUTE_MODE> trainee_cfu_compute_mode_hint,
-                               std::optional<STRATEGY_TYPE> trainee_strategy_type_hint,
-                               bool learn)
+ScalarCfrWorker::EvalChoiceNode(Node *this_node, int trainee, sPrivateHandsInfo &hand_info, Strategy *target_strategy,
+                                std::optional<CFU_COMPUTE_MODE> trainee_cfu_compute_mode_hint,
+                                std::optional<STRATEGY_TYPE> trainee_strategy_type_hint,
+                                bool learn)
 {
     int acting_player = this_node->GetActingPlayer();
     bool is_trainee_turn = acting_player == trainee;

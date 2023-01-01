@@ -191,9 +191,9 @@ public:
 
     static double EvalTermNode(Node *this_node, int trainee, sPrivateHandsInfo &hand_info);
 
-    double EvalInterNode(Node *this_node, int trainee, sPrivateHandsInfo &hand_info, Strategy *target_strategy,
-                         std::optional<CFU_COMPUTE_MODE> trainee_cfu_compute_mode_hint,
-                         std::optional<STRATEGY_TYPE> trainee_strategy_type_hint, bool learn);
+    double EvalChoiceNode(Node *this_node, int trainee, sPrivateHandsInfo &hand_info, Strategy *target_strategy,
+                          std::optional<CFU_COMPUTE_MODE> trainee_cfu_compute_mode_hint,
+                          std::optional<STRATEGY_TYPE> trainee_strategy_type_hint, bool learn);
 
     // Depth-Limited Solving
     double EvalLeafRootNode(Node *leaf_root_node, int trainee, sPrivateHandsInfo &hand_info);
