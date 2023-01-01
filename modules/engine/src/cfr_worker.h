@@ -201,11 +201,11 @@ public:
     void ComputeCfu(Node *this_node, const double *children_cfus, double &out_this_node_cfu,
                     CFU_COMPUTE_MODE cfu_compute_mode, const float *distr_rnb, const bool *prune_flag) const;
 
-    void CollectChildBRUs(Node *this_node, const double *children_brus, const double &this_node_bru,
-                          Strategy *target_strategy, const bool *prune_flag, sPrivateHandsInfo &hands_info);
+    void CollectChildBRUs(Node *this_node, sPrivateHandsInfo &hands_info, const double *children_brus,
+                          const double &this_node_bru, Strategy *target_strategy, const bool *prune_flag);
 
-    void CollectRegrets(Node *this_node, const double *children_cfus, const double &this_node_cfu,
-                        Strategy *target_strategy, const bool *prune_flag, sPrivateHandsInfo &hands_info);
+    void CollectRegrets(Node *this_node, sPrivateHandsInfo &hands_info, const double *children_cfus,
+                        const double &this_node_cfu, Strategy *target_strategy, const bool *prune_flag);
 
     void WavgUpdateSideWalk(Node *this_node, int trainee, sPrivateHandsInfo &hands_info,
                             Strategy *target_strategy);

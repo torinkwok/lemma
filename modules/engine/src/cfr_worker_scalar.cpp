@@ -206,8 +206,8 @@ void ScalarCfrWorker::ComputeCfu(Node *this_node, const double *children_cfus, d
     out_this_node_cfu = expected_utility;
 }
 
-void ScalarCfrWorker::CollectChildBRUs(Node *this_node, const double *children_brus, const double &this_node_bru,
-                                       Strategy *target_strategy, const bool *prune_flag, sPrivateHandsInfo &hands_info)
+void ScalarCfrWorker::CollectChildBRUs(Node *this_node, sPrivateHandsInfo &hands_info, const double *children_brus,
+                                       const double &this_node_bru, Strategy *target_strategy, const bool *prune_flag)
 {
     int acting_player = this_node->GetActingPlayer();
     auto a_max = this_node->GetAmax();
@@ -231,8 +231,8 @@ void ScalarCfrWorker::CollectChildBRUs(Node *this_node, const double *children_b
     }
 }
 
-void ScalarCfrWorker::CollectRegrets(Node *this_node, const double *children_cfus, const double &this_node_cfu,
-                                     Strategy *target_strategy, const bool *prune_flag, sPrivateHandsInfo &hands_info)
+void ScalarCfrWorker::CollectRegrets(Node *this_node, sPrivateHandsInfo &hands_info, const double *children_cfus,
+                                     const double &this_node_cfu, Strategy *target_strategy, const bool *prune_flag)
 {
     int acting_player = this_node->GetActingPlayer();
     auto a_max = this_node->GetAmax();
@@ -372,10 +372,10 @@ ScalarCfrWorker::EvalChoiceNode(Node *this_node, int trainee, sPrivateHandsInfo 
             switch (resolved_cfu_compute_mode) {
                 case WEIGHTED_RESPONSE:
                 case SUM_RESPONSE:
-                    CollectRegrets(this_node, children_cfus, this_node_cfu, target_strategy, prune_flag, hands_info);
+                    CollectRegrets(this_node, hands_info, children_cfus, this_node_cfu, target_strategy, prune_flag);
                     break;
                 case BEST_RESPONSE:
-                    CollectChildBRUs(this_node, children_cfus, this_node_cfu, target_strategy, prune_flag, hands_info);
+                    CollectChildBRUs(this_node, hands_info, children_cfus, this_node_cfu, target_strategy, prune_flag);
                     break;
             }
         }
