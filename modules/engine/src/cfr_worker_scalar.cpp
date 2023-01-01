@@ -363,7 +363,7 @@ ScalarCfrWorker::EvalInterNode(Node *this_node, int trainee, sPrivateHandsInfo &
         // }
 
         float distr_rnb[a_max];
-        target_strategy->ComputeStrategy(this_node, b, distr_rnb, cfr_param_->strategy_cal_mode_);
+        target_strategy->ComputeStrategy(this_node, b, distr_rnb, resolved_strategy_type);
 
         double this_node_cfu = 0.0;
         ComputeCfu(this_node, children_cfus, this_node_cfu, WEIGHTED_RESPONSE, distr_rnb, prune_flag);
@@ -384,10 +384,10 @@ ScalarCfrWorker::EvalInterNode(Node *this_node, int trainee, sPrivateHandsInfo &
     } else {
         // NOTE(kwok): Non-trainee's turn. Sample an action using their own computed strategy.
         float distr_rnb[a_max];
-        target_strategy->ComputeStrategy(this_node, b, distr_rnb, cfr_param_->strategy_cal_mode_);
+        target_strategy->ComputeStrategy(this_node, b, distr_rnb, resolved_strategy_type);
         int sampled_a = RndXorShift<float>(distr_rnb, a_max, x, y, z, (1 << 16));
         if (sampled_a == -1) {
-            target_strategy->PrintNodeStrategy(this_node, b, cfr_param_->strategy_cal_mode_);
+            target_strategy->PrintNodeStrategy(this_node, b, resolved_strategy_type);
             logger::critical("new strategy regret problem in main walk, opp side");
         }
 
