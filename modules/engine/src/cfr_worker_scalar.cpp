@@ -93,9 +93,9 @@ double ScalarCfrWorker::WalkTree(Node *this_node, int trainee, sPrivateHandsInfo
         //                  std::to_string(this_node->GetRound() - 1));
         return result;
     }
-    return EvalInterNode(this_node,
-                         trainee, hand_info, target_strategy, trainee_cfu_compute_mode_hint, trainee_strategy_type_hint,
-                         learn
+    return EvalInterNode(
+            this_node, trainee, hand_info, target_strategy,
+            trainee_cfu_compute_mode_hint, trainee_strategy_type_hint, learn
     );
 }
 
@@ -291,7 +291,8 @@ void ScalarCfrWorker::CollectRegrets(Node *this_node, const double *children_cfu
 double
 ScalarCfrWorker::EvalInterNode(Node *this_node, int trainee, sPrivateHandsInfo &hand_info, Strategy *target_strategy,
                                std::optional<CFU_COMPUTE_MODE> trainee_cfu_compute_mode_hint,
-                               std::optional<STRATEGY_TYPE> trainee_strategy_type_hint, bool learn)
+                               std::optional<STRATEGY_TYPE> trainee_strategy_type_hint,
+                               bool learn)
 {
     int acting_player = this_node->GetActingPlayer();
     bool is_trainee_turn = acting_player == trainee;
@@ -324,7 +325,7 @@ ScalarCfrWorker::EvalInterNode(Node *this_node, int trainee, sPrivateHandsInfo &
         for (auto a = 0; a < a_max; a++) {
             prune_flag[a] = false;
             auto next_node = this_node->children[a];
-            // NOTE(kwok): Do pruning if the flag is set. Skip river nodes and nodes leading to terminal.
+            // do pruning if the flag is set. skip river nodes and nodes leading to terminal.
             if (iter_prune_flag && !next_node->IsTerminal() && next_node->GetRound() != HOLDEM_ROUND_RIVER) {
                 // if (iter_prune_flag && !next_node->IsTerminal()) {
 #ifdef DEBUG_EAGER_LOOKUP
@@ -352,14 +353,14 @@ ScalarCfrWorker::EvalInterNode(Node *this_node, int trainee, sPrivateHandsInfo &
             }
             children_cfus[a] = WalkTree(
                     next_node, trainee, hand_info, target_strategy,
-                    resolved_cfu_compute_mode, resolved_strategy_type, learn
+                    trainee_cfu_compute_mode_hint, trainee_strategy_type_hint, learn
             );
         }
 
-        // NOTE(kwok): only WEIGHTED_RESPONSE is supported
-        if (cfr_param_->cfu_compute_acting_playing != WEIGHTED_RESPONSE) {
-            logger::critical("scalar does not support best response eval");
-        }
+        // only WEIGHTED_RESPONSE is supported
+        // if (cfr_param_->cfu_compute_acting_playing != WEIGHTED_RESPONSE) {
+        //     logger::critical("scalar does not support BEST_RESPONSE eval");
+        // }
 
         float distr_rnb[a_max];
         target_strategy->ComputeStrategy(this_node, b, distr_rnb, cfr_param_->strategy_cal_mode_);
@@ -403,9 +404,9 @@ ScalarCfrWorker::EvalInterNode(Node *this_node, int trainee, sPrivateHandsInfo &
             target_strategy->uint_wavg_->upsert(rnb0 + sampled_a, [&](auto &n) { n++; }, 1);
         }
 
-        return WalkTree(this_node->children[sampled_a],
-                        trainee, hand_info, target_strategy, resolved_cfu_compute_mode, resolved_strategy_type,
-                        learn
+        return WalkTree(
+                this_node->children[sampled_a], trainee, hand_info, target_strategy,
+                trainee_cfu_compute_mode_hint, trainee_strategy_type_hint, learn
         );
     }
 }
