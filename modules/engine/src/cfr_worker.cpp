@@ -123,72 +123,13 @@ double VectorCfrWorker::Solve(Board_t board, bool calc_bru_explo, double *out_br
 
     if (calc_bru_explo) {
         assert(brus != nullptr);
-        *out_bru_explo = (brus[0] + brus[1]) / 2; // FIXME(kwok): The number of players is not supposed to be fixed to 2.
+        // FIXME(kwok): The number of players is not supposed to be fixed to 2.
+        *out_bru_explo = (brus[0] + brus[1]) / 2;
         delete[] brus;
         fprintf(stderr, "avg_cfu = %g, bru_explo = (%g + %g)/2 = %g\n", avg_cfu, brus[0], brus[1], *out_bru_explo);
     }
 
     return avg_cfu;
-}
-
-double VectorCfrWorker::CalcBRU(Board_t board)
-{
-    auto *ag = strategy->ag_;
-    auto starting_round = ag->root_state_.round;
-    if (starting_round < 3 /* pre-flop, flop, and turn */) {
-        delete priv_hand_kernel;
-        priv_hand_kernel = new sPrivateHandKernel(board, starting_round);
-        priv_hand_kernel->AbstractHandKernel(&ag->bucket_reader_);
-    } else if (starting_round == 3 /* river */ && priv_hand_kernel == nullptr) {
-        // cache the hand kernel if just solving round RIVER subgame
-        priv_hand_kernel = new sPrivateHandKernel(board, starting_round);
-        priv_hand_kernel->AbstractHandKernel(&ag->bucket_reader_);
-    }
-
-    // pruning with prob
-    ConditionalPrune();
-
-    // TODO(kwok): Cache the results for RIVER sub-games.
-    sPrivateHandBelief root_belief[2]; // FIXME(kwok): The number of players is not supposed to be fixed to 2.
-    auto active_players = ag->GetActivePlayerNum();
-    for (int p = 0; p < active_players; p++) {
-        // preparations
-        root_belief[p].CopyValue(&ag->root_hand_beliefs_for_all_[p]);
-        root_belief[p].NormalizeExcludeBoard(board);
-    }
-
-    double brus[2]{0.0, 0.0};
-    switch (mode_) {
-        case CFR_VECTOR_ALTERNATE_SOLVE: {
-            for (int trainee = 0; trainee < active_players; trainee++) {
-                // FIXME(kwok): The number of players is not supposed to be fixed to 2.
-                sPrivateHandBelief opp_belief = root_belief[1 - trainee];
-                // opp_belief.Scale(REGRET_SCALE_FACTOR);
-                WalkTree_Alternate(
-                        ag->root_node_, trainee, &opp_belief, strategy,
-                        BEST_RESPONSE, std::optional<STRATEGY_TYPE>(), true
-                );
-            }
-            for (int trainee = 0; trainee < active_players; trainee++) {
-                // FIXME(kwok): The number of players is not supposed to be fixed to 2.
-                sPrivateHandBelief opp_belief = root_belief[1 - trainee];
-                // opp_belief.Scale(REGRET_SCALE_FACTOR);
-                sPrivateHandBelief *bru_p = WalkTree_Alternate(
-                        ag->root_node_, trainee, &opp_belief, strategy,
-                        std::optional<CFU_COMPUTE_MODE>(), STRATEGY_BEST_RESPONSE, false
-                );
-                bru_p->DotMultiply(&root_belief[trainee]);
-                brus[trainee] = bru_p->BeliefSum(); // weighted average
-                delete bru_p;
-            }
-            break;
-        }
-        default: {
-            logger::critical("invalid CFR mode %d", mode_);
-        }
-    }
-    double avg_bru = (brus[0] + brus[1]) / 2;
-    return avg_bru;
 }
 
 // TODO(kwok): Adding back the pruned is necessary.
@@ -728,7 +669,7 @@ void
 VectorCfrWorker::CollectChildBRUs(Node *this_node,
                                   std::vector<sPrivateHandBelief *> child_brus,
                                   sPrivateHandBelief *this_node_bru,
-                                  Strategy *target_strategy)
+                                  Strategy *target_strategy) const
 {
     auto a_max = this_node->GetAmax();
     auto r = this_node->GetRound();

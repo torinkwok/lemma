@@ -226,8 +226,6 @@ public:
 
     double Solve(Board_t board, bool calc_bru_explo, double *out_bru_explo) override;
 
-    double CalcBRU(Board_t board);
-
     Ranges *WalkTree_Pairwise(Node *this_node, Ranges *reach_ranges);
 
     Ranges *EvalChoiceNode_Pairwise(Node *this_node, Ranges *reach_ranges);
@@ -251,7 +249,7 @@ public:
 
     void
     CollectChildBRUs(Node *this_node, std::vector<sPrivateHandBelief *> child_brus,
-                     sPrivateHandBelief *this_node_bru, Strategy *target_strategy);
+                     sPrivateHandBelief *this_node_bru, Strategy *target_strategy) const;
 
     void
     CollectRegrets(Node *this_node, std::vector<sPrivateHandBelief *> child_cfus,
@@ -268,9 +266,6 @@ public:
                                                  Strategy *target_strategy,
                                                  std::optional<CFU_COMPUTE_MODE> trainee_cfu_compute_mode_hint,
                                                  std::optional<STRATEGY_TYPE> trainee_strategy_type_hint, bool learn);
-
-private:
-    std::pair<double, double> _Solve(Board_t board, bool calc_bru);
 };
 
 #endif //AUTODIDACT_MODULES_ENGINE_SRC_CFR_WORKER_H_
