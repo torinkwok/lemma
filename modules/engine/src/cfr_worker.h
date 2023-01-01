@@ -185,13 +185,13 @@ public:
 
     double Solve(Board_t board, bool calc_bru_explo, double *out_bru_explo) override;
 
-    double WalkTree(Node *this_node, int trainee, sPrivateHandsInfo &hand_info,
+    double WalkTree(Node *this_node, int trainee, sPrivateHandsInfo &hand_info, Strategy *target_strategy,
                     std::optional<CFU_COMPUTE_MODE> trainee_cfu_compute_mode_hint,
                     std::optional<STRATEGY_TYPE> trainee_strategy_type_hint, bool learn);
 
     static double EvalTermNode(int trainee, Node *this_node, sPrivateHandsInfo &hand_info);
 
-    double EvalInterNode(int trainee, Node *this_node, sPrivateHandsInfo &hand_info,
+    double EvalInterNode(int trainee, Node *this_node, sPrivateHandsInfo &hand_info, Strategy *target_strategy,
                          std::optional<CFU_COMPUTE_MODE> trainee_cfu_compute_mode_hint,
                          std::optional<STRATEGY_TYPE> trainee_strategy_type_hint, bool learn);
 
@@ -207,7 +207,8 @@ public:
     void CollectRegrets(Node *this_node, const double *children_cfus, const double &this_node_cfu,
                         Strategy *target_strategy, const bool *prune_flag, sPrivateHandsInfo &hand_info);
 
-    void WavgUpdateSideWalk(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info);
+    void WavgUpdateSideWalk(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info,
+                            Strategy *target_strategy);
 
     double RolloutWalkLeafTreeWithBiasFavor(int trainee, Node *this_node, sPrivateHandsInfo &hand_info,
                                             int *bias_favors_for_all);

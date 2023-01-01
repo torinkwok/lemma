@@ -49,7 +49,7 @@ double ScalarCfrWorker::Solve(Board_t board, bool calc_bru_explo, double *out_br
         // NOTE(kwok): Walk down the training tree alternatively.
         for (int trainee = 0; trainee < active_players; trainee++) {
             sum_cfus += WalkTree(ag->root_node_,
-                                 trainee, private_hands_info,
+                                 trainee, private_hands_info, strategy,
                                  std::optional<CFU_COMPUTE_MODE>(),
                                  std::optional<STRATEGY_TYPE>(),
                                  true
@@ -63,7 +63,7 @@ double ScalarCfrWorker::Solve(Board_t board, bool calc_bru_explo, double *out_br
         for (int i = 0; i < n_sidewalk_iters; i++) {
             private_hands_info.SamplePrivateHandsForAll(ag, local_root_beliefs);
             for (int trainee_pos = 0; trainee_pos < active_players; trainee_pos++) {
-                WavgUpdateSideWalk(trainee_pos, ag->root_node_, private_hands_info);
+                WavgUpdateSideWalk(trainee_pos, ag->root_node_, private_hands_info, strategy);
             }
         }
     }
@@ -78,7 +78,7 @@ double ScalarCfrWorker::Solve(Board_t board, bool calc_bru_explo, double *out_br
     return sum_cfus;
 }
 
-double ScalarCfrWorker::WalkTree(Node *this_node, int trainee, sPrivateHandsInfo &hand_info,
+double ScalarCfrWorker::WalkTree(Node *this_node, int trainee, sPrivateHandsInfo &hand_info, Strategy *target_strategy,
                                  std::optional<CFU_COMPUTE_MODE> trainee_cfu_compute_mode_hint,
                                  std::optional<STRATEGY_TYPE> trainee_strategy_type_hint, bool learn)
 {
@@ -94,7 +94,8 @@ double ScalarCfrWorker::WalkTree(Node *this_node, int trainee, sPrivateHandsInfo
         return result;
     }
     return EvalInterNode(
-            trainee, this_node, hand_info, trainee_cfu_compute_mode_hint, trainee_strategy_type_hint, learn
+            trainee, this_node, hand_info, target_strategy, trainee_cfu_compute_mode_hint, trainee_strategy_type_hint,
+            learn
     );
 }
 
@@ -246,7 +247,7 @@ void ScalarCfrWorker::CollectRegrets(Node *this_node, const double *children_cfu
         int diff = (int) round(children_cfus[a] - this_node_cfu);
 #ifdef DEBUG_EAGER_LOOKUP
         // TODO(kwok): 🦊
-            double temp_reg = strategy->eager_int_regret_[rnb0 + a] + diff; // NOTE(kwok): Accumulate regret values
+            double temp_reg = target_strategy->eager_int_regret_[rnb0 + a] + diff; // NOTE(kwok): Accumulate regret values
             // clamp it
             int new_reg = (int) std::fmax(temp_reg, cfr_param_->rm_floor);
             // total regret should have a ceiling
@@ -260,7 +261,7 @@ void ScalarCfrWorker::CollectRegrets(Node *this_node, const double *children_cfu
                         this_node_cfu
                 );
             }
-            strategy->eager_int_regret_[rnb0 + a] = new_reg;
+            target_strategy->eager_int_regret_[rnb0 + a] = new_reg;
 #endif
         // TODO(kwok): 🐦
         target_strategy->int_regret_->insert(rnb0 + a);
@@ -287,10 +288,10 @@ void ScalarCfrWorker::CollectRegrets(Node *this_node, const double *children_cfu
     }
 }
 
-double ScalarCfrWorker::EvalInterNode(int trainee, Node *this_node, sPrivateHandsInfo &hand_info,
-                                      std::optional<CFU_COMPUTE_MODE> trainee_cfu_compute_mode_hint,
-                                      std::optional<STRATEGY_TYPE> trainee_strategy_type_hint,
-                                      bool learn)
+double
+ScalarCfrWorker::EvalInterNode(int trainee, Node *this_node, sPrivateHandsInfo &hand_info, Strategy *target_strategy,
+                               std::optional<CFU_COMPUTE_MODE> trainee_cfu_compute_mode_hint,
+                               std::optional<STRATEGY_TYPE> trainee_strategy_type_hint, bool learn)
 {
     int acting_player = this_node->GetActingPlayer();
     bool is_trainee_turn = acting_player == trainee;
@@ -315,7 +316,7 @@ double ScalarCfrWorker::EvalInterNode(int trainee, Node *this_node, sPrivateHand
     auto r = this_node->GetRound();
     auto n = this_node->GetN();
     auto b = hand_info.buckets_[acting_player][r];
-    auto rnb0 = strategy->ag_->kernel_->hash_rnba(r, n, b, 0);
+    auto rnb0 = target_strategy->ag_->kernel_->hash_rnba(r, n, b, 0);
 
     if (is_trainee_turn) {
         double children_cfus[a_max];
@@ -328,15 +329,15 @@ double ScalarCfrWorker::EvalInterNode(int trainee, Node *this_node, sPrivateHand
                 // if (iter_prune_flag && !next_node->IsTerminal()) {
 #ifdef DEBUG_EAGER_LOOKUP
                 // TODO(kwok): 🦊
-                if (strategy->eager_int_regret_[rnb0 + a] <= cfr_param_->rollout_prune_thres) {
+                if (target_strategy->eager_int_regret_[rnb0 + a] <= cfr_param_->rollout_prune_thres) {
                     prune_flag[a] = true;
                     continue;
                 }
 #endif
                 // TODO(kwok): 🐦
                 // TODO(kwok): Test if this operation blocks.
-                strategy->int_regret_->insert(rnb0 + a);
-                strategy->int_regret_->find_fn(
+                target_strategy->int_regret_->insert(rnb0 + a);
+                target_strategy->int_regret_->find_fn(
                         rnb0 + a,
                         [&](const auto &regret)
                         {
@@ -349,8 +350,9 @@ double ScalarCfrWorker::EvalInterNode(int trainee, Node *this_node, sPrivateHand
                     continue;
                 }
             }
-            children_cfus[a] = WalkTree(next_node,
-                                        trainee, hand_info, resolved_cfu_compute_mode, resolved_strategy_type, learn
+            children_cfus[a] = WalkTree(
+                    next_node, trainee, hand_info, target_strategy,
+                    resolved_cfu_compute_mode, resolved_strategy_type, learn
             );
         }
 
@@ -360,7 +362,7 @@ double ScalarCfrWorker::EvalInterNode(int trainee, Node *this_node, sPrivateHand
         }
 
         float distr_rnb[a_max];
-        strategy->ComputeStrategy(this_node, b, distr_rnb, cfr_param_->strategy_cal_mode_);
+        target_strategy->ComputeStrategy(this_node, b, distr_rnb, cfr_param_->strategy_cal_mode_);
 
         double this_node_cfu = 0.0;
         ComputeCfu(this_node, children_cfus, this_node_cfu, WEIGHTED_RESPONSE, distr_rnb, prune_flag);
@@ -381,28 +383,28 @@ double ScalarCfrWorker::EvalInterNode(int trainee, Node *this_node, sPrivateHand
     } else {
         // NOTE(kwok): Non-trainee's turn. Sample an action using their own computed strategy.
         float distr_rnb[a_max];
-        strategy->ComputeStrategy(this_node, b, distr_rnb, cfr_param_->strategy_cal_mode_);
+        target_strategy->ComputeStrategy(this_node, b, distr_rnb, cfr_param_->strategy_cal_mode_);
         int sampled_a = RndXorShift<float>(distr_rnb, a_max, x, y, z, (1 << 16));
         if (sampled_a == -1) {
-            strategy->PrintNodeStrategy(this_node, b, cfr_param_->strategy_cal_mode_);
+            target_strategy->PrintNodeStrategy(this_node, b, cfr_param_->strategy_cal_mode_);
             logger::critical("new strategy regret problem in main walk, opp side");
         }
 
         if (!cfr_param_->avg_side_update_ /* set by "side_walk" */ && cfr_param_->rm_avg_update == AVG_CLASSIC) {
             // update wavg. don't use it for blueprint training as it explodes quickly
             //    for (auto a = 0; a < a_max; a++) {
-            //      strategy->uint_wavg_[rnb0 + a] += distr_rnb[a] * 1000;
+            //      target_strategy->uint_wavg_[rnb0 + a] += distr_rnb[a] * 1000;
             //    }
 #ifdef DEBUG_EAGER_LOOKUP
             // TODO(kwok): 🦊
-            strategy->eager_uint_wavg_[rnb0 + sampled_a] += 1;
+            target_strategy->eager_uint_wavg_[rnb0 + sampled_a] += 1;
 #endif
             // TODO(kwok): 🐦
-            strategy->uint_wavg_->upsert(rnb0 + sampled_a, [&](auto &n) { n++; }, 1);
+            target_strategy->uint_wavg_->upsert(rnb0 + sampled_a, [&](auto &n) { n++; }, 1);
         }
 
         return WalkTree(this_node->children[sampled_a],
-                        trainee, hand_info, resolved_cfu_compute_mode, resolved_strategy_type,
+                        trainee, hand_info, target_strategy, resolved_cfu_compute_mode, resolved_strategy_type,
                         learn
         );
     }
@@ -618,7 +620,8 @@ double ScalarCfrWorker::RolloutLeafInterNodeWithBiasFavor(int trainee,
 }
 
 /// Pluribus' way to update WAVG.
-void ScalarCfrWorker::WavgUpdateSideWalk(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info)
+void ScalarCfrWorker::WavgUpdateSideWalk(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info,
+                                         Strategy *target_strategy)
 {
     if (this_node->IsTerminal()) {
         return;
@@ -637,25 +640,25 @@ void ScalarCfrWorker::WavgUpdateSideWalk(int trainee_pos, Node *this_node, sPriv
         auto n = this_node->GetN();
         Bucket_t b = hand_info.buckets_[trainee_pos][r];
         float distr_rnb[a_max];
-        strategy->ComputeStrategy(this_node, b, distr_rnb, cfr_param_->strategy_cal_mode_);
+        target_strategy->ComputeStrategy(this_node, b, distr_rnb, cfr_param_->strategy_cal_mode_);
         int sampled_a = RndXorShift<float>(distr_rnb, a_max, x, y, z, (1 << 16));
         if (sampled_a == -1) {
             logger::debug("🚨new strategy regret problem");
-            strategy->PrintNodeStrategy(this_node, b, cfr_param_->strategy_cal_mode_);
+            target_strategy->PrintNodeStrategy(this_node, b, cfr_param_->strategy_cal_mode_);
         }
-        auto rnba = strategy->ag_->kernel_->hash_rnba(r, n, b, sampled_a);
+        auto rnba = target_strategy->ag_->kernel_->hash_rnba(r, n, b, sampled_a);
 #ifdef DEBUG_EAGER_LOOKUP
         // TODO(kwok): 🦊
-        strategy->eager_uint_wavg_[rnba] += 1;
+        target_strategy->eager_uint_wavg_[rnba] += 1;
 #endif
         // TODO(kwok): 🐦
         // TODO(kwok): Test if this operation blocks.
-        strategy->uint_wavg_->upsert(rnba, [](auto &n) { n++; }, 1);
-        WavgUpdateSideWalk(trainee_pos, this_node->children[sampled_a], hand_info);
+        target_strategy->uint_wavg_->upsert(rnba, [](auto &n) { n++; }, 1);
+        WavgUpdateSideWalk(trainee_pos, this_node->children[sampled_a], hand_info, target_strategy);
     } else {
         // NOTE(kwok): The opponent's turn.
         for (auto a = 0; a < a_max; a++) {
-            WavgUpdateSideWalk(trainee_pos, this_node->children[a], hand_info);
+            WavgUpdateSideWalk(trainee_pos, this_node->children[a], hand_info, target_strategy);
         }
     }
 }
