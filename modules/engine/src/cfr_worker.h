@@ -185,14 +185,27 @@ public:
 
     double Solve(Board_t board, bool calc_bru_explo, double *out_bru_explo) override;
 
-    double WalkTree(int trainee, Node *this_node, sPrivateHandsInfo &hand_info);
+    double WalkTree(int trainee, Node *this_node, sPrivateHandsInfo &hand_info,
+                    std::optional<CFU_COMPUTE_MODE> trainee_cfu_compute_mode_hint,
+                    std::optional<STRATEGY_TYPE> trainee_strategy_type_hint, bool learn);
 
     static double EvalTermNode(int trainee, Node *this_node, sPrivateHandsInfo &hand_info);
+
+    double EvalInterNode(int trainee, Node *this_node, sPrivateHandsInfo &hand_info,
+                         std::optional<CFU_COMPUTE_MODE> trainee_cfu_compute_mode_hint,
+                         std::optional<STRATEGY_TYPE> trainee_strategy_type_hint, bool learn);
 
     // Depth-Limited Solving
     double EvalLeafRootNode(int trainee, Node *leaf_root_node, sPrivateHandsInfo &hand_info);
 
-    double EvalInterNode(int trainee, Node *this_node, sPrivateHandsInfo &hand_info);
+    void ComputeCfu(Node *this_node, const double *children_cfus, double &out_this_node_cfu,
+                    CFU_COMPUTE_MODE cfu_compute_mode, const float *distr_rnb, const bool *prune_flag) const;
+
+    void CollectChildBRUs(Node *this_node, const double *children_brus, const double &this_node_bru,
+                          Strategy *target_strategy, const bool *prune_flag, sPrivateHandsInfo &hand_info);
+
+    void CollectRegrets(Node *this_node, const double *children_cfus, const double &this_node_cfu,
+                        Strategy *target_strategy, const bool *prune_flag, sPrivateHandsInfo &hand_info);
 
     void WavgUpdateSideWalk(int trainee_pos, Node *this_node, sPrivateHandsInfo &hand_info);
 

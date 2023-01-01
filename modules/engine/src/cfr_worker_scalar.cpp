@@ -48,7 +48,12 @@ double ScalarCfrWorker::Solve(Board_t board, bool calc_bru_explo, double *out_br
 
         // NOTE(kwok): Walk down the training tree alternatively.
         for (int trainee = 0; trainee < active_players; trainee++) {
-            sum_cfus += WalkTree(trainee, ag->root_node_, private_hands_info);
+            sum_cfus += WalkTree(
+                    trainee, ag->root_node_, private_hands_info,
+                    std::optional<CFU_COMPUTE_MODE>(),
+                    std::optional<STRATEGY_TYPE>(),
+                    true
+            );
         }
     }
 
@@ -73,14 +78,15 @@ double ScalarCfrWorker::Solve(Board_t board, bool calc_bru_explo, double *out_br
     return sum_cfus;
 }
 
-/// NOTE(kwok): Where CFR iterations taking place.
-double ScalarCfrWorker::WalkTree(int trainee, Node *this_node, sPrivateHandsInfo &hand_info)
+double ScalarCfrWorker::WalkTree(int trainee, Node *this_node, sPrivateHandsInfo &hand_info,
+                                 std::optional<CFU_COMPUTE_MODE> trainee_cfu_compute_mode_hint,
+                                 std::optional<STRATEGY_TYPE> trainee_strategy_type_hint,
+                                 bool learn)
 {
     if (this_node->IsTerminal()) {
         return EvalTermNode(trainee, this_node, hand_info);
     }
-    // NOTE(kwok): depth limited solving, till the local root of next round (rather than the local
-    // root of this round)
+    // depth limited solving, till the local root of next round (rather than the local root of this round)
     if (this_node->IsLeafNode()) {
         // SimpleTimer timer;
         auto result = EvalLeafRootNode(trainee, this_node, hand_info);
@@ -88,7 +94,9 @@ double ScalarCfrWorker::WalkTree(int trainee, Node *this_node, sPrivateHandsInfo
         //                  std::to_string(this_node->GetRound() - 1));
         return result;
     }
-    return EvalInterNode(trainee, this_node, hand_info);
+    return EvalInterNode(
+            trainee, this_node, hand_info, trainee_cfu_compute_mode_hint, trainee_strategy_type_hint, learn
+    );
 }
 
 double ScalarCfrWorker::EvalTermNode(int trainee, Node *this_node, sPrivateHandsInfo &hand_info)
@@ -114,17 +122,14 @@ double ScalarCfrWorker::EvalTermNode(int trainee, Node *this_node, sPrivateHands
  */
 double ScalarCfrWorker::EvalLeafRootNode(int trainee, Node *leaf_root_node, sPrivateHandsInfo &hand_info)
 {
-    // NOTE(kwok): Should be the last round. It's the Pluribus way.
+    // should be the last round. it's the pluribus way
     auto r = leaf_root_node->GetRound() - 1;
-    /*
-     * If exists, read from the cache:
-     * (PREFLOP) RAM cache from file
-     * (FLOP) rollout/NN cache if needed
-     */
+
     // FIXME(kwok): The number of players is not supposed to be fixed to 2.
-    auto b0 = 0;
-    auto b1 = 0;
+    Bucket_t b0 = 0;
+    Bucket_t b1 = 0;
     if (cfr_param_->depth_limited_cache_) {
+        // read from the cache if exists: (PREFLOP) RAM cache from file, (FLOP) rollout/NN cache if needed
         leaf_root_node->CreateValueCacheIfNull();
         if (r > HOLDEM_ROUND_FLOP) {
             logger::critical("We don't do DLS for post-flop");
@@ -142,14 +147,10 @@ double ScalarCfrWorker::EvalLeafRootNode(int trainee, Node *leaf_root_node, sPri
         }
     }
 
-    /*
-     * ROLLOUT for the current trainee rather than pairwise or alternatively
-     */
+    /* rollout for the current trainee rather than pairwise or alternatively */
     double player0_rollout_cfu = RolloutLeafRootNode(leaf_root_node, hand_info);
 
-    /*
-     * or use NN
-     */
+    /* or use NN */
 
     // insert to cache
     if (cfr_param_->depth_limited_cache_) {
@@ -161,17 +162,161 @@ double ScalarCfrWorker::EvalLeafRootNode(int trainee, Node *leaf_root_node, sPri
     return trainee == 0 ? player0_rollout_cfu : -player0_rollout_cfu;
 }
 
-double ScalarCfrWorker::EvalInterNode(int trainee, Node *this_node, sPrivateHandsInfo &hand_info)
+void ScalarCfrWorker::ComputeCfu(Node *this_node, const double *children_cfus, double &out_this_node_cfu,
+                                 CFU_COMPUTE_MODE cfu_compute_mode, const float *distr_rnb,
+                                 const bool *prune_flag) const
+{
+    auto a_max = this_node->GetAmax();
+    double expected_utility = 0.0;
+    switch (cfu_compute_mode) {
+        case WEIGHTED_RESPONSE: {
+            for (auto a = 0; a < a_max; a++) {
+                if (prune_flag[a]) {
+                    // pruned node won't be taken into account when calculating the final CFU of the current node.
+                    continue;
+                }
+                expected_utility += distr_rnb[a] * children_cfus[a];
+            }
+            break;
+        }
+        case SUM_RESPONSE: {
+            for (int a = 0; a < a_max; a++) {
+                if (prune_flag[a]) {
+                    continue;
+                }
+                expected_utility += children_cfus[a];
+            }
+            break;
+        }
+        case BEST_RESPONSE: {
+            // the best response is a strategy for a player that is optimal against the opponent strategy
+            expected_utility = -std::numeric_limits<double>::infinity();
+            for (int a = 0; a < a_max; a++) {
+                if (distr_rnb[a] > 0) {
+                    // pruning will never happen in the BEST_RESPONSE mode.
+                    auto utility = children_cfus[a];
+                    if (utility > expected_utility) {
+                        expected_utility = utility;
+                    }
+                }
+            }
+            break;
+        }
+    }
+    out_this_node_cfu = expected_utility;
+}
+
+void ScalarCfrWorker::CollectChildBRUs(Node *this_node, const double *children_brus, const double &this_node_bru,
+                                       Strategy *target_strategy, const bool *prune_flag, sPrivateHandsInfo &hand_info)
+{
+    int acting_player = this_node->GetActingPlayer();
+    auto a_max = this_node->GetAmax();
+    auto r = this_node->GetRound();
+    auto n = this_node->GetN();
+    auto b = hand_info.buckets_[acting_player][r];
+    auto rnb0 = target_strategy->ag_->kernel_->hash_rnba(r, n, b, 0);
+    for (int a = 0; a < a_max; a++) {
+        if (prune_flag[a]) {
+            continue;
+        }
+        double bru_child_a = children_brus[a];
+        target_strategy->double_bru->insert(rnb0 + a);
+        target_strategy->double_bru->update_fn(
+                rnb0 + a,
+                [&](auto &bru)
+                {
+                    bru = bru_child_a;
+                }
+        );
+    }
+}
+
+void ScalarCfrWorker::CollectRegrets(Node *this_node, const double *children_cfus, const double &this_node_cfu,
+                                     Strategy *target_strategy, const bool *prune_flag, sPrivateHandsInfo &hand_info)
+{
+    int acting_player = this_node->GetActingPlayer();
+    auto a_max = this_node->GetAmax();
+    auto r = this_node->GetRound();
+    auto n = this_node->GetN();
+    auto b = hand_info.buckets_[acting_player][r];
+    auto rnb0 = target_strategy->ag_->kernel_->hash_rnba(r, n, b, 0);
+    for (auto a = 0; a < a_max; a++) {
+        if (prune_flag[a]) {
+            continue;
+        }
+        int diff = (int) round(children_cfus[a] - this_node_cfu);
+#ifdef DEBUG_EAGER_LOOKUP
+        // TODO(kwok): 🦊
+            double temp_reg = strategy->eager_int_regret_[rnb0 + a] + diff; // NOTE(kwok): Accumulate regret values
+            // clamp it
+            int new_reg = (int) std::fmax(temp_reg, cfr_param_->rm_floor);
+            // total regret should have a ceiling
+            if (new_reg > 2107483647) { // 2147483647 - 4 * 10^7
+                logger::critical(
+                        "if the regret overflowed, think about the possibility of the regret %d not being converging. [temp_reg %f][diff %f][cfu_a %f][this_node_cfu %f]",
+                        new_reg,
+                        temp_reg,
+                        diff,
+                        children_cfus[a],
+                        this_node_cfu
+                );
+            }
+            strategy->eager_int_regret_[rnb0 + a] = new_reg;
+#endif
+        // TODO(kwok): 🐦
+        target_strategy->int_regret_->insert(rnb0 + a);
+        target_strategy->int_regret_->update_fn(
+                rnb0 + a,
+                [&](auto &regret)
+                {
+                    double temp_reg = regret + diff; // accumulate regret values
+                    int new_reg = (int) std::fmax(temp_reg, cfr_param_->rm_floor); // clamp it
+                    // the total regret should have a ceiling
+                    if (new_reg > 2107483647) { // 2147483647 - 4 * 10^7
+                        logger::critical(
+                                "if the regret overflowed, think about the possibility of the regret %d not being converging. [temp_reg %f][diff %f][cfu_a %f][this_node_cfu %f]",
+                                new_reg,
+                                temp_reg,
+                                diff,
+                                children_cfus[a],
+                                this_node_cfu
+                        );
+                    }
+                    regret = new_reg;
+                }
+        );
+    }
+}
+
+double ScalarCfrWorker::EvalInterNode(int trainee, Node *this_node, sPrivateHandsInfo &hand_info,
+                                      std::optional<CFU_COMPUTE_MODE> trainee_cfu_compute_mode_hint,
+                                      std::optional<STRATEGY_TYPE> trainee_strategy_type_hint,
+                                      bool learn)
 {
     int acting_player = this_node->GetActingPlayer();
     bool is_trainee_turn = acting_player == trainee;
+
+    CFU_COMPUTE_MODE resolved_cfu_compute_mode;
+    if (is_trainee_turn && trainee_cfu_compute_mode_hint.has_value()) {
+        resolved_cfu_compute_mode = trainee_cfu_compute_mode_hint.value();
+    } else if (is_trainee_turn) {
+        resolved_cfu_compute_mode = cfr_param_->cfu_compute_acting_playing;
+    } else {
+        resolved_cfu_compute_mode = cfr_param_->cfu_compute_opponent;
+    }
+
+    STRATEGY_TYPE resolved_strategy_type;
+    if (is_trainee_turn && trainee_strategy_type_hint.has_value()) {
+        resolved_strategy_type = trainee_strategy_type_hint.value();
+    } else {
+        resolved_strategy_type = cfr_param_->strategy_cal_mode_;
+    }
+
     auto a_max = this_node->GetAmax();
     auto r = this_node->GetRound();
     auto n = this_node->GetN();
     auto b = hand_info.buckets_[acting_player][r];
     auto rnb0 = strategy->ag_->kernel_->hash_rnba(r, n, b, 0);
-    // RNBA debug_copy = rnb0;
-    // printf("debug copy = %llu", debug_copy);
 
     if (is_trainee_turn) {
         double children_cfus[a_max];
@@ -192,18 +337,22 @@ double ScalarCfrWorker::EvalInterNode(int trainee, Node *this_node, sPrivateHand
                 // TODO(kwok): 🐦
                 // TODO(kwok): Test if this operation blocks.
                 strategy->int_regret_->insert(rnb0 + a);
-                strategy->int_regret_->find_fn(rnb0 + a, [&](const auto &regret)
-                                               {
-                                                   if (regret <= cfr_param_->rollout_prune_thres) {
-                                                       prune_flag[a] = true;
-                                                   }
-                                               }
+                strategy->int_regret_->find_fn(
+                        rnb0 + a,
+                        [&](const auto &regret)
+                        {
+                            if (regret <= cfr_param_->rollout_prune_thres) {
+                                prune_flag[a] = true;
+                            }
+                        }
                 );
                 if (prune_flag[a]) {
                     continue;
                 }
             }
-            children_cfus[a] = WalkTree(trainee, next_node, hand_info);
+            children_cfus[a] = WalkTree(
+                    trainee, next_node, hand_info, resolved_cfu_compute_mode, resolved_strategy_type, learn
+            );
         }
 
         // NOTE(kwok): only WEIGHTED_RESPONSE is supported
@@ -211,63 +360,22 @@ double ScalarCfrWorker::EvalInterNode(int trainee, Node *this_node, sPrivateHand
             logger::critical("scalar does not support best response eval");
         }
 
-        double this_node_cfu = 0.0;
-
         float distr_rnb[a_max];
-        // NOTE(kwok): query RNBA indexed strategy data to compute this_node_cfu
         strategy->ComputeStrategy(this_node, b, distr_rnb, cfr_param_->strategy_cal_mode_);
-        for (auto a = 0; a < a_max; a++) {
-            if (prune_flag[a]) {
-                // NOTE(kwok): Pruned nodes won't be taken into account when calculating the final CFU
-                // of the current node.
-                continue;
-            }
-            this_node_cfu += distr_rnb[a] * children_cfus[a];
-        }
 
-        for (auto a = 0; a < a_max; a++) {
-            if (prune_flag[a]) {
-                continue;
+        double this_node_cfu = 0.0;
+        ComputeCfu(this_node, children_cfus, this_node_cfu, WEIGHTED_RESPONSE, distr_rnb, prune_flag);
+
+        if (is_trainee_turn && learn) {
+            switch (resolved_cfu_compute_mode) {
+                case WEIGHTED_RESPONSE:
+                case SUM_RESPONSE:
+                    CollectRegrets(this_node, children_cfus, this_node_cfu, target_strategy, prune_flag, hand_info);
+                    break;
+                case BEST_RESPONSE:
+                    CollectChildBRUs(this_node, children_cfus, this_node_cfu, target_strategy, prune_flag, hand_info);
+                    break;
             }
-            int diff = (int) round(children_cfus[a] - this_node_cfu); // NOTE(kwok): The regret value
-#ifdef DEBUG_EAGER_LOOKUP
-            // TODO(kwok): 🦊
-            double temp_reg = strategy->eager_int_regret_[rnb0 + a] + diff; // NOTE(kwok): Accumulate regret values
-            // clamp it
-            int new_reg = (int) std::fmax(temp_reg, cfr_param_->rm_floor);
-            // total regret should have a ceiling
-            if (new_reg > 2107483647) { // 2147483647 - 4 * 10^7
-                logger::critical(
-                        "if the regret overflowed, think about the possibility of the regret %d not being converging. [temp_reg %f][diff %f][cfu_a %f][this_node_cfu %f]",
-                        new_reg,
-                        temp_reg,
-                        diff,
-                        children_cfus[a],
-                        this_node_cfu
-                );
-            }
-            strategy->eager_int_regret_[rnb0 + a] = new_reg;
-#endif
-            // TODO(kwok): 🐦
-            strategy->int_regret_->insert(rnb0 + a);
-            strategy->int_regret_->update_fn(rnb0 + a, [&](auto &regret)
-                                              {
-                                                  double temp_reg = regret + diff; // NOTE(kwok): Accumulate regret values
-                                                  int new_reg = (int) std::fmax(temp_reg, cfr_param_->rm_floor); // clamp it
-                                                  // the total regret should have a ceiling
-                                                  if (new_reg > 2107483647) { // 2147483647 - 4 * 10^7
-                                                      logger::critical(
-                                                              "if the regret overflowed, think about the possibility of the regret %d not being converging. [temp_reg %f][diff %f][cfu_a %f][this_node_cfu %f]",
-                                                              new_reg,
-                                                              temp_reg,
-                                                              diff,
-                                                              children_cfus[a],
-                                                              this_node_cfu
-                                                      );
-                                                  }
-                                                  regret = new_reg;
-                                              }
-            );
         }
 
         return this_node_cfu;
@@ -294,7 +402,10 @@ double ScalarCfrWorker::EvalInterNode(int trainee, Node *this_node, sPrivateHand
             strategy->uint_wavg_->upsert(rnb0 + sampled_a, [&](auto &n) { n++; }, 1);
         }
 
-        return WalkTree(trainee, this_node->children[sampled_a], hand_info);
+        return WalkTree(
+                trainee, this_node->children[sampled_a], hand_info, resolved_cfu_compute_mode, resolved_strategy_type,
+                learn
+        );
     }
 }
 
