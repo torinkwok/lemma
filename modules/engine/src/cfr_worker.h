@@ -248,25 +248,25 @@ public:
      * cfr helper methods
      */
     void ComputeCfu(Node *this_node,
-                    std::vector<sPrivateHandBelief *> child_reach_ranges,
-                    std::vector<sPrivateHandBelief *> child_cfus,
+                    std::vector<sPrivateHandBelief *> children_reach_ranges,
+                    std::vector<sPrivateHandBelief *> children_cfus,
                     sPrivateHandBelief *this_node_cfu,
                     CFU_COMPUTE_MODE cfu_compute_mode,
                     const float *all_belief_distr_1dim) const;
 
     void
     CalcReachRange(Node *this_node, sPrivateHandBelief *belief,
-                   std::vector<sPrivateHandBelief *> &child_ranges, Strategy *target_strategy,
+                   std::vector<sPrivateHandBelief *> &children_reach_ranges, Strategy *target_strategy,
                    STRATEGY_TYPE strategy_type);
 
     void ConditionalPrune();
 
     void
-    CollectChildBRUs(Node *this_node, std::vector<sPrivateHandBelief *> child_brus,
+    CollectChildBRUs(Node *this_node, std::vector<sPrivateHandBelief *> children_brus,
                      sPrivateHandBelief *this_node_bru, Strategy *target_strategy) const;
 
     void
-    CollectRegrets(Node *this_node, std::vector<sPrivateHandBelief *> child_cfus,
+    CollectRegrets(Node *this_node, std::vector<sPrivateHandBelief *> children_cfus,
                    sPrivateHandBelief *this_node_cfu, Strategy *target_strategy);
 
     std::vector<sPrivateHandBelief *> ExtractBeliefs(std::vector<Ranges *> &ranges, int pos);

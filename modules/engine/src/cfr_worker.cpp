@@ -339,24 +339,24 @@ Ranges *VectorCfrWorker::EvalChoiceNode_Pairwise(Node *this_node, Ranges *reach_
      * ROLLOUT
      */
     //copy the reach_ranges to child ranges for both players
-    std::vector<Ranges *> child_reach_ranges;
-    child_reach_ranges.reserve(a_max);
+    std::vector<Ranges *> children_reach_ranges;
+    children_reach_ranges.reserve(a_max);
     for (int a = 0; a < a_max; a++) {
-        child_reach_ranges.emplace_back(new Ranges(reach_ranges));
+        children_reach_ranges.emplace_back(new Ranges(reach_ranges));
     }
 
     //only need to roll out the acting_player
     int actor = this_node->GetActingPlayer();
-    auto actor_child_beliefs = ExtractBeliefs(child_reach_ranges, actor);
+    auto actor_child_beliefs = ExtractBeliefs(children_reach_ranges, actor);
     CalcReachRange(this_node, &reach_ranges->beliefs_[actor], actor_child_beliefs, strategy, UNKNOWN);
 
     /*
      * WALK TREE RECURSE DOWN
      */
-    std::vector<Ranges *> child_cfu;
-    child_cfu.reserve(a_max);
+    std::vector<Ranges *> children_cfus;
+    children_cfus.reserve(a_max);
     for (int a = 0; a < a_max; a++) {
-        child_cfu.emplace_back(WalkTree_Pairwise(this_node->children[a], child_reach_ranges[a]));
+        children_cfus.emplace_back(WalkTree_Pairwise(this_node->children[a], children_reach_ranges[a]));
     }
 
     /*
@@ -364,7 +364,7 @@ Ranges *VectorCfrWorker::EvalChoiceNode_Pairwise(Node *this_node, Ranges *reach_
      */
     auto cfu = new Ranges(reach_ranges, "empty");
     //acting player
-    auto actor_child_cfu = ExtractBeliefs(child_cfu, actor);
+    auto actor_child_cfu = ExtractBeliefs(children_cfus, actor);
     //todo: need to add the memory thing here.
     ComputeCfu(this_node,
                actor_child_beliefs,
@@ -375,8 +375,8 @@ Ranges *VectorCfrWorker::EvalChoiceNode_Pairwise(Node *this_node, Ranges *reach_
     //opponent
     int opp_pos = 1 - actor;
     ComputeCfu(this_node,
-               ExtractBeliefs(child_reach_ranges, opp_pos),
-               ExtractBeliefs(child_cfu, opp_pos),
+               ExtractBeliefs(children_reach_ranges, opp_pos),
+               ExtractBeliefs(children_cfus, opp_pos),
                &cfu->beliefs_[opp_pos],
                cfr_param_->cfu_compute_opponent, nullptr
     );
@@ -392,9 +392,9 @@ Ranges *VectorCfrWorker::EvalChoiceNode_Pairwise(Node *this_node, Ranges *reach_
     //delete the util belief from child nodes
     for (int a = 0; a < a_max; a++) {
         // pop up
-        delete child_cfu[a];
+        delete children_cfus[a];
         //goes down
-        delete child_reach_ranges[a];
+        delete children_reach_ranges[a];
     }
     return cfu;
 }
@@ -403,7 +403,8 @@ Ranges *VectorCfrWorker::EvalChoiceNode_Pairwise(Node *this_node, Ranges *reach_
 ///     * belief updating and pruning
 ///     * WAVG updating
 void VectorCfrWorker::CalcReachRange(Node *this_node, sPrivateHandBelief *belief,
-                                     std::vector<sPrivateHandBelief *> &child_ranges, Strategy *target_strategy,
+                                     std::vector<sPrivateHandBelief *> &children_reach_ranges,
+                                     Strategy *target_strategy,
                                      STRATEGY_TYPE strategy_type)
 {
     auto r = this_node->GetRound();
@@ -523,7 +524,7 @@ void VectorCfrWorker::CalcReachRange(Node *this_node, sPrivateHandBelief *belief
                 auto regret = target_strategy->eager_double_regret_[rnb0 + a];
                 if (regret <= cfr_param_->rollout_prune_thres) {
                     // prune it and continue
-                    child_ranges[a]->Prune(priv_hand_i);
+                    children_reach_ranges[a]->Prune(priv_hand_i);
                     is_fox_pruned = true;
                 }
 #endif
@@ -536,7 +537,7 @@ void VectorCfrWorker::CalcReachRange(Node *this_node, sPrivateHandBelief *belief
                         {
                             if (regret <= cfr_param_->rollout_prune_thres) {
                                 // prune it and continue
-                                child_ranges[a]->Prune(priv_hand_i);
+                                children_reach_ranges[a]->Prune(priv_hand_i);
                                 is_dove_pruned = true;
                             }
                         }
@@ -557,18 +558,18 @@ void VectorCfrWorker::CalcReachRange(Node *this_node, sPrivateHandBelief *belief
             }
             // zero all trivial values less than 0.03
             if (action_prob < RANGE_ROLLOUT_PRUNE_THRESHOLD) {
-                child_ranges[a]->Zero(priv_hand_i);
+                children_reach_ranges[a]->Zero(priv_hand_i);
             } else {
-                // NOTE(kwok): child_ranges are all the same prior to this calculation
+                // NOTE(kwok): children_reach_ranges are all the same prior to this calculation
                 // NOTE(kwok): A child node's reach probability equals:
                 //
                 //                   [how much we believe the opponent holding `priv_hand_i`]
                 //                                            ×
                 // [how possible we will choose the action `a` in the case of the opponent holding `priv_hand_i`]
-                child_ranges[a]->belief_[priv_hand_i] *= action_prob;
+                children_reach_ranges[a]->belief_[priv_hand_i] *= action_prob;
             }
             // safe-guarding
-            auto new_v = child_ranges[a]->belief_[priv_hand_i];
+            auto new_v = children_reach_ranges[a]->belief_[priv_hand_i];
             if (new_v > 0.0 && new_v < pow(10, -14)) {
                 logger::warn("🚨reach of %.16f is considered too small for round %d", new_v, this_node->GetRound());
             }
@@ -578,8 +579,8 @@ void VectorCfrWorker::CalcReachRange(Node *this_node, sPrivateHandBelief *belief
 
 /// Reminder: If the next node is the root of a street, we get to handle the value properly. Skip all -1s.
 void VectorCfrWorker::ComputeCfu(Node *this_node,
-                                 std::vector<sPrivateHandBelief *> child_reach_ranges,
-                                 std::vector<sPrivateHandBelief *> child_cfus,
+                                 std::vector<sPrivateHandBelief *> children_reach_ranges,
+                                 std::vector<sPrivateHandBelief *> children_cfus,
                                  sPrivateHandBelief *this_node_cfu,
                                  CFU_COMPUTE_MODE cfu_compute_mode,
                                  const float *all_belief_distr_1dim) const
@@ -597,13 +598,13 @@ void VectorCfrWorker::ComputeCfu(Node *this_node,
                 int offset = priv_hand_idx * a_max;
                 for (int a = 0; a < a_max; a++) {
                     // proceed only when candidate node has not been pruned
-                    if (child_reach_ranges[a]->IsPruned(priv_hand_idx)) {
+                    if (children_reach_ranges[a]->IsPruned(priv_hand_idx)) {
                         continue;
                     }
                     // FIXME(kwok): `all_belief_distr_1dim` may point to unallocated memory.
                     float strategy_weight = all_belief_distr_1dim[offset + a];
                     if (strategy_weight > 0.0) {
-                        expected_utility += strategy_weight * child_cfus[a]->belief_[priv_hand_idx];
+                        expected_utility += strategy_weight * children_cfus[a]->belief_[priv_hand_idx];
                     }
                 }
                 if (expected_utility > pow(10, 15)) {
@@ -619,10 +620,10 @@ void VectorCfrWorker::ComputeCfu(Node *this_node,
                 for (int a = 0; a < a_max; a++) {
                     // proceed only when candidate node has not been pruned. outliers should already
                     // been pruned
-                    if (child_reach_ranges[a]->IsPruned(priv_hand_idx)) {
+                    if (children_reach_ranges[a]->IsPruned(priv_hand_idx)) {
                         continue;
                     }
-                    expected_utility += child_cfus[a]->belief_[priv_hand_idx];
+                    expected_utility += children_cfus[a]->belief_[priv_hand_idx];
                 }
                 break;
             }
@@ -634,7 +635,7 @@ void VectorCfrWorker::ComputeCfu(Node *this_node,
                 for (int a = 0; a < a_max; a++) {
                     if (all_belief_distr_1dim[offset + a] > 0) {
                         // pruning will never happen in the BEST_RESPONSE mode.
-                        auto utility = child_cfus[a]->belief_[priv_hand_idx];
+                        auto utility = children_cfus[a]->belief_[priv_hand_idx];
                         if (utility != kBeliefPrunedFlag && utility > expected_utility) {
                             expected_utility = utility;
                             // max_a = a;
@@ -645,7 +646,7 @@ void VectorCfrWorker::ComputeCfu(Node *this_node,
                 // weighted with weights, need to re-weight with 1/ 1000, cuz it scales 1000 both on my reach and opp reach
                 // expected_utility *= reach_ranges->ranges_[my_pos].belief_[priv_hand_idx] / 1000.0;
                 // if (max_a > -1) {
-                //     expected_utility *= child_reach_ranges[max_a]->belief_[priv_hand_idx] / REGRET_SCALE_FACTOR;
+                //     expected_utility *= children_reach_ranges[max_a]->belief_[priv_hand_idx] / REGRET_SCALE_FACTOR;
                 // }
                 if (fabs(expected_utility + 999999999) < 0.001) {
                     // it means they are all pruned. probably the next node is the first node of a street. board crashes.
@@ -665,11 +666,10 @@ void VectorCfrWorker::ConditionalPrune()
     }
 }
 
-void
-VectorCfrWorker::CollectChildBRUs(Node *this_node,
-                                  std::vector<sPrivateHandBelief *> child_brus,
-                                  sPrivateHandBelief *this_node_bru,
-                                  Strategy *target_strategy) const
+void VectorCfrWorker::CollectChildBRUs(Node *this_node,
+                                       std::vector<sPrivateHandBelief *> children_brus,
+                                       sPrivateHandBelief *this_node_bru,
+                                       Strategy *target_strategy) const
 {
     auto a_max = this_node->GetAmax();
     auto r = this_node->GetRound();
@@ -683,10 +683,10 @@ VectorCfrWorker::CollectChildBRUs(Node *this_node,
         auto b = priv_hand_kernel->GetBucket(r, priv_hand_i);
         auto rnb0 = target_strategy->ag_->kernel_->hash_rnba(r, n, b, 0);
         for (int a = 0; a < a_max; a++) {
-            if (child_brus[a]->IsPruned(priv_hand_i)) {
+            if (children_brus[a]->IsPruned(priv_hand_i)) {
                 continue;
             }
-            double bru_child_a = child_brus[a]->belief_[priv_hand_i];
+            double bru_child_a = children_brus[a]->belief_[priv_hand_i];
             target_strategy->double_bru->insert(rnb0 + a);
             target_strategy->double_bru->update_fn(
                     rnb0 + a,
@@ -699,11 +699,10 @@ VectorCfrWorker::CollectChildBRUs(Node *this_node,
     }
 }
 
-void
-VectorCfrWorker::CollectRegrets(Node *this_node,
-                                std::vector<sPrivateHandBelief *> child_cfus,
-                                sPrivateHandBelief *this_node_cfu,
-                                Strategy *target_strategy)
+void VectorCfrWorker::CollectRegrets(Node *this_node,
+                                     std::vector<sPrivateHandBelief *> children_cfus,
+                                     sPrivateHandBelief *this_node_cfu,
+                                     Strategy *target_strategy)
 {
     auto a_max = this_node->GetAmax();
     auto r = this_node->GetRound();
@@ -725,10 +724,10 @@ VectorCfrWorker::CollectRegrets(Node *this_node,
         // update regrets, assuming opponent is holding `priv_hand_i`
         for (int a = 0; a < a_max; a++) {
             // pruned nodes won't participate into regret update
-            if (child_cfus[a]->IsPruned(priv_hand_i)) {
+            if (children_cfus[a]->IsPruned(priv_hand_i)) {
                 continue;
             }
-            double cfu_child_a = child_cfus[a]->belief_[priv_hand_i];
+            double cfu_child_a = children_cfus[a]->belief_[priv_hand_i];
             double diff = cfu_child_a - cfu_this_node; // naive regret
 #ifdef DEBUG_EAGER_LOOKUP
             // TODO(kwok): 🦊
