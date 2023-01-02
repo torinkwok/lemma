@@ -78,5 +78,5 @@ if __name__ == '__main__':
             }
         }
     }
-    optima = fmin(obj_func, space, algo=tpe.suggest, max_evals=200)
+    optima = fmin(obj_func_mock, space, algo=tpe.suggest, max_evals=2000)
     print(f'optima: {optima}')
