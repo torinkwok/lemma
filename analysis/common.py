@@ -8,7 +8,7 @@ float_scinot_pat = r'(?:e[+-]\d+)?'
 float_decimal_pat = rf'(?:\.\d+{float_scinot_pat})?'
 float_cap = rf'(-?\d+{float_decimal_pat})'
 explo_line_pat = re.compile(
-    rf'^thread_iter_num = {uint_cap}: avg_cfu = {float_cap}, bru_explo = \({float_cap} \+ {float_cap}\)/2 = {float_cap}$'
+    rf'^thread_iter_num = {uint_cap}, avg_cfu = {float_cap}, bru_explo = \({float_cap} \+ {float_cap}\)/2 = {float_cap}$'
 )
 
 agent_loaded_cfr_pat = re.compile(r'^🧠')
@@ -43,9 +43,9 @@ def run_agent(*, log=False):
 
 if __name__ == '__main__':
     for test_line in [
-        'thread_iter_num = 12499950: avg_cfu = 734.506, bru_explo = (-355.634 + 35.6298)/2 = 195.632',
-        'thread_iter_num = 12499965: avg_cfu = 0, bru_explo = (72.8961 + -2.53304)/2 = 35.1815',
-        'thread_iter_num = 4735: avg_cfu = -7129.78, bru_explo = (1.12499e-310 + 1.98149e+232)/2 = -5186',
+        'thread_iter_num = 3, avg_cfu = 734.506, bru_explo = (-355.634 + 35.6298)/2 = 195.632',
+        'thread_iter_num = 253, avg_cfu = 0, bru_explo = (72.8961 + -2.53304)/2 = 35.1815',
+        'thread_iter_num = 4735, avg_cfu = -7129.78, bru_explo = (1.12499e-310 + 1.98149e+232)/2 = -5186',
     ]:
         test_match = re.search(explo_line_pat, test_line)
         print(int(test_match.groups()[0]), end=': ')
