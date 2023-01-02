@@ -1,6 +1,6 @@
 #include "cfr_worker.h"
 
-double ScalarCfrWorker::Solve(Board_t board, bool calc_bru_explo, double *out_bru_explo)
+double ScalarCfrWorker::Solve(Board_t board, bool calc_bru_explo, double *out_bru_explo, size_t thread_iter_num)
 {
     auto ag = strategy->ag_;
     auto active_players = AbstractGame::GetActivePlayerNum();
@@ -113,7 +113,10 @@ double ScalarCfrWorker::Solve(Board_t board, bool calc_bru_explo, double *out_br
         }
         *out_bru_explo = bru_per_sample / n_priv_hand_samples;
         delete[] brus;
-        fprintf(stderr, "avg_cfu = %g, bru_explo = (%g + %g)/2 = %g\n", avg_cfu, brus[0], brus[1], *out_bru_explo);
+        fprintf(stderr, "thread_iter_num = %lu, avg_cfu = %g, bru_explo = (%g + %g)/2 = %g\n",
+                thread_iter_num,
+                avg_cfu, brus[0], brus[1], *out_bru_explo
+        );
     }
 
     return avg_cfu;

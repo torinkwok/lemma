@@ -51,7 +51,7 @@ public:
     CFR_MODE mode_;
 
     // return exploitability mbb/g
-    virtual double Solve(Board_t board, bool calc_bru_explo, double *out_bru_explo) = 0;
+    virtual double Solve(Board_t board, bool calc_bru_explo, double *out_bru_explo, size_t thread_iter_num) = 0;
 
     static double ClampRegret(double old_reg, double diff, double floor)
     {
@@ -183,7 +183,7 @@ public:
     {
     }
 
-    double Solve(Board_t board, bool calc_bru_explo, double *out_bru_explo) override;
+    double Solve(Board_t board, bool calc_bru_explo, double *out_bru_explo, size_t thread_iter_num) override;
 
     double WalkTree(Node *this_node, int trainee, sPrivateHandsInfo &hands_info, Strategy *target_strategy,
                     std::optional<CFU_COMPUTE_MODE> trainee_cfu_compute_mode_hint,
@@ -238,7 +238,7 @@ public:
         delete priv_hand_kernel;
     };
 
-    double Solve(Board_t board, bool calc_bru_explo, double *out_bru_explo) override;
+    double Solve(Board_t board, bool calc_bru_explo, double *out_bru_explo, size_t thread_iter_num) override;
 
     Ranges *WalkTree_Pairwise(Node *this_node, Ranges *reach_ranges);
 

@@ -1,7 +1,7 @@
 #include "cfr_worker.h"
 #include "node.h"
 
-double VectorCfrWorker::Solve(Board_t board, bool calc_bru_explo, double *out_bru_explo)
+double VectorCfrWorker::Solve(Board_t board, bool calc_bru_explo, double *out_bru_explo, size_t thread_iter_num)
 {
     auto *ag = strategy->ag_;
     auto starting_round = ag->root_state_.round;
@@ -126,7 +126,10 @@ double VectorCfrWorker::Solve(Board_t board, bool calc_bru_explo, double *out_br
         // FIXME(kwok): The number of players is not supposed to be fixed to 2.
         *out_bru_explo = (brus[0] + brus[1]) / 2;
         delete[] brus;
-        fprintf(stderr, "avg_cfu = %g, bru_explo = (%g + %g)/2 = %g\n", avg_cfu, brus[0], brus[1], *out_bru_explo);
+        fprintf(stderr, "thread_iter_num = %lu, avg_cfu = %g, bru_explo = (%g + %g)/2 = %g\n",
+                thread_iter_num,
+                avg_cfu, brus[0], brus[1], *out_bru_explo
+        );
     }
 
     return avg_cfu;

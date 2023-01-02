@@ -296,11 +296,7 @@ void *CFR::CfrSolve(void *thread_args)
         // board.Print();
         bool calc_bru_explo = remaining_iter % 1 == 0;
         double bru_explo = std::numeric_limits<double>::infinity();
-        double local_util = worker->Solve(board, calc_bru_explo, &bru_explo);
-        if (calc_bru_explo) {
-            // printf("remaining_iter=%d, expl=%g\n", remaining_iter, local_util);
-            fprintf(stderr, "remaining_iter = %d: ", remaining_iter);
-        }
+        double local_util = worker->Solve(board, calc_bru_explo, &bru_explo, args->iterations_ - remaining_iter - 1);
         args->output_->AddIterResult(local_util);
     }
 
