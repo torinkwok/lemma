@@ -7,6 +7,7 @@ from common import run_agent
 
 
 def set_hy_params(hy_params):
+    print('-' * 10)
     print(f'⚙️{json.dumps(hy_params)}\n')
     for pot in ['0pot', 'bigpot', 'midpot']:
         with open(f'config/engine/delta/cfr/cfrs_r1_upoker-p_{pot}.json', 'w') as fh:
