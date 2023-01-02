@@ -12,7 +12,7 @@
     }
   },
   "daemon": false,
-  "mock": {
+  "match_state_mock": {
     "enabled": true,
     "response": {
       "action": "b200c/",
