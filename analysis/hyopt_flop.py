@@ -60,9 +60,9 @@ if __name__ == '__main__':
             },
             'rollout': {
                 'pruning': {
-                    'regret_thres': hp.uniform('regret_thres', 0.4, 0.9),
-                    'prob': hp.uniform('prob', 0.4, 0.9),
-                    'first_iter': hp.uniformint('first_iter', 1000, 20000),
+                    'regret_thres': hp.uniform('regret_thres', -20000.0, 0.0),
+                    'prob': hp.uniform('prob', 0.0, 1.0),
+                    'first_iter': hp.uniformint('first_iter', 0, 20000),
                 },
             },
             'side_walk': hp.choice('side_walk', [True, False]),
