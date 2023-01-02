@@ -60,7 +60,7 @@ if __name__ == '__main__':
             },
             'rollout': {
                 'pruning': {
-                    'regret_thres': hp.uniform('regret_thres', -20000.0, 0.0),
+                    'regret_thres': hp.uniform('regret_thres', 0.0, 1.0),
                     'prob': hp.uniform('prob', 0.0, 1.0),
                     'first_iter': hp.uniformint('first_iter', 0, 20000),
                 },
