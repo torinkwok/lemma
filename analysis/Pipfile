@@ -6,6 +6,9 @@ name = "pypi"
 [packages]
 pandas = "*"
 matplotlib = "*"
+jupyter = "*"
+requests = "*"
+hyperopt = "*"
 
 [dev-packages]
 mypy = "*"
