@@ -15,21 +15,15 @@ double ScalarCfrWorker::Solve(Board_t board, bool calc_bru_explo, double *out_br
     }
 
     double avg_cfu = 0.0;
+    double avg_bru = 0.0;
+    std::vector<double> avg_bru_by_players;
+    for (int trainee = 0; trainee < active_players; trainee++) {
+        avg_bru_by_players.push_back(0.0);
+    }
 
     // FIXME(kwok): What about blueprint computing?
     // TODO(kwok): See `n_priv_hand_samples` also as a hyper-parameter.
     static const int n_priv_hand_samples = 1;
-
-    double *brus = nullptr;
-    size_t brus_size = n_priv_hand_samples * 2;
-    if (calc_bru_explo) {
-        // FIXME(kwok): The number of players is not supposed to be fixed to 2.
-        brus = new double[brus_size];
-        for (int i = 0; i < n_priv_hand_samples; i++) {
-            brus[i] = std::numeric_limits<double>::infinity();
-        }
-    }
-
     for (int i = 0; i < n_priv_hand_samples; i++) {
         // NOTE(kwok): On each iteration, we start by sampling all of chance’s actions: the public chance
         // events visible to each player, as well as the private chance events that are visible to only a
@@ -78,7 +72,8 @@ double ScalarCfrWorker::Solve(Board_t board, bool calc_bru_explo, double *out_br
                         ag->root_node_, trainee, hands_info, strategy,
                         std::optional<CFU_COMPUTE_MODE>(), STRATEGY_BEST_RESPONSE, false
                 );
-                brus[i * active_players + trainee] = bru;
+                avg_bru += bru;
+                avg_bru_by_players[trainee] += bru;
             }
         }
     }
@@ -94,28 +89,21 @@ double ScalarCfrWorker::Solve(Board_t board, bool calc_bru_explo, double *out_br
         }
     }
 
-    // FIXME(kwok): The number of players is not supposed to be fixed to 2.
-    avg_cfu /= (n_priv_hand_samples * 2);
+    avg_cfu /= (n_priv_hand_samples * active_players);
 
     for (auto b: root_beliefs) {
         delete b;
     }
 
     if (calc_bru_explo) {
-        assert(brus != nullptr);
-        double bru_per_sample = 0.0;
-        for (int i = 0; i < n_priv_hand_samples; i++) {
-            double bru_per_trainee = 0.0;
-            for (int trainee = 0; trainee < active_players; trainee++) {
-                bru_per_trainee += brus[i * active_players + trainee];
-            }
-            bru_per_sample += bru_per_trainee / active_players;
-        }
-        *out_bru_explo = bru_per_sample / n_priv_hand_samples;
-        delete[] brus;
+        avg_bru /= n_priv_hand_samples * active_players;
+        std::for_each(avg_bru_by_players.begin(), avg_bru_by_players.end(),
+                      [](double &bru) { bru /= n_priv_hand_samples; }
+        );
+        *out_bru_explo = avg_bru;
         fprintf(stderr, "thread_iter_num = %lu, avg_cfu = %g, bru_explo = (%g + %g)/2 = %g\n",
                 thread_iter_num,
-                avg_cfu, brus[0], brus[1], *out_bru_explo
+                avg_cfu, avg_bru_by_players[0], avg_bru_by_players[1], *out_bru_explo
         );
     }
 
