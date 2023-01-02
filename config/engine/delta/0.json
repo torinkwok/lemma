@@ -1,9 +1,7 @@
 {
   "blueprint": {
-    "disk" : false,
+    "disk": false,
     "strategy_prefix": [
-//      "IR-169-9k-9k-9k_cfrs10m"
-//      "IR-100-100-100-100_cfrs15k"
       "IR-169-9k-9k-9k_cfrs100m"
     ],
     "action_chooser": {
@@ -14,6 +12,23 @@
     }
   },
   "daemon": false,
+  "mock": {
+    "enabled": true,
+    "response": {
+      "action": "b200c/",
+      "board": [
+        "6h",
+        "5c",
+        "Ah"
+      ],
+      "client_pos": 0,
+      "hole_cards": [
+        "Qc",
+        "As"
+      ],
+      "old_action": "b200c/"
+    }
+  },
   "subgame_solvers": [
     "delta/sgs/sgs_r1_upoker-p_bigpot.json",
     "delta/sgs/sgs_r1_upoker-p_midpot.json",

@@ -93,6 +93,10 @@ public:
     int TranslateToNormState(const std::string &match_state_str, MatchState &normalized_match_state);
 
     TableContext table_context_;
+
+    bool match_state_mock_enabled = false;
+    web::json::value raw_match_state_mock_response;
+
 private:
     Game *normalized_game_;
 

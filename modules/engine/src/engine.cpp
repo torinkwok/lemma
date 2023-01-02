@@ -37,6 +37,14 @@ Engine::Engine(const char *engine_conf_file, Game *game)
     engine_name_ = engine_conf_str.substr(0, engine_conf_str.length() - 5); //remove the .json
     bucket_pool_ = new BucketPool();
 
+    if (data.has_field("match_state_mock")) {
+        auto mock = data.at("match_state_mock");
+        match_state_mock_enabled = mock.at("enabled").as_bool();
+        if (match_state_mock_enabled) {
+            raw_match_state_mock_response = mock.at("response");
+        }
+    }
+
     if (data.has_field("random_action")) {
         random_action_ = true;
         return;

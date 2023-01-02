@@ -8,7 +8,8 @@
 #include <cstdlib>
 #include <cstdio>
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     // argument parser
     // ./agent engine=acpc params=localhost,51000
     cxxopts::Options options("Game Agent", "Manages connection with Poker Sites and executes Engine actions");
@@ -126,8 +127,12 @@ int main(int argc, char *argv[]) {
                 if (is_proxy_validated) {
                     http_config.set_proxy(web::web_proxy(validated_proxy_uri));
                 }
-                connector = new SlumbotConnector(result["connector_params"].as<std::vector<std::string>>(),
-                                                 http_config);
+                connector = new SlumbotConnector(
+                        result["connector_params"].as<std::vector<std::string>>(), http_config
+                );
+                SlumbotConnector *slumbot_connector = (SlumbotConnector *) connector;
+                slumbot_connector->match_state_mock_enabled = engine->match_state_mock_enabled;
+                slumbot_connector->raw_match_state_mock_response = engine->raw_match_state_mock_response;
                 if (slumbot_session_key.empty()) {
                     if (connector->connect()) {
                         logger::info("[AGENT]: Slumbot API logged in");
@@ -135,7 +140,7 @@ int main(int argc, char *argv[]) {
                         logger::critical(" [AGENT]: failed to login on Slumbot");
                     }
                 } else {
-                    ((SlumbotConnector *) connector)->connectWithSession(slumbot_session_key);
+                    slumbot_connector->connectWithSession(slumbot_session_key);
                 }
                 break;
             }

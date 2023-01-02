@@ -75,6 +75,10 @@ public:
     // FIXME(kwok): The two members should've been private.
     sSlumbotMatchState *slumbot_match_state_{};
     web::json::value previous_act_result_json_;
+
+    bool match_state_mock_enabled = false;
+    web::json::value raw_match_state_mock_response;
+
 private:
     const char *username_{};
     const char *password_{};
