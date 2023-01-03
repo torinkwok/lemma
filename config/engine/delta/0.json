@@ -28,6 +28,36 @@
                 ],
                 "old_action": "b200c/"
             },
+            "r2#0": {
+                "action": "b200c/b300c/",
+                "board": [
+                    "6h",
+                    "5c",
+                    "Ah",
+                    "Ad"
+                ],
+                "client_pos": 0,
+                "hole_cards": [
+                    "Qc",
+                    "As"
+                ],
+                "old_action": "b200c/"
+            },
+            "r2#1": {
+                "action": "b200c/b800c/",
+                "board": [
+                    "6h",
+                    "5c",
+                    "Ah",
+                    "Kd"
+                ],
+                "client_pos": 0,
+                "hole_cards": [
+                    "Qc",
+                    "As"
+                ],
+                "old_action": "b200c/"
+            },
             "r3#0": {
                 "action": "b200c/b300c/kk/",
                 "board": [
@@ -36,6 +66,22 @@
                     "Ah",
                     "2d",
                     "9c"
+                ],
+                "client_pos": 0,
+                "hole_cards": [
+                    "Qc",
+                    "As"
+                ],
+                "old_action": "b200c/"
+            },
+            "r3#1": {
+                "action": "b200c/b300c/kk/",
+                "board": [
+                    "6h",
+                    "5c",
+                    "Ah",
+                    "Ad",
+                    "Ac"
                 ],
                 "client_pos": 0,
                 "hole_cards": [
