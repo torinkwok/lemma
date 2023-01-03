@@ -42,7 +42,7 @@ def obj_func_mock(args):
 if __name__ == '__main__':
     space = {
         'cfr': {
-            'num_threads': 4,
+            'num_threads': 36,
             'algo': 'scalar',
             'regret_matching': {
                 'floor': hp.uniformint('floor', -20000.0, 0.0),
