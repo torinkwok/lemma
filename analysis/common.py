@@ -2,6 +2,7 @@ import subprocess
 import pathlib
 import os
 import re
+import argparse
 
 uint_cap = r'(\d+)'
 float_scinot_pat = r'(?:e[+-]\d+)?'
@@ -14,6 +15,22 @@ explo_line_pat = re.compile(
 agent_loaded_cfr_pat = re.compile(r'^🧠')
 
 os.chdir(pathlib.Path() / '..')
+
+
+class CommonArgsCollector:
+    def __init__(self):
+        self.cmd_args_parser = argparse.ArgumentParser(prog='hyopt')
+        self.cmd_args_parser.add_argument('-k', '--mock_response_key', type=str)
+        self.cmd_args_parser.add_argument('-i', '--commit_id', type=str)
+        self.cmd_args_parser.add_argument('-r', '--round', type=int)
+        self.cmd_args_parser.add_argument('-m', '--use_obj_func_mock', action='store_true')
+        self.cmd_args_parser.add_argument('-v', '--verbose', action='store_true')
+        cmd_args = self.cmd_args_parser.parse_args()
+        self.r = cmd_args.round
+        self.commit_id = cmd_args.commit_id
+        self.mock_response_key = cmd_args.mock_response_key
+        self.use_obj_func_mock = cmd_args.use_obj_func_mock
+        self.verbose = cmd_args.verbose
 
 
 def run_agent(*, log=False, commit_id=None, mock_response_key=None):

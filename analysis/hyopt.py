@@ -3,26 +3,20 @@ import numpy as np
 import json
 from hyperopt import hp, fmin, tpe
 import common
-import argparse
+
+
+class HyperOptArgsCollector(common.CommonArgsCollector):
+    def __init__(self):
+        super().__init__()
+        self.cmd_args_parser.add_argument('-nt', '--n_threads', type=int, default=4)
+        cmd_args = self.cmd_args_parser.parse_args()
+        self.n_threads = cmd_args.n_threads
 
 
 class LemmaHyperOpt:
     def __init__(self):
-        cmd_args_parser = argparse.ArgumentParser(prog='hyopt')
-        cmd_args_parser.add_argument('-k', '--mock_response_key', type=str)
-        cmd_args_parser.add_argument('-i', '--commit_id', type=str)
-        cmd_args_parser.add_argument('-r', '--round', type=int)
-        cmd_args_parser.add_argument('-m', '--use_obj_func_mock', action='store_true')
-        cmd_args_parser.add_argument('-v', '--verbose', action='store_true')
-        cmd_args_parser.add_argument('-nt', '--n_threads', type=int, default=4)
-        cmd_args = cmd_args_parser.parse_args()
-        self.r = cmd_args.round
-        self.commit_id = cmd_args.commit_id
-        self.mock_response_key = cmd_args.mock_response_key
-        self.use_obj_func_mock = cmd_args.use_obj_func_mock
-        self.verbose = cmd_args.verbose
-        self.n_threads = cmd_args.n_threads
-        del cmd_args_parser, cmd_args
+        self.cmd_args = HyperOptArgsCollector()
+        self.r = self.cmd_args.r
         if self.r == 1:
             self.max_iter, self.avg_window, self.mccfr_var, self.mccfr_var_abbr, self.max_trials = \
                 36000, 2500, 'scalar', 'cfrs', 2000
@@ -37,7 +31,7 @@ class LemmaHyperOpt:
         self.optima = None
         self.space = {
             'cfr': {
-                'num_threads': self.n_threads,
+                'num_threads': self.cmd_args.n_threads,
                 'algo': self.mccfr_var,
                 'regret_matching': {
                     'floor': hp.uniformint('floor', -20000.0, 0.0),
@@ -84,7 +78,9 @@ class LemmaHyperOpt:
 
     def obj_func(self, args):
         self.set_hy_params(args)
-        res_gen = common.run_agent(log=self.verbose, commit_id=self.commit_id, mock_response_key=self.mock_response_key)
+        res_gen = common.run_agent(log=self.cmd_args.verbose,
+                                   commit_id=self.cmd_args.commit_id,
+                                   mock_response_key=self.cmd_args.mock_response_key)
         count = 0
         buffer = []
         try:
@@ -106,7 +102,7 @@ class LemmaHyperOpt:
 
     def find_optima(self):
         self.optima = fmin(
-            self.obj_func_mock if self.use_obj_func_mock else self.obj_func,
+            self.obj_func_mock if self.cmd_args.use_obj_func_mock else self.obj_func,
             self.space,
             algo=tpe.suggest,
             max_evals=self.max_trials,
