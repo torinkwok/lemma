@@ -31,7 +31,7 @@ def run_agent(*, log=False, commit_id=None, mock_response_key=None):
             break
         if log or re.search(agent_loaded_cfr_pat, stderr_line):
             # log unconditionally or only log final CFR config loaded by agent executable
-            print(stderr_line.removesuffix('\n'))
+            print(stderr_line.rstrip())
         m = re.search(explo_line_pat, stderr_line)
         if not m:
             continue
