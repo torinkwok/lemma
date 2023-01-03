@@ -23,6 +23,7 @@
 #include <filesystem>
 #include <chrono>
 #include <future>
+#include <optional>
 
 extern "C" {
 #include "autodidact/game.h"

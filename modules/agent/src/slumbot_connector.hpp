@@ -4,6 +4,7 @@
 #include "base_connector.hpp"
 #include <vector>
 #include <string>
+#include <optional>
 #include <cpprest/http_client.h>
 
 /* Calculations
