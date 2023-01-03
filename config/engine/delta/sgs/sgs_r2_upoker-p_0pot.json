@@ -1,6 +1,6 @@
 {
   "builder_file": "delta/builder/builder_r2_upoker-p_nlh2_200bb_0pot.json",
-  "cfr_file": "delta/cfr/cfrs_r2_upoker-p_0pot.json",
+  "cfr_file": "delta/cfr/cfrv_r2_upoker-p_0pot.json",
   "playing_strategy" : "wavg",
   "trigger": {
     "active_round": 2,
