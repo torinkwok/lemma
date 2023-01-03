@@ -28,10 +28,10 @@ class LemmaHyperOpt:
                 36000, 2500, 'scalar', 'cfrs', 2000
         elif self.r == 2:
             self.max_iter, self.avg_window, self.mccfr_var, self.mccfr_var_abbr, self.max_trials = \
-                1400, 50, 'vector_alt', 'cfrv', 500
+                3000, 50, 'vector_alt', 'cfrv', 500
         elif self.r == 3:
             self.max_iter, self.avg_window, self.mccfr_var, self.mccfr_var_abbr, self.max_trials = \
-                1400, 50, 'vector_alt', 'cfrv', 500
+                3000, 50, 'vector_alt', 'cfrv', 500
         self.is_depth_limited_search = self.r == 1
         self.triggers = ['0pot', 'bigpot', 'midpot']
         self.optima = None
