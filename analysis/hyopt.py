@@ -1,7 +1,6 @@
 import time
 import numpy as np
 import json
-import sys
 from hyperopt import hp, fmin, tpe
 import common
 import argparse
