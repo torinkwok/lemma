@@ -13,16 +13,16 @@ explo_line_pat = re.compile(
 
 agent_loaded_cfr_pat = re.compile(r'^🧠')
 
-agent_exe_path = os.path.abspath(pathlib.Path() / '..' / 'bin/build/release-min/agent')
 os.chdir(pathlib.Path() / '..')
 
 
-def run_agent(*, log=False):
+def run_agent(*, log=False, commit_id=None, mock_response_key=None):
+    agent_exe_path = os.path.abspath(
+        pathlib.Path() / 'bin/build' / (commit_id if commit_id else '') / 'release-min/agent')
     cmd = agent_exe_path + \
           " --engine_params=delta/0.json --game=nlh2_200bb.game --connector=1 " \
           "--connector_params=lemma,ckp3t4kkbccHZFmosBZVsGibxz6MnaQ4Heof3uu3nkXtLwn7GVoMDhNrj6qe8ZCU,1000 " \
-          "--log_level=trace " \
-          "--proxy=http://127.0.0.1:6152"
+          "--log_level=trace " + (f'--mock_response_key={mock_response_key}' if mock_response_key else '')
     agent_proc = subprocess.Popen(
         cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, encoding='utf-8')
     while True:
@@ -31,7 +31,7 @@ def run_agent(*, log=False):
             break
         if log or re.search(agent_loaded_cfr_pat, stderr_line):
             # log unconditionally or only log final CFR config loaded by agent executable
-            print(stderr_line, end='')
+            print(stderr_line.removesuffix('\n'))
         m = re.search(explo_line_pat, stderr_line)
         if not m:
             continue
