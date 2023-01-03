@@ -251,8 +251,8 @@ int SlumbotConnector::send()
 
 bool SlumbotConnector::get()
 {
-    if (match_state_mock_enabled) {
-        from_json(this->raw_match_state_mock_response, this->slumbot_match_state_);
+    if (GetMatchStateMockEnabled()) {
+        from_json(this->raw_match_state_mock_responses.at(mock_response_key.value()), this->slumbot_match_state_);
         return true;
     }
     // A hand has completed.

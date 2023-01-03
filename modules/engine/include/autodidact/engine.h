@@ -94,8 +94,13 @@ public:
 
     TableContext table_context_;
 
-    bool match_state_mock_enabled = false;
-    web::json::value raw_match_state_mock_response;
+    bool GetMatchStateMockEnabled()
+    {
+        return mock_response_key.has_value();
+    }
+
+    std::optional<std::string> mock_response_key;
+    web::json::value raw_match_state_mock_responses;
 
 private:
     Game *normalized_game_;

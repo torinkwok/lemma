@@ -1,45 +1,60 @@
 {
-  "blueprint": {
-    "disk": false,
-    "strategy_prefix": [
-      "IR-169-9k-9k-9k_cfrs100m"
-    ],
-    "action_chooser": {
-      "purification": false,
-      "fold_threshold": 0.80,
-      "pot_allin_threshold": 0.4,
-      "prune_threshold": 0.05
-    }
-  },
-  "daemon": false,
-  "match_state_mock": {
-    "enabled": true,
-    "response": {
-      "action": "b200c/",
-      "board": [
-        "6h",
-        "5c",
-        "Ah"
-      ],
-      "client_pos": 0,
-      "hole_cards": [
-        "Qc",
-        "As"
-      ],
-      "old_action": "b200c/"
-    }
-  },
-  "subgame_solvers": [
-    "delta/sgs/sgs_r1_upoker-p_bigpot.json",
-    "delta/sgs/sgs_r1_upoker-p_midpot.json",
-    "delta/sgs/sgs_r1_upoker-p_0pot.json",
-
-    "delta/sgs/sgs_r2_upoker-p_bigpot.json",
-    "delta/sgs/sgs_r2_upoker-p_midpot.json",
-    "delta/sgs/sgs_r2_upoker-p_0pot.json",
-
-    "delta/sgs/sgs_r3_upoker-p_bigpot.json",
-    "delta/sgs/sgs_r3_upoker-p_midpot.json",
-    "delta/sgs/sgs_r3_upoker-p_0pot.json"
-  ]
+    "blueprint": {
+        "disk": false,
+        "strategy_prefix": [
+            "IR-169-9k-9k-9k_cfrs100m"
+        ],
+        "action_chooser": {
+            "purification": false,
+            "fold_threshold": 0.80,
+            "pot_allin_threshold": 0.4,
+            "prune_threshold": 0.05
+        }
+    },
+    "daemon": false,
+    "match_state_mock": {
+        "responses": {
+            "r1#0": {
+                "action": "b200c/",
+                "board": [
+                    "6h",
+                    "5c",
+                    "Ah"
+                ],
+                "client_pos": 0,
+                "hole_cards": [
+                    "Qc",
+                    "As"
+                ],
+                "old_action": "b200c/"
+            },
+            "r3#0": {
+                "action": "b200c/b300c/kk/",
+                "board": [
+                    "6h",
+                    "5c",
+                    "Ah",
+                    "2d",
+                    "9c"
+                ],
+                "client_pos": 0,
+                "hole_cards": [
+                    "Qc",
+                    "As"
+                ],
+                "old_action": "b200c/"
+            }
+        }
+    },
+    "subgame_solvers": [
+        "delta/sgs/sgs_r1_upoker-p_bigpot.json",
+        "delta/sgs/sgs_r1_upoker-p_midpot.json",
+        "delta/sgs/sgs_r1_upoker-p_0pot.json",
+        "delta/sgs/sgs_r2_upoker-p_bigpot.json",
+        "delta/sgs/sgs_r2_upoker-p_midpot.json",
+        "delta/sgs/sgs_r2_upoker-p_0pot.json",
+        "delta/sgs/sgs_r3_upoker-p_bigpot.json",
+        "delta/sgs/sgs_r3_upoker-p_midpot.json",
+        "delta/sgs/sgs_r3_upoker-p_0pot.json"
+    ]
 }

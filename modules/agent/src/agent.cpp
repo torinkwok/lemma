@@ -29,6 +29,7 @@ int main(int argc, char *argv[])
             ("o,log_output", "console/file?", cxxopts::value<std::string>(), "default logs output to console")
             ("proxy", "proxy server", cxxopts::value<std::string>(), "proxy server")
             ("slumbot_session", "Slumbot session key", cxxopts::value<std::string>(), "")
+            ("mock_response_key", "mock response key", cxxopts::value<std::string>(), "")
             ("h,help", "print usage information");
 
     auto result = options.parse(argc, argv);
@@ -39,6 +40,7 @@ int main(int argc, char *argv[])
     }
 
     auto slumbot_session_key = result.count("slumbot_session") ? result["slumbot_session"].as<std::string>() : "";
+    auto mock_response_key = result.count("mock_response_key") ? result["mock_response_key"].as<std::string>() : "";
 
     bool check_must_opts = result.count("engine")
                            || result.count("engine_params")
@@ -93,6 +95,9 @@ int main(int argc, char *argv[])
     auto &e_params = result["engine_params"].as<std::vector<std::string>>();
     const char *solver_filename = e_params[0].c_str();
     auto *engine = new Engine(solver_filename, game);
+    if (!mock_response_key.empty()) {
+        engine->mock_response_key = mock_response_key;
+    }
     TableContext table_context;
     table_context.session_game = *game;
     table_context.table_name_ = "slumbot_table";
@@ -131,8 +136,8 @@ int main(int argc, char *argv[])
                         result["connector_params"].as<std::vector<std::string>>(), http_config
                 );
                 SlumbotConnector *slumbot_connector = (SlumbotConnector *) connector;
-                slumbot_connector->match_state_mock_enabled = engine->match_state_mock_enabled;
-                slumbot_connector->raw_match_state_mock_response = engine->raw_match_state_mock_response;
+                slumbot_connector->mock_response_key = engine->mock_response_key;
+                slumbot_connector->raw_match_state_mock_responses = engine->raw_match_state_mock_responses;
                 if (slumbot_session_key.empty()) {
                     if (connector->connect()) {
                         logger::info("[AGENT]: Slumbot API logged in");

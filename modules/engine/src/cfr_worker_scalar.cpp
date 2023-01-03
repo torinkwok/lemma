@@ -359,7 +359,6 @@ ScalarCfrWorker::EvalChoiceNode(Node *this_node, int trainee, sPrivateHandsInfo 
             auto next_node = this_node->children[a];
             // do pruning if the flag is set. skip river nodes and nodes leading to terminal.
             if (iter_prune_flag && !next_node->IsTerminal() && next_node->GetRound() != HOLDEM_ROUND_RIVER) {
-                // if (iter_prune_flag && !next_node->IsTerminal()) {
 #ifdef DEBUG_EAGER_LOOKUP
                 // TODO(kwok): 🦊
                 if (target_strategy->eager_int_regret_[rnb0 + a] <= cfr_param_->rollout_prune_thres) {

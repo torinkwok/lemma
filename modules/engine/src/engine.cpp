@@ -39,10 +39,7 @@ Engine::Engine(const char *engine_conf_file, Game *game)
 
     if (data.has_field("match_state_mock")) {
         auto mock = data.at("match_state_mock");
-        match_state_mock_enabled = mock.at("enabled").as_bool();
-        if (match_state_mock_enabled) {
-            raw_match_state_mock_response = mock.at("response");
-        }
+        raw_match_state_mock_responses = mock.at("responses");
     }
 
     if (data.has_field("random_action")) {
