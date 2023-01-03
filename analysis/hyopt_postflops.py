@@ -1,15 +1,19 @@
 import time
 import numpy as np
 import json
+import sys
 from hyperopt import hp, fmin, tpe
 
 from common import run_agent
 
 
 def set_hy_params(hy_params):
+    r = int(sys.argv[1])
+    assert(r in {2, 3})
+    print('-' * 10, end='\n\n')
     print(f'⚙️{json.dumps(hy_params)}\n')
     for pot in ['0pot', 'bigpot', 'midpot']:
-        with open(f'config/engine/delta/cfr/cfrs_r2_upoker-p_{pot}.json', 'w') as fh:
+        with open(f'config/engine/delta/cfr/cfrv_r{r}_upoker-p_{pot}.json', 'w') as fh:
             json.dump(hy_params, fh, indent='    ')
 
 
@@ -60,10 +64,10 @@ if __name__ == '__main__':
                 }
             },
             'convergence': {
-                'max_iter': 100000000,
-                'timeout_ms': 20000000
+                'timeout_ms': 20000000,
+                'max_iter': 100000000
             }
         }
     }
-    optima = fmin(obj_func, space, algo=tpe.suggest, max_evals=100)
+    optima = fmin(obj_func_mock, space, algo=tpe.suggest, max_evals=500)
     print(f'optima: {optima}')
