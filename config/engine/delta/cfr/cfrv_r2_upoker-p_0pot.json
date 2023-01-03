@@ -1,0 +1,26 @@
+{
+    "cfr": {
+        "algo": "vector_alt",
+        "convergence": {
+            "max_iter": 100000000,
+            "timeout_ms": 20000000
+        },
+        "num_threads": 4,
+        "regret_matching": {
+            "avg_update_on": 0,
+            "discounting": {
+                "first_iter": 50000000,
+                "interval": 10000,
+                "iterations": 10
+            },
+            "floor": -16905
+        },
+        "rollin": {
+            "estimator": {
+                "my": "weighted_resp",
+                "opp": "weighted_resp"
+            }
+        },
+        "side_walk": false
+    }
+}
