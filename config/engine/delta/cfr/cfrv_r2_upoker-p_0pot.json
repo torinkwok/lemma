@@ -4,7 +4,7 @@
         "convergence": {
             "max_iter": 1400
         },
-        "num_threads": 4,
+        "num_threads": 36,
         "regret_matching": {
             "avg_update_on": 0,
             "discounting": {
