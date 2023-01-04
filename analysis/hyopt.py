@@ -25,7 +25,7 @@ class LemmaHyperOpt:
         del cmd_args_parser, cmd_args
         if self.r == 1:
             self.max_iter, self.avg_window, self.mccfr_var, self.mccfr_var_abbr, self.max_trials = \
-                36000, 2500, 'scalar', 'cfrs', 2000
+                600000, 2500, 'scalar', 'cfrs', 2000
         elif self.r == 2:
             self.max_iter, self.avg_window, self.mccfr_var, self.mccfr_var_abbr, self.max_trials = \
                 1400, 100, 'vector_alt', 'cfrv', 500
@@ -71,7 +71,7 @@ class LemmaHyperOpt:
             self.space['cfr']['rollout'] = {
                 'pruning': {
                     'regret_thres': hp.uniform('regret_thres', 0.0, 1.0),
-                    'prob': hp.uniform('prob', 0.0, 1.0),
+                    'prob': 0.95,
                     'first_iter': hp.uniformint('first_iter', 0, 20000),
                 },
             }
