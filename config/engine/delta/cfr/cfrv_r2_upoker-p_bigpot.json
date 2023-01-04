@@ -2,8 +2,7 @@
     "cfr": {
         "algo": "vector_alt",
         "convergence": {
-            "max_iter": 100000000,
-            "timeout_ms": 20000000
+            "max_iter": 1400
         },
         "num_threads": 4,
         "regret_matching": {
@@ -13,7 +12,7 @@
                 "interval": 10000,
                 "iterations": 10
             },
-            "floor": -16905
+            "floor": -9044.0
         },
         "rollin": {
             "estimator": {
@@ -21,6 +20,6 @@
                 "opp": "weighted_resp"
             }
         },
-        "side_walk": false
+        "side_walk": true
     }
 }

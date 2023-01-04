@@ -1,19 +1,25 @@
 {
-  "cfr": {
-    "num_threads": 36,
-    "algo": "vector_alt",
-    "regret_matching": {
-      "floor": -20000.0,
-      "avg_update_on": 0,
-      "discounting": {
-        "first_iter": 50000,
-        "iterations": 10,
-        "interval": 10000
-      }
-    },
-    "convergence": {
-      "max_iter": 100000,
-      "timeout_ms": 30000
+    "cfr": {
+        "algo": "vector_alt",
+        "convergence": {
+            "max_iter": 1400
+        },
+        "num_threads": 4,
+        "regret_matching": {
+            "avg_update_on": 0,
+            "discounting": {
+                "first_iter": 50000000,
+                "interval": 10000,
+                "iterations": 10
+            },
+            "floor": -9927.0
+        },
+        "rollin": {
+            "estimator": {
+                "my": "weighted_resp",
+                "opp": "weighted_resp"
+            }
+        },
+        "side_walk": true
     }
-  }
 }

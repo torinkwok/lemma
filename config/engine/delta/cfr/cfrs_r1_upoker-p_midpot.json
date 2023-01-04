@@ -1,31 +1,37 @@
 {
-  "cfr": {
-    "num_threads": 36,
-    "algo": "scalar",
-    "depth_limited": {
-      "on": true,
-      "reps": 50,
-      "cache": false
-    },
-    "rollout": {
-      "pruning": {
-        "regret_thres": 0.95,
-        "prob": 0.95,
-        "first_iter": 1000
-      }
-    },
-    "regret_matching": {
-      "floor": -20000.0,
-      "avg_update_on": 0,
-      "discounting": {
-        "first_iter": 200000,
-        "iterations": 10,
-        "interval": 50000
-      }
-    },
-    "convergence": {
-      "max_iter": 100000,
-      "timeout_ms": 30000
+    "cfr": {
+        "algo": "scalar",
+        "convergence": {
+            "max_iter": 36000
+        },
+        "depth_limited": {
+            "cache": false,
+            "on": true,
+            "reps": 71
+        },
+        "num_threads": 36,
+        "regret_matching": {
+            "avg_update_on": 0,
+            "discounting": {
+                "first_iter": 50000000,
+                "interval": 10000,
+                "iterations": 10
+            },
+            "floor": -11341
+        },
+        "rollin": {
+            "estimator": {
+                "my": "weighted_resp",
+                "opp": "weighted_resp"
+            }
+        },
+        "rollout": {
+            "pruning": {
+                "first_iter": 3257,
+                "prob": 0.99944406686436149,
+                "regret_thres": 0.00017913741162557326
+            }
+        },
+        "side_walk": true
     }
-  }
 }
