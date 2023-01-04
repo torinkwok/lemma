@@ -109,6 +109,8 @@ struct sCfrParam
     int depth_limited_rollout_reps_ = 1;
     bool depth_limited_cache_ = false;
 
+    std::optional<int> br_calc_frequency;
+
     /*
      * rollin  util upwards, my and opp
      */

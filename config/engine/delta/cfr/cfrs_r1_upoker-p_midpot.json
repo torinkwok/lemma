@@ -32,6 +32,7 @@
                 "regret_thres": 0.00017913741162557326
             }
         },
+        "br_calc_frequency": 3600,
         "side_walk": true
     }
 }

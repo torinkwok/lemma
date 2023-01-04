@@ -294,7 +294,8 @@ void *CFR::CfrSolve(void *thread_args)
         // Rather, we're sampling all required public chance events in one breath.
         SampleSequentialFullBoard(ag->root_state_, &ag->game_, board, cur_flop_idx, worker->my_flops_);
         // board.Print();
-        bool calc_bru_explo = remaining_iter % 1 == 0;
+        bool calc_bru_explo = args->cfr_param_.br_calc_frequency.has_value() &&
+                              0 == remaining_iter % args->cfr_param_.br_calc_frequency.value();
         double bru_explo = std::numeric_limits<double>::infinity();
         double local_util = worker->Solve(board, calc_bru_explo, &bru_explo, args->iterations_ - remaining_iter - 1);
         args->output_->AddIterResult(local_util);
@@ -538,6 +539,13 @@ void CFR::Config(web::json::value data)
                            && data.has_field("regret_matching");
     if (!check_must_opts) {
         logger::critical("please fill in the must-have for cfr.");
+    }
+
+    if (data.has_field("br_calc_frequency")) {
+        auto obj = data.at("br_calc_frequency");
+        if (!obj.is_null()) {
+            cfr_param_.br_calc_frequency = obj.as_integer();
+        }
     }
 
     //check and set meta cfr params
