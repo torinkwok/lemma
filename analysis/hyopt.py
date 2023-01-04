@@ -52,7 +52,7 @@ class LemmaHyperOpt:
                 'rollin': {
                     'estimator': {
                         'my': 'weighted_resp',
-                        'opp': 'weighted_resp',
+                        'opp': hp.choice('opp', ['weighted_resp', 'sum_resp']),
                     },
                 },
                 'convergence': {
