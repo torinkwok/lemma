@@ -2,7 +2,7 @@
     "cfr": {
         "algo": "scalar",
         "convergence": {
-            "max_iter": 36000
+            "max_iter": 600000
         },
         "depth_limited": {
             "cache": false,
@@ -32,7 +32,7 @@
                 "regret_thres": 0.00017913741162557326
             }
         },
-        "br_calc_frequency": 3600,
+        "br_calc_frequency": 60000,
         "side_walk": true
     }
 }
