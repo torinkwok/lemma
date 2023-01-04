@@ -14,6 +14,22 @@
     "daemon": false,
     "match_state_mock": {
         "responses": {
+            "r3#2": {
+                "action": "b200c/kk/b264c/kb1336",
+                "board": [
+                    "Ah",
+                    "7h",
+                    "7c",
+                    "2d",
+                    "9s"
+                ],
+                "client_pos": 0,
+                "hole_cards": [
+                    "Kc",
+                    "6s"
+                ],
+                "old_action": "b200c/kk/b264c/"
+            },
             "r1#0": {
                 "action": "b200c/",
                 "board": [
