@@ -59,6 +59,7 @@ class LemmaHyperOpt:
                     'max_iter': 100000000,
                     'timeout_ms': 20000000
                 },
+                'br_calc_frequency': 1,
             },
         }
         if self.is_depth_limited_search:
